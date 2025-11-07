@@ -1,0 +1,1765 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>RanSan Groups — Billing Suite</title>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <!-- Add jsPDF + AutoTable (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  
+
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/billing.js" defer></script>
+  <script src="assets/addbilling.js" defer></script>
+
+  <link rel="stylesheet" href="assets/billing.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: { 900: '#0a0b0f', 800: '#0f1117', 700: '#141824' },
+            brand: { 500: '#7c3aed', 400: '#a78bfa', 300: '#c4b5fd', glow: '#6d28d9' },
+            accent: { 500: '#06b6d4', 400: '#22d3ee' },
+            warn: { 500: '#f97316' }
+          },
+          boxShadow: { glass: '0 8px 32px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.03)' }
+        }
+      }
+    }
+  </script>
+
+  <!-- Icons & Charts -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+</head>
+
+<body class="text-white/90">
+
+
+
+  <header class="sticky top-0 z-50 
+  bg-white/80 dark:bg-gray-900/90
+  backdrop-blur-xl border-b border-white/30 dark:border-gray-700 
+  shadow-md">
+
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
+
+      <!-- Left: Logo + Brand -->
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 
+        flex items-center justify-center shadow-lg">
+          <img src="assets/logo.png" alt="Ransan Group" class="h-7 w-7">
+        </div>
+        <span class="font-extrabold text-xl tracking-wide text-gray-900 dark:text-white text-glow">
+          Ransan Group
+        </span>
+      </div>
+
+      <!-- Center: Page Title -->
+      <h1 class="hidden md:block text-base font-semibold text-gray-900 dark:text-white text-glow">
+        Billing Dashboard
+      </h1>
+
+      <div class="env-toggle">
+        <input type="checkbox" id="envSwitch" class="env-switch" />
+        <label for="envSwitch" class="env-slider"></label>
+        <span id="envLabel" class="env-label">Test</span>
+      </div>
+
+      <!-- Right: Actions -->
+      <div class="flex items-center space-x-3">
+        <!-- Theme Toggle -->
+
+        <!-- Theme Dropdown -->
+        <div class="relative">
+          <select id="themeSelect" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm 
+           text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+            <option value="glass">Glassmorphism</option>
+            <option value="neoglass">NeoGlass</option>
+            <option value="cyberpunk">Cyberpunk HUD</option>
+            <option value="minimal">Minimal White</option>
+          </select>
+        </div>
+
+        <!-- Accent Dropdown -->
+        <div class="relative">
+          <select id="colorSelect" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm 
+           text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="purple" selected>Purple</option>
+            <option value="orange">Orange</option>
+          </select>
+        </div>
+
+
+        <!-- Notifications -->
+
+        <!-- Notifications Button with Dropdown -->
+        <div class="relative" id="notifWrapper">
+          <button id="notifBtn" class="relative p-2 rounded-xl bg-gray-100 hover:bg-gray-200 
+          dark:bg-gray-700 dark:hover:bg-gray-600 transition">
+            <i data-lucide="bell" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+            <span id="notifBadge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+          </button>
+
+          <!-- Dropdown Panel -->
+          <div id="notifPanel" class="hidden absolute right-0 mt-2 w-80 bg-gray-900 text-white 
+              rounded-xl shadow-xl border border-gray-700 z-50 p-3">
+            <div class="font-semibold text-sm mb-2">Notifications</div>
+            <ul id="notifList" class="space-y-1 max-h-60 overflow-y-auto"></ul>
+            <div id="noNotif" class="text-gray-400 text-sm text-center py-3">No Due Invoices 🎉</div>
+          </div>
+        </div>
+
+
+
+        <!-- Profile -->
+        <img src="assets/user.png" alt="User"
+          class="h-10 w-10 rounded-2xl border border-gray-200 dark:border-gray-600 shadow-md">
+      </div>
+    </div>
+  </header>
+
+
+
+  <div class="grid grid-cols-12 gap-4">
+    <!-- Sidebar -->
+    <aside id="sidebar"
+      class="glass col-span-12 lg:col-span-3 transition-all duration-300 p-4 lg:p-5 space-y-4 no-print">
+
+      <!-- Collapse Button -->
+      <button id="collapseBtn"
+        class="p-2 bg-gray-700/50 rounded w-full flex items-center gap-2 hover:bg-gray-600 transition">
+        <i data-lucide="chevron-left"></i>
+        <span class="label">Collapse</span>
+      </button>
+
+      <!-- Business Switcher -->
+      <div class="pt-2">
+        <label class="text-[11px] text-white/60 label">Business (filter)</label>
+        <select id="bizSelect"
+          class="p-2 rounded-md bg-white text-gray-900 dark:bg-gray-800 dark:text-white w-full label"
+          onchange="onBusinessSelect(this.value)">
+          <option value="">-- All Businesses --</option>
+        </select>
+
+        <!-- This row should collapse too -->
+        <div class="flex gap-2 mt-2 label">
+          <button type="button" class="btn flex-1" onclick="editSelectedBusiness()">
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+            <span class="label">Edit</span>
+          </button>
+          <button type="button" class="btn" title="Add business" onclick="createBusiness()">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span class="label">Add</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="pt-2 space-y-2">
+        <button data-nav="dashboard" class="btn w-full flex items-center justify-between"
+          onclick="showView('dashboard')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span class="label">Dashboard</span>
+          </span>
+          <span class="chip label">Overview</span>
+        </button>
+
+        <button data-nav="commission-report" class="btn w-full flex items-center justify-between"
+          onclick="showView('commission-report')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="percent" class="w-4 h-4"></i>
+            <span class="label">Commission Report</span>
+          </span>
+          <span class="chip label">Commission</span>
+        </button>
+
+        <button data-nav="transactions" class="btn w-full flex items-center justify-between"
+          onclick="showView('transactions')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="repeat" class="w-4 h-4"></i>
+            <span class="label">Transactions</span>
+          </span>
+          <span class="chip label" id="txChip">Ledger</span>
+        </button>
+
+        <button data-nav="invoices" class="btn w-full flex items-center justify-between" onclick="showView('invoices')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span class="label">Invoices</span>
+          </span>
+          <span class="chip label" id="invoiceCount">0</span>
+        </button>
+
+        <button data-nav="customers" class="btn w-full flex items-center justify-between"
+          onclick="showView('customers')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span class="label">Customers</span>
+          </span>
+          <span class="chip label" id="customerCount">0</span>
+        </button>
+
+        <!-- Customer Ledger -->
+        <button data-nav="customerLedger" class="btn w-full flex items-center justify-between"
+          onclick="showView('customerLedger')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+            <span class="label">Customer Ledger</span>
+          </span>
+          <span class="chip label">Ledger</span>
+        </button>
+
+        <button data-nav="services" class="btn w-full flex items-center justify-between" onclick="showView('services')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="boxes" class="w-4 h-4"></i>
+            <span class="label">Services</span>
+          </span>
+          <span class="chip label">Catalog</span>
+        </button>
+
+        <button data-nav="statement" class="btn w-full flex items-center justify-between"
+          onclick="showView('statement')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+            <span class="label">Customer Statement</span>
+          </span>
+          <span class="chip label">Statement</span>
+        </button>
+
+        <button data-nav="reports" class="btn w-full flex items-center justify-between" onclick="showView('reports')">
+          <span class="flex items-center gap-2">
+            <i data-lucide="chart-pie" class="w-4 h-4"></i>
+            <span class="label">Reports</span>
+          </span>
+          <span class="chip label">Reports</span>
+        </button>
+      </nav>
+
+      <!-- Export / Import -->
+      <div class="pt-2">
+        <button class="btn w-full flex items-center gap-2" onclick="exportData()">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span class="label">Export JSON</span>
+        </button>
+        <label class="btn w-full mt-2 flex items-center gap-2 cursor-pointer">
+          <i data-lucide="upload" class="w-4 h-4"></i>
+          <span class="label">Import JSON</span>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+        </label>
+      </div>
+
+      <!-- Footer -->
+      <footer class="text-[11px] text-white/50 pt-2">
+        <div class="label">RanSan Groups • Local-first</div>
+        <div class="flex items-center gap-1 opacity-80" title="Your data stays in your browser">
+          <i data-lucide="shield" class="w-3 h-3"></i>
+          <span class="label">Your data stays in your browser.</span>
+        </div>
+      </footer>
+    </aside>
+
+
+    <!-- Main -->
+    <main id="mainContent" class="col-span-12 lg:col-span-9 transition-all duration-300">
+
+      <!-- SUMMARY BAR (dashboard) -->
+      <section id="view-dashboard" class="space-y-6">
+        <div class="grid grid-cols-12 gap-4">
+          <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-white/70 text-sm">Total Invoiced (<span id="sumBizName">All</span>)</span>
+              <span class="badge"><i data-lucide="trending-up" class="w-3 h-3"></i> MoM</span>
+            </div>
+            <div class="text-2xl font-semibold mt-2" id="sumRevenue">₹0</div>
+            <div class="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
+              <div class="h-2 bg-brand-500/60 rounded-full animate-pulseSoft" id="goalBar" style="width:35%"></div>
+            </div>
+          </div>
+
+          <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-white/70 text-sm">Pending</span>
+              <span class="badge"><i data-lucide="clock" class="w-3 h-3"></i> Due</span>
+            </div>
+            <div class="text-2xl font-semibold mt-2 text-amber-300" id="sumPending">₹0</div>
+            <div class="text-[11px] text-white/60 mt-1" id="pendingCount">0 invoices</div>
+          </div>
+
+          <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-white/70 text-sm">Received</span>
+              <span class="badge"><i data-lucide="check-circle" class="w-3 h-3"></i> Settled</span>
+            </div>
+            <div class="text-2xl font-semibold mt-2 text-emerald-300" id="sumReceived">₹0</div>
+            <div class="text-[11px] text-white/60 mt-1" id="paidCount">0 invoices</div>
+          </div>
+
+          <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-white/70 text-sm">Credit Outstanding</span>
+              <span class="badge"><i data-lucide="credit-card" class="w-3 h-3"></i> Terms</span>
+            </div>
+            <div class="text-2xl font-semibold mt-2 text-sky-300" id="sumCredit">₹0</div>
+            <div class="text-[11px] text-white/60 mt-1" id="creditNote">—</div>
+          </div>
+        </div>
+
+
+
+
+        <!-- Revenue Goal Circular Progress -->
+        <div class="mt-4 flex justify-center">
+          <svg id="revGoalRing" class="w-28 h-28"> <!-- bigger size -->
+            <circle cx="56" cy="56" r="50" stroke="gray" stroke-width="6" fill="none" />
+            <circle id="revGoalProgress" cx="56" cy="56" r="50" stroke="var(--accent-color)" stroke-width="6"
+              fill="none" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"
+              transform="rotate(-90 56 56)" /> <!-- rotate center to start at top -->
+            <text id="revGoalText" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+              class="fill-white text-base font-semibold">0%</text>
+          </svg>
+        </div>
+
+
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="glass col-span-12 lg:col-span-8 rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4"></i>
+                <h3 class="font-semibold">Revenue & Collections</h3>
+              </div>
+              <div class="text-xs text-white/60">Last 6 months</div>
+            </div>
+            <canvas id="revChart" height="120"></canvas>
+          </div>
+
+          <div class="glass col-span-12 lg:col-span-4 rounded-2xl p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <i data-lucide="pie-chart" class="w-4 h-4"></i>
+              <h3 class="font-semibold">Status Split</h3>
+            </div>
+            <canvas id="statusChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <!-- 📊 Dashboard Reports -->
+        <div id="dashboardReports" class="mt-6">
+          <h2 class="text-xl font-bold mb-4 text-gray-100 flex items-center gap-2">
+            <i data-lucide="bar-chart-3" class="w-5 h-5 text-violet-400"></i>
+            Dashboard Reports
+          </h2>
+
+          <div id="reports" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- 🏆 Top Customers (full width) -->
+            <div class="glass p-4 rounded-2xl shadow-lg col-span-2">
+              <h3 class="font-semibold mb-3 text-gray-100 flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
+                Top Customers
+              </h3>
+              <canvas id="topCustomers" class="h-56 w-full"></canvas>
+            </div>
+
+            <!-- 📄 Invoice Status (half width) -->
+            <div class="glass p-4 rounded-2xl shadow-lg">
+              <h3 class="font-semibold mb-3 text-gray-100 flex items-center gap-2">
+                <i data-lucide="file-check" class="w-4 h-4 text-emerald-400"></i>
+                Invoice Status
+              </h3>
+              <canvas id="invoicesStatus" class="h-48 w-full"></canvas>
+            </div>
+
+            <!-- 💳 Credit Usage (half width) -->
+            <div id="creditUsage" class="glass p-4 rounded-2xl shadow-lg text-gray-200"></div>
+
+            <!-- ⏳ Avg Payment Delay (full width card with table, metric, summary, chart) -->
+            <!-- ⏳ Avg Payment Delay -->
+            <div class="glass p-4 rounded-2xl shadow-lg col-span-2">
+              <h3 class="font-semibold mb-3 text-gray-100 flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-yellow-400"></i>
+                Avg Payment Delay
+              </h3>
+
+              <!-- Top row: Table (1/3) + Metrics & Summary (2/3) -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <!-- Table (narrow) -->
+                <div id="avgDelay" class="md:col-span-1 text-gray-200 overflow-auto max-h-64 p-2 bg-transparent"></div>
+
+                <!-- Metrics & Summary (wide) -->
+                <div class="md:col-span-2 space-y-3">
+                  <div id="avgDelayMetric" class="text-lg font-semibold text-gray-100"></div>
+                  <div id="avgDelaySummary" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+                </div>
+
+                <!-- Chart (full width below) -->
+                <div class="md:col-span-3">
+                  <canvas id="avgDelayChart" class="mt-4 h-64 w-full"></canvas>
+                </div>
+              </div>
+            </div>
+
+
+            <!-- 📊 Cash Flow (full width) -->
+            <div class="glass p-4 rounded-2xl shadow-lg col-span-2">
+              <h3 class="font-semibold mb-3 text-gray-100 flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-4 h-4 text-indigo-400"></i>
+                Cash Flow (Next 30 Days)
+              </h3>
+              <canvas id="cashFlow" class="h-60 w-full"></canvas>
+            </div>
+
+            <!-- 📈 Business Performance (full width) -->
+            <div class="glass p-4 rounded-2xl shadow-lg col-span-2">
+              <h3 class="font-semibold mb-3 text-gray-100 flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-pink-400"></i>
+                Business Performance
+              </h3>
+              <canvas id="businessPerformance" class="h-60 w-full"></canvas>
+            </div>
+
+            <!-- 🟢 Collection Efficiency (full width) -->
+            <div id="collectionEfficiency" class="glass p-4 rounded-2xl shadow-lg text-gray-200 col-span-2"></div>
+
+          </div>
+        </div>
+
+
+
+
+
+      </section>
+
+      <!-- TRANSACTIONS View -->
+      <section id="view-transactions" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="list"></i> Transactions</h3>
+          <div class="text-sm text-white/60">Ledger of invoices & payments</div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-4">
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <div class="text-xs text-white/60">Total Invoiced</div>
+            <div id="txTotal" class="text-2xl font-semibold mt-2">₹0</div>
+          </div>
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <div class="text-xs text-white/60">Total Payments</div>
+            <div id="txPayments" class="text-2xl font-semibold mt-2 text-emerald-300">₹0</div>
+          </div>
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <div class="text-xs text-white/60">Credits (Invoices)</div>
+            <div id="txCredits" class="text-2xl font-semibold mt-2 text-sky-300">₹0</div>
+          </div>
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <div class="text-xs text-white/60">Balance Outstanding</div>
+            <div id="txBalance" class="text-2xl font-semibold mt-2 text-amber-300">₹0</div>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-4 overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="text-white/60">
+              <tr>
+                <th class="p-2 text-left">Date</th>
+                <th class="p-2 text-left">Type</th>
+                <th class="p-2 text-left">Ref</th>
+                <th class="p-2 text-left">Business</th>
+                <th class="p-2 text-left">Customer</th>
+                <th class="p-2 text-left">Amount</th>
+                <th class="p-2 text-left">Method</th>
+              </tr>
+            </thead>
+            <tbody id="txTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- INVOICES view (create + list + summary) -->
+      <section id="view-invoices" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="file-plus" class="w-4 h-4"></i>
+            <h3 class="font-semibold">Create Invoice</h3>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn" onclick="resetInvoiceForm()">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+            </button>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-4">
+          <!-- Invoice Form -->
+          <form id="invoiceForm" onsubmit="event.preventDefault(); saveInvoice();">
+            <div class="grid grid-cols-12 gap-4">
+              <!-- Customer -->
+              <div class="col-span-12 md:col-span-4">
+                <label class="text-xs text-white/60">Customer</label>
+                <select id="invCustomer" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"></select>
+                <div class="flex items-center gap-2 mt-2 text-xs text-white/60">
+                  <span>Credit Limit:</span><span id="custCreditLimit">—</span>
+                  <span>•</span>
+                  <span>Terms (days):</span><span id="custTerms">—</span>
+                </div>
+              </div>
+
+              <!-- Invoice & Due -->
+              <div class="col-span-6 md:col-span-2">
+                <label class="text-xs text-white/60">Invoice Date</label>
+                <input type="date" id="invDate" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+              </div>
+              <div class="col-span-6 md:col-span-2">
+                <label class="text-xs text-white/60">Due Date</label>
+                <input type="date" id="invDue" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+              </div>
+
+              <!-- Add Item / Save -->
+              <div class="col-span-12 md:col-span-4 flex items-end justify-end gap-2">
+                <button class="btn" type="button" onclick="addItemRow()">
+                  <i data-lucide="plus"></i> Add Item
+                </button>
+                <button class="btn bg-brand-500/30 hover:bg-brand-500/40 border-brand-500/50" type="submit">
+                  <i data-lucide="save"></i> Save
+                </button>
+              </div>
+            </div>
+
+
+
+            <!-- Items table -->
+            <div class="mt-4 overflow-x-auto scroll-thin">
+              <table class="min-w-full text-sm">
+                <thead class="text-white/60">
+                  <tr>
+                    <th class="text-left p-2">Service</th>
+                    <th class="text-left p-2">Description</th>
+                    <th class="text-left p-2">Qty</th>
+                    <th class="text-left p-2">Rate</th>
+                    <th class="text-left p-2">Amount</th>
+                    <th class="text-left p-2"></th>
+                  </tr>
+                </thead>
+                <tbody id="itemBody"></tbody>
+              </table>
+            </div>
+
+            <!-- Totals -->
+            <div class="grid grid-cols-12 gap-4 mt-4">
+              <div class="col-span-12 md:col-span-8">
+                <label class="text-xs text-white/60">Notes</label>
+                <textarea id="invNotes" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" rows="3"
+                  placeholder="Purchase order, brief, etc."></textarea>
+                <div class="flex items-center gap-3 mt-2">
+                  <label class="inline-flex items-center gap-2 text-sm">
+                    <input id="asCredit" type="checkbox" class="accent-brand-500" /> Credit Sale
+                  </label>
+                  <label class="inline-flex items-center gap-2 text-sm">
+                    <input id="takePaymentNow" type="checkbox" class="accent-emerald-400" /> Record Payment Now
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-span-12 md:col-span-4">
+                <div class="glass rounded-xl p-3">
+                  <!-- Subtotal -->
+                  <div class="flex items-center justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span id="invSubTotal">₹0</span>
+                  </div>
+
+                  <!-- Discount -->
+                  <div class="flex items-center justify-between text-sm mt-1">
+                    <span>Discount</span>
+                    <input id="discount" type="number" value="0"
+                      class="w-24 bg-white/5 border border-white/10 rounded-lg p-1 text-right"
+                      oninput="recalcTotals()" />
+                  </div>
+
+                  <!-- Commission (Manual Entry) -->
+                  <div class="flex items-center justify-between text-sm mt-1">
+                    <span>Commission</span>
+                    <input id="invCommission" type="number" value="0"
+                      class="w-24 bg-white/5 border border-white/10 rounded-lg p-1 text-right" placeholder="₹0" />
+                  </div>
+
+                  <!-- Grand Total -->
+                  <div class="flex items-center justify-between text-lg font-semibold mt-3">
+                    <span>Total</span>
+                    <span id="invTotal">₹0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Invoice summary & list -->
+        <!-- Invoice summary & KPIs -->
+        <div class="grid grid-cols-12 gap-4">
+          <!-- Commission (instead of Total Invoices) -->
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>Commission (Earnings)</span>
+            <div id="invCommissionKPI" class="text-2xl font-bold text-emerald-400">₹0</div>
+          </div>
+
+          <!-- Total Amount -->
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>Total Amount</span>
+            <div id="invAmount" class="text-2xl font-bold text-sky-300">₹0</div>
+          </div>
+
+          <!-- Paid -->
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>Paid</span>
+            <div id="invPaid" class="text-2xl font-bold text-emerald-300">₹0</div>
+          </div>
+
+          <!-- Balance -->
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>Balance</span>
+            <div id="invBalance" class="text-2xl font-bold text-rose-300">₹0</div>
+          </div>
+        </div>
+
+        <button class="btn bg-red-600/20 text-red-400 hover:bg-red-600/30" onclick="openBulkDeleteInvoiceModal()">
+          <i data-lucide="trash-2"></i> Delete Selected
+        </button>
+
+        <button class="btn bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30"
+          onclick="openBulkWhatsAppReminderModal()">
+          <i data-lucide="send"></i> Send Reminders
+        </button>
+
+
+        <div class="glass rounded-2xl p-4 overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="text-white/60">
+              <tr>
+                <th class="text-left p-2"></th>
+                <th class="text-left p-2">Invoice No</th>
+                <th class="text-left p-2">Business</th>
+                <th class="text-left p-2">Date</th>
+                <th class="text-left p-2">Customer</th>
+                <th class="text-left p-2">Items</th>
+                <th class="text-left p-2">Total</th>
+                <th class="text-left p-2">Commission (Earnings)</th> <!-- ✅ Added -->
+                <th class="text-left p-2">Paid</th>
+                <th class="text-left p-2">Due</th>
+                <th class="text-left p-2">Status</th>
+                <th class="text-left p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invoiceTable"></tbody>
+          </table>
+          <div id="invoiceModuleContainer"></div>
+        </div>
+      </section>
+
+
+      <!-- CUSTOMERS view with service filter -->
+      <section id="view-customers" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <h3 class="font-semibold">Customers</h3>
+          </div>
+          <button class="btn" onclick="openCustomerModal()">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Customer
+          </button>
+        </div>
+
+        <div id="customerFilterLabel" class="text-sm text-white/70 mb-2"></div>
+        <div id="businessButtons" class="flex gap-2 my-3"></div>
+
+
+
+        <!-- Customer Table -->
+        <div class="glass rounded-2xl p-4 mt-3">
+          <div class="overflow-x-auto scroll-thin">
+            <table class="min-w-full text-sm">
+              <thead class="text-white/60">
+                <tr>
+                  <th class="text-left p-2">Name</th>
+                  <th class="text-left p-2">Phone</th>
+                  <th class="text-left p-2">Service</th>
+                  <th class="text-left p-2">Credit Limit</th>
+                  <th class="text-left p-2">Terms (days)</th>
+                  <th class="text-left p-2">Outstanding</th>
+                  <th class="text-left p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customerTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- CUSTOMER MODAL -->
+      <div id="customerModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="modal-glass w-[800px] max-w-[95vw]">
+          <!-- Header -->
+          <div class="flex items-center justify-between p-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+              <i data-lucide="user-plus" class="w-5 h-5"></i>
+              <h3 class="font-semibold">Add Customer</h3>
+            </div>
+            <button class="btn" onclick="closeCustomerModal()"><i data-lucide="x"></i></button>
+          </div>
+
+          <!-- Two-column form -->
+          <div class="grid grid-cols-2 gap-4 p-4">
+            <div>
+              <label class="text-xs text-white/60">Business</label>
+              <select id="custService"
+                class="p-2 rounded-md bg-white text-gray-900 dark:bg-gray-800 dark:text-white"></select>
+            </div>
+
+            <div>
+              <label class="text-xs text-white/60">Customer Name</label>
+              <input id="custName" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+            </div>
+
+            <div>
+              <label class="text-xs text-white/60">Phone</label>
+              <input id="custPhone" type="tel" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+            </div>
+
+            <div>
+              <label class="text-xs text-white/60">Email</label>
+              <input id="custEmail" type="email" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+            </div>
+
+            <div>
+              <label class="text-xs text-white/60">Credit Limit</label>
+              <input id="custCredit" type="number"
+                class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+            </div>
+
+            <div>
+              <label class="text-xs text-white/60">Terms (days)</label>
+              <input id="custTermsInput" type="number"
+                class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+            </div>
+
+            <div class="col-span-2">
+              <label class="text-xs text-white/60">Notes</label>
+              <textarea id="custNotes" rows="3"
+                class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"></textarea>
+            </div>
+          </div>
+
+          <!-- Actions row in two columns -->
+          <div class="grid grid-cols-2 gap-2 p-4 border-t border-white/10">
+            <button class="btn w-full" onclick="closeCustomerModal()">Cancel</button>
+            <button id="custSaveBtn" class="btn w-full bg-green-600 hover:bg-green-500"
+              onclick="handleSaveCustomer()">Save</button>
+          </div>
+        </div>
+      </div>
+
+
+
+
+      <!-- SERVICES view -->
+      <section id="view-services" class="hidden space-y-4">
+        <div class="glass rounded-2xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="boxes" class="w-4 h-4"></i>
+              <h3 class="font-semibold">Service Catalog</h3>
+            </div>
+            <div class="flex gap-2">
+              <!-- Add Service button -->
+              <button type="button" class="btn" onclick="openServiceModal()">
+                <i data-lucide="plus"></i> Add Service
+              </button>
+
+              <!-- Global Delete Service button -->
+              <button type="button" class="btn bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                onclick="openDeleteServiceModal()">
+                <i data-lucide="trash-2"></i> Delete Service
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic grid where services render -->
+          <div id="serviceCatalog" class="grid grid-cols-12 gap-4"></div>
+        </div>
+
+        <!-- Module container for Add/Edit/Delete Service -->
+        <div id="serviceModuleContainer"></div>
+      </section>
+
+
+
+
+      <!-- CUSTOMER LEDGER view -->
+      <section id="view-customerLedger" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+            <h3 class="font-semibold">Customer Ledger</h3>
+          </div>
+          <div>
+            <label class="block text-xs text-white/60 mb-1">Customer</label>
+            <select id="ledgerCustomerFilter" class="bg-white/10 border border-white/20 rounded-lg p-2">
+              <option value="">-- All Customers --</option>
+              <!-- options will be populated dynamically -->
+            </select>
+          </div>
+          <!-- add next to ledger filters / header -->
+          <button id="downloadStatementBtn" class="p-1.5 rounded-lg hover:bg-white/10 text-white/80"
+            onclick="generateCustomerStatement()" title="Download Statement">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+          </button>
+          <div>
+            <label class="block text-xs text-white/60 mb-1">Status</label>
+            <select id="ledgerStatusFilter" class="bg-white/10 border border-white/20 rounded-lg p-2">
+              <option value="">-- All Status --</option>
+              <option value="Paid">Paid</option>
+              <option value="Partial">Partial</option>
+              <option value="Pending">Pending</option>
+              <option value="Credit">Credit</option>
+            </select>
+          </div>
+        </div>
+
+
+        <!-- Totals -->
+        <div class="grid grid-cols-3 gap-4 text-sm">
+          <div class="glass p-3 rounded-lg">
+            <div class="text-white/70">Total Invoiced</div>
+            <div id="custTotalInvoiced" class="text-lg font-semibold">₹0</div>
+          </div>
+          <div class="glass p-3 rounded-lg">
+            <div class="text-white/70">Total Paid</div>
+            <div id="custTotalPaid" class="text-lg font-semibold text-emerald-400">₹0</div>
+          </div>
+          <div class="glass p-3 rounded-lg">
+            <div class="text-white/70">Balance Due</div>
+            <div id="custTotalBalance" class="text-lg font-semibold text-amber-400">₹0</div>
+          </div>
+        </div>
+
+
+        <!-- Ledger Table -->
+        <div class="glass rounded-2xl p-4 mt-3">
+          <div class="overflow-x-auto scroll-thin">
+            <table class="min-w-full text-sm">
+              <thead class="text-white/60">
+                <tr>
+                  <th class="p-2 text-left">Invoice #</th>
+                  <th class="p-2 text-left">Date</th>
+                  <th class="p-2 text-left">Customer</th>
+                  <th class="p-2 text-right">Total</th>
+                  <th class="p-2 text-right">Paid</th>
+                  <th class="p-2 text-right">Balance</th>
+                  <th class="p-2 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody id="ledgerTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-statement" class="hidden space-y-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-white/10">
+          <h2 class="text-xl font-semibold text-white">Customer Statement</h2>
+
+          <div class="flex items-center gap-3">
+            <select id="statementCustomerSelect" class="bg-gray-800 text-white rounded-lg px-3 py-1.5 text-sm"
+              onchange="renderStatementDashboard(this.value)">
+              <!-- JS will populate options -->
+            </select>
+
+            <button onclick="closeStatementDashboard()" class="text-white/70 hover:text-white" title="Close">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="statementSummaryCards">
+            <!-- JS will inject total invoiced, paid, pending -->
+          </div>
+
+          <!-- Pie Chart -->
+          <div class="bg-white/5 rounded-xl p-4 w-full max-w-sm">
+            <h3 class="text-white mb-2">Payment Distribution</h3>
+            <canvas id="statementPieChart" height="120"></canvas>
+          </div>
+
+          <!-- Invoice List -->
+          <!-- Invoices + Summary -->
+          <div class="bg-white/5 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-white">Invoices</h3>
+
+            </div>
+
+            <table class="w-full text-sm text-white/80">
+              <thead>
+                <tr class="border-b border-white/10">
+                  <th class="p-2 text-left">Invoice</th>
+                  <th class="p-2 text-left">Date</th>
+                  <th class="p-2 text-right">Total</th>
+                  <th class="p-2 text-right">Paid</th>
+                  <th class="p-2 text-right">Balance</th>
+                  <th class="p-2 text-left">Status</th>
+                  <th class="p-2 text-left">Due Date</th>
+                </tr>
+              </thead>
+              <tbody id="statementInvoiceList"></tbody>
+            </table>
+
+            <!-- ✅ Summary Bar -->
+<div id="statementSummaryBar"
+     class="mt-4 bg-gray-800/60 rounded-lg p-3 text-white text-sm">
+  <!-- JS injects summary cards + buttons -->
+</div>
+          </div>
+
+
+        </div>
+
+        <h3 style="color:white;margin:0;font-size:18px">Advanced Customer Statement (Independent)</h3>
+        <div class="flex items-center justify-between mb-3">
+
+          <div class="flex items-center gap-3">
+
+
+            <!-- Customer select (independent) -->
+            <select id="adv2_customer_select"
+              style="background:#111827;color:#fff;padding:6px;border-radius:6px;margin-left:8px"></select>
+
+            <!-- Quick ranges -->
+            <select id="adv2_quick_range" style="background:#111827;color:#fff;padding:6px;border-radius:6px">
+              <option value="">Quick range</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="fy">This FY</option>
+            </select>
+
+            <label style="color:#ddd;margin-left:8px">From</label>
+            <input id="adv2_start" type="date" style="background:#111827;color:#fff;padding:6px;border-radius:6px" />
+            <label style="color:#ddd;margin-left:8px">To</label>
+            <input id="adv2_end" type="date" style="background:#111827;color:#fff;padding:6px;border-radius:6px" />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="adv2_export_csv"
+              style="background:#059669;color:white;padding:6px 10px;border-radius:6px">Export CSV</button>
+            <button id="adv2_export_pdf"
+              style="background:#2563eb;color:white;padding:6px 10px;border-radius:6px">Export PDF</button>
+            <button id="adv2_close" style="background:transparent;color:#ddd;padding:6px">Close</button>
+          </div>
+        </div>
+
+        <!-- Summary cards -->
+        <div id="adv2_summary_cards"
+          style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px">
+        </div>
+
+        <!-- Opening / Closing balances -->
+        <div id="adv2_balances"
+          style="background:#0b1220;padding:12px;border-radius:10px;color:#e6eef8;margin-bottom:12px"></div>
+
+        <!-- Aging buckets -->
+        <div id="adv2_aging_buckets" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap"></div>
+
+        <!-- Timeline chart -->
+        <div style="background:#0b1220;padding:12px;border-radius:10px;margin-bottom:12px">
+          <div style="color:#cbd5e1;margin-bottom:8px">Invoice vs Payment Timeline</div>
+          <canvas id="adv2_timeline" height="140"></canvas>
+        </div>
+
+        <!-- Payment method pie -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="flex:1;min-width:220px;background:#0b1220;padding:12px;border-radius:10px">
+            <div style="color:#cbd5e1;margin-bottom:8px">Payment Distribution</div>
+            <canvas id="adv2_pie" height="120"></canvas>
+          </div>
+
+          <div style="width:320px;min-width:220px;background:#0b1220;padding:12px;border-radius:10px">
+            <div style="color:#cbd5e1;margin-bottom:8px">Payment Method</div>
+            <canvas id="adv2_paymethod" height="120"></canvas>
+          </div>
+        </div>
+
+        <!-- Profitability / CLV / Repeat -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <div id="adv2_profitability"
+            style="flex:1;min-width:220px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8"></div>
+          <div id="adv2_clv"
+            style="width:280px;min-width:220px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8"></div>
+          <div id="adv2_credit"
+            style="width:280px;min-width:220px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8"></div>
+          <div id="adv2_repeat"
+            style="width:220px;min-width:200px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8"></div>
+        </div>
+
+        <!-- Top Debtors -->
+        <div style="background:#0b1220;padding:12px;border-radius:10px;margin-bottom:12px;color:#e6eef8">
+          <div style="color:#cbd5e1;margin-bottom:8px">Top Debtors</div>
+          <div id="adv2_top_debtors"></div>
+        </div>
+
+        <!-- Invoice list + notes -->
+        <div style="background:#0b1220;padding:12px;border-radius:10px;color:#e6eef8">
+          <div style="color:#cbd5e1;margin-bottom:8px">Invoices & Notes</div>
+          <table id="adv2_invoice_table" style="width:100%;border-collapse:collapse;color:#e6eef8">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.06)">
+                <th style="text-align:left;padding:6px">Invoice</th>
+                <th style="text-align:left;padding:6px">Date</th>
+                <th style="text-align:right;padding:6px">Total</th>
+                <th style="text-align:right;padding:6px">Paid</th>
+                <th style="text-align:right;padding:6px">Balance</th>
+                <th style="text-align:left;padding:6px">Status</th>
+                <th style="text-align:left;padding:6px">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="adv2_invoice_tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+
+
+
+      <section id="view-reports" class="space-y-6 hidden">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold">Reports</h2>
+          <div class="flex gap-2">
+            <!-- Quick filters (optional) -->
+            <select id="reportsRange" class="px-2 py-1 rounded-lg bg-white/10">
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="180">Last 180 days</option>
+              <option value="365">Last 365 days</option>
+              <option value="all">All time</option>
+            </select>
+
+            <div class="flex gap-2 items-center">
+              <!-- Date Range Filters -->
+              <label>Start:</label>
+              <input type="date" id="reportStartDate" class="border p-1 rounded">
+
+              <label>End:</label>
+              <input type="date" id="reportEndDate" class="border p-1 rounded">
+
+              <!-- Business Filter -->
+              <select id="reportsBiz" class="px-2 py-1 rounded-lg bg-white/10">
+                <option value="">All Businesses</option>
+                <!-- Filled dynamically via JS -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Report Categories -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="reportsTiles">
+          <button data-report="financial" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+            <div class="text-3xl mb-2">📊</div>
+            <div class="font-semibold">Financial Reports</div>
+            <div class="text-white/60 text-sm">Cash flow, MoM trend, aging, burn forecast</div>
+          </button>
+
+          <button data-report="customers" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+            <div class="text-3xl mb-2">👥</div>
+            <div class="font-semibold">Customer Insights</div>
+            <div class="text-white/60 text-sm">Pareto, CLV</div>
+          </button>
+
+          <button data-report="invoices" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+            <div class="text-3xl mb-2">🧾</div>
+            <div class="font-semibold">Invoice Reports</div>
+            <div class="text-white/60 text-sm">Status, payment methods, DSO</div>
+          </button>
+
+          <button data-report="forecast" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+            <div class="text-3xl mb-2">📈</div>
+            <div class="font-semibold">Forecast & Predictive</div>
+            <div class="text-white/60 text-sm">Revenue forecast, collection risk</div>
+          </button>
+        </div>
+
+        <!-- Content render target -->
+        <div id="reportsRoot" class="grid grid-cols-12 gap-4"></div>
+      </section>
+
+
+
+      <!-- Commission Report Tab (hidden by default) -->
+      <section id="view-commission-report" class="hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+            <h3 class="font-semibold">Commission Report</h3>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn" id="commissionExportCSV">Export CSV</button>
+            <button class="btn" id="commissionExportPrint">Export / Print</button>
+          </div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="grid grid-cols-12 gap-4" id="commission-kpis">
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>Total Commission</span>
+            <div id="kpiTotalCommission" class="text-2xl font-bold text-emerald-400">₹0</div>
+          </div>
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>This Month</span>
+            <div id="kpiThisMonth" class="text-2xl font-bold text-sky-300">₹0</div>
+          </div>
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>Highest Single</span>
+            <div id="kpiHighest" class="text-2xl font-bold text-amber-300">₹0</div>
+          </div>
+          <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+            <span>Avg / Invoice</span>
+            <div id="kpiAvg" class="text-2xl font-bold text-rose-300">₹0</div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-12 gap-4">
+          <div class="glass col-span-12 md:col-span-8 p-4 rounded-2xl">
+            <h4 class="font-medium mb-2">Commission Trend</h4>
+            <canvas id="commissionTrendChart" height="160"></canvas>
+          </div>
+          <div class="glass col-span-12 md:col-span-4 p-4 rounded-2xl">
+            <h4 class="font-medium mb-2">Commission by Business</h4>
+            <canvas id="commissionByBusinessChart" height="160"></canvas>
+          </div>
+        </div>
+
+        <!-- Leaderboards & Drilldown -->
+        <div class="grid grid-cols-12 gap-4">
+          <div class="glass col-span-12 md:col-span-6 p-4 rounded-2xl overflow-auto">
+            <h4 class="font-medium mb-2">Top Customers by Commission</h4>
+            <table class="min-w-full text-sm">
+              <thead class="text-white/60">
+                <tr>
+                  <th class="p-2 text-left">#</th>
+                  <th class="p-2 text-left">Customer</th>
+                  <th class="p-2 text-right">Commission</th>
+                  <th class="p-2 text-left">Invoices</th>
+                </tr>
+              </thead>
+              <tbody id="commissionByCustomerBody"></tbody>
+            </table>
+          </div>
+
+          <div class="glass col-span-12 md:col-span-6 p-4 rounded-2xl overflow-auto">
+            <h4 class="font-medium mb-2">Top Services by Commission</h4>
+            <table class="min-w-full text-sm">
+              <thead class="text-white/60">
+                <tr>
+                  <th class="p-2 text-left">#</th>
+                  <th class="p-2 text-left">Service</th>
+                  <th class="p-2 text-right">Commission</th>
+                  <th class="p-2 text-left">Invoices</th>
+                </tr>
+              </thead>
+              <tbody id="commissionByServiceBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Invoice level drilldown -->
+        <div class="glass rounded-2xl p-4 overflow-auto">
+          <h4 class="font-medium mb-2">Invoice Level (Drilldown & Filters)</h4>
+
+          <div class="flex items-center gap-2 mb-4">
+            <select id="commissionFilterBiz" class="p-2 rounded bg-white/5">
+              <option value="all">All Businesses</option>
+            </select>
+            <select id="commissionFilterCust" class="p-2 rounded bg-white/5">
+              <option value="all">All Customers</option>
+            </select>
+            <input id="commissionFrom" type="date" class="p-2 rounded bg-white/5" />
+            <input id="commissionTo" type="date" class="p-2 rounded bg-white/5" />
+            <button id="commissionApplyFilters" class="btn">Apply</button>
+          </div>
+
+          <table class="min-w-full text-sm">
+            <thead class="text-white/60">
+              <tr>
+                <th class="p-2 text-left">Invoice No</th>
+                <th class="p-2 text-left">Date</th>
+                <th class="p-2 text-left">Business</th>
+                <th class="p-2 text-left">Customer</th>
+                <th class="p-2 text-right">Total</th>
+                <th class="p-2 text-right">Commission</th>
+                <th class="p-2 text-left">Status</th>
+                <th class="p-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="commissionInvoiceTable"></tbody>
+          </table>
+        </div>
+        <!-- 📊 Advanced Commission Reports -->
+
+        <!-- 🔍 Filters for Advanced Commission Reports -->
+        <div class="flex flex-wrap gap-4 mb-6 items-end">
+          <div>
+            <label class="block text-sm text-gray-400">From</label>
+            <input id="commFilterStart" type="date"
+              class="bg-white/10 border border-white/20 rounded-lg p-2 text-white" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400">To</label>
+            <input id="commFilterEnd" type="date"
+              class="bg-white/10 border border-white/20 rounded-lg p-2 text-white" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400">Business</label>
+            <select id="commFilterBiz" class="bg-white/10 border border-white/20 rounded-lg p-2 text-white">
+              <option value="">All Businesses</option>
+            </select>
+          </div>
+          <button onclick="renderCommissionAdvancedReports()"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg">
+            Apply
+          </button>
+        </div>
+
+
+        <div id="commissionAdvanced" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Commission by Time Period</h3>
+            <canvas id="commissionPeriodChart"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Commission by Payment Mode</h3>
+            <canvas id="commissionPaymentChart"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Commission by Status</h3>
+            <canvas id="commissionStatusChart"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow flex flex-col items-center justify-center">
+            <h3 class="text-lg font-semibold mb-2">Commission Recovery Ratio</h3>
+            <div id="commissionRecovery" class="text-3xl font-bold text-emerald-400">0%</div>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Top Customers by Commission</h3>
+            <canvas id="commissionTopCustomers"></canvas>
+          </div>
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Top Services by Commission</h3>
+            <canvas id="commissionTopServices"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Commission Aging</h3>
+            <canvas id="commissionAgingChart"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Business Commission Margin</h3>
+            <canvas id="commissionMarginChart"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Commission Forecast vs Target</h3>
+            <canvas id="commissionForecastChart"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Commission Payout by Agent</h3>
+            <canvas id="commissionPayoutChart"></canvas>
+          </div>
+
+          <div class="bg-black/40 p-4 rounded-xl shadow">
+            <h3 class="text-lg font-semibold mb-2">Commission by Region</h3>
+            <canvas id="commissionRegionChart"></canvas>
+          </div>
+
+        </div>
+
+      </section>
+
+
+    </main>
+  </div>
+
+  <!-- PRINT / INVOICE MODAL -->
+  <div id="printModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+    <div class="glass rounded-2xl p-6 w-[900px] max-w-[95vw] print-card">
+      <div class="flex items-center justify-between no-print">
+        <div class="flex items-center gap-2"><i data-lucide="receipt" class="w-5 h-5"></i>
+          <h3 class="font-semibold">Invoice Preview</h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn" onclick="window.print()"><i data-lucide="printer"></i> Print</button>
+          <button class="btn" onclick="closePrint()"><i data-lucide="x"></i> Close</button>
+        </div>
+      </div>
+      <div id="printArea" class="mt-4 bg-white text-black rounded-xl p-6"></div>
+    </div>
+  </div>
+
+  <!-- BUSINESS EDITOR MODAL -->
+  <div id="bizModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+    <div class="modal-glass w-[680px] max-w-[95vw]">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="building-2" class="w-5 h-5"></i>
+          <h3 class="font-semibold">Business Settings</h3>
+        </div>
+        <button class="btn" onclick="closeBizEditor()"><i data-lucide="x"></i></button>
+      </div>
+
+      <!-- Form -->
+      <div class="grid grid-cols-12 gap-3 mt-4">
+
+        <!-- Name -->
+        <div class="col-span-12 md:col-span-6">
+          <label class="text-xs text-white/60">Name</label>
+          <input id="bizName" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="Your Company Pvt Ltd" />
+        </div>
+
+        <!-- Invoice Prefix -->
+        <div class="col-span-6 md:col-span-3">
+          <label class="text-xs text-white/60">Invoice Prefix</label>
+          <input id="bizPrefix" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="TECH" />
+        </div>
+
+        <!-- GSTIN -->
+        <div class="col-span-6 md:col-span-3">
+          <label class="text-xs text-white/60">GSTIN</label>
+          <input id="bizGST" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="22AAAAA0000A1Z5" />
+        </div>
+
+        <!-- Currency -->
+        <div class="col-span-6 md:col-span-3">
+          <label class="text-xs text-white/60">Currency</label>
+          <input id="bizCurrency" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="INR" />
+        </div>
+
+        <!-- Phone -->
+        <div class="col-span-6 md:col-span-3">
+          <label class="text-xs text-white/60">Phone</label>
+          <input id="bizPhone" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="+91 98765 43210" />
+        </div>
+
+        <!-- Email -->
+        <div class="col-span-12 md:col-span-6">
+          <label class="text-xs text-white/60">Email</label>
+          <input id="bizEmail" type="email" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="info@company.com" />
+        </div>
+
+        <!-- WhatsApp Base -->
+        <div class="col-span-12 md:col-span-6">
+          <label class="text-xs text-white/60">WhatsApp Base</label>
+          <input id="bizWA" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="https://wa.me" />
+        </div>
+
+        <!-- Footer -->
+        <div class="col-span-12">
+          <label class="text-xs text-white/60">Invoice Footer</label>
+          <input id="bizFooter" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+            placeholder="Thank you for your business" />
+        </div>
+
+        <!-- Internal Notes -->
+        <div class="col-span-12">
+          <label class="text-xs text-white/60">Internal Notes</label>
+          <textarea id="bizNote" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2 rounded-xl"
+            placeholder="Internal notes about this business..."></textarea>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-between mt-4">
+        <button class="btn" onclick="deleteBusiness()"><i data-lucide="trash-2"></i> Delete</button>
+        <div class="flex gap-2">
+          <button class="btn" onclick="saveBusiness()"><i data-lucide="save"></i> Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Invoice Modal -->
+  <div id="editInvoiceModal"
+    class="hidden fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+    <div class="bg-black/40 border border-white/10 rounded-2xl p-6 w-[800px] text-white shadow-2xl backdrop-blur-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="editInvoiceTitle" class="text-xl font-semibold"></h2>
+        <button onclick="closeEditInvoice()" class="text-gray-300 hover:text-white">✕</button>
+      </div>
+
+      <!-- Customer -->
+      <div class="mb-3">
+        <label class="block text-sm text-gray-300">Customer</label>
+        <select id="editInvCustomer"
+          class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white"></select>
+      </div>
+
+      <!-- Dates -->
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="block text-sm text-gray-300">Date</label>
+          <input id="editInvDate" type="date"
+            class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300">Due Date</label>
+          <input id="editInvDue" type="date"
+            class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white" />
+        </div>
+      </div>
+
+      <!-- Items -->
+      <div class="mb-3">
+        <label class="block text-sm text-gray-300">Items</label>
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="text-gray-400 border-b border-white/20">
+              <th class="text-left p-2">Service</th>
+              <th class="text-left p-2">Description</th>
+              <th class="text-left p-2">Qty</th>
+              <th class="text-left p-2">Rate</th>
+              <th class="text-right p-2">Amount</th>
+            </tr>
+          </thead>
+          <tbody id="editItemBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Totals (including Commission) -->
+      <div id="editInvoiceTotals" class="mt-4 p-3 rounded-xl bg-white/5 text-gray-200 space-y-2">
+        <div class="flex justify-between">
+          <span>Subtotal</span>
+          <span id="subtotalValue">₹0.00</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span>Discount</span>
+          <input id="discountInput" type="number"
+            class="bg-transparent border border-gray-500 rounded px-2 w-24 text-right" value="0" min="0" />
+        </div>
+        <div class="flex justify-between items-center">
+          <span>Commission</span>
+          <input id="editCommissionInput" type="number"
+            class="bg-transparent border border-emerald-500 rounded px-2 w-24 text-right" value="0" min="0" />
+        </div>
+        <div class="flex justify-between font-bold text-lg text-emerald-300">
+          <span>Grand Total</span>
+          <span id="grandTotalValue">₹0.00</span>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="mb-3 mt-3">
+        <label class="block text-sm text-gray-300">Notes</label>
+        <textarea id="editInvNotes" rows="2"
+          class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-white"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 mt-4">
+        <button onclick="closeEditInvoice()" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg">Cancel</button>
+        <button onclick="saveEditedInvoice()"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg">Save</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Bulk Payment Allocation Modal -->
+  <div id="bulkPaymentModal"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+    <div class="glass w-full max-w-3xl rounded-2xl p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Record Bulk Payment</h2>
+        <button onclick="closeBulkPaymentModal()" class="text-white/60 hover:text-white">✕</button>
+      </div>
+
+      <!-- Header -->
+      <div class="mb-4 flex gap-4 items-center">
+        <div>
+          <label class="block text-xs text-white/60">Customer</label>
+          <span id="bulkPaymentCustomerName" class="font-semibold"></span>
+        </div>
+        <div>
+          <label class="block text-xs text-white/60">Amount Received</label>
+          <input id="bulkPaymentAmountInput" type="number" min="0"
+            class="bg-white/10 border border-white/20 rounded-lg p-2 w-32 text-right" oninput="bulkAutoAllocateFIFO()">
+        </div>
+      </div>
+
+      <!-- Invoice List -->
+      <div class="overflow-x-auto max-h-80 mb-4">
+        <table class="min-w-full text-sm">
+          <thead class="text-white/60">
+            <tr>
+              <th class="p-2 text-left">Invoice</th>
+              <th class="p-2 text-left">Date</th>
+              <th class="p-2 text-right">Due</th>
+              <th class="p-2 text-right">Allocate</th>
+            </tr>
+          </thead>
+          <tbody id="bulkPaymentAllocTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex justify-between items-center">
+        <div class="text-sm text-white/80">
+          Remaining: <span id="bulkPaymentRemaining" class="font-bold">₹0</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeBulkPaymentModal()"
+            class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Cancel</button>
+          <button onclick="saveBulkPaymentAllocation()"
+            class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+  <!-- Loader -->
+  <div id="loader" class="hidden fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+    <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+
+  <!-- Initial Loader -->
+  <div id="initialLoader" class="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+    <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      console.log("Current ENV:", RUN_ENV);
+    });
+  </script>
+
+
+  <script>
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const themeSelect = document.getElementById("themeSelect");
+      const colorSelect = document.getElementById("colorSelect");
+
+      // 🔹 Theme change
+      if (themeSelect) {
+        themeSelect.addEventListener("change", (e) => {
+          document.body.classList.remove("theme-glass", "theme-neoglass", "theme-cyberpunk", "theme-minimal");
+          document.body.classList.add(`theme-${e.target.value}`);
+        });
+      }
+
+      // 🔹 Accent color change
+      if (colorSelect) {
+        colorSelect.addEventListener("change", (e) => {
+          updateAccent(e.target.value);
+        });
+
+        // Initialize with default
+        updateAccent(colorSelect.value);
+      }
+    });
+
+    /**
+     * Apply accent to body + update nav highlight
+     */
+    function updateAccent(color) {
+      console.log("🎨 updateAccent called with:", color);
+
+      // Remove old accents
+      document.body.classList.remove("accent-green", "accent-blue", "accent-purple", "accent-orange");
+      document.body.classList.add(`accent-${color}`);
+
+      // Find current active view
+      const currentView = document.querySelector("nav button.border-l-4")?.getAttribute("onclick")
+        ?.replace("showView('", "").replace("')", "");
+
+      console.log("🔎 Current active view is:", currentView);
+
+      if (currentView) {
+        highlightActive(currentView, color);
+      }
+    }
+
+
+
+
+
+    function setChipTextContrast(hexColor) {
+      // Convert hex → RGB
+      let r = parseInt(hexColor.substr(1, 2), 16);
+      let g = parseInt(hexColor.substr(3, 2), 16);
+      let b = parseInt(hexColor.substr(5, 2), 16);
+
+      // Perceived brightness formula
+      let brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+      // Decide text color
+      let textColor = brightness > 140 ? "#111" : "#fff";
+
+      // Apply globally
+      document.documentElement.style.setProperty("--chip-text", textColor);
+
+      // Update all chips immediately
+      document.querySelectorAll(".chip").forEach(el => {
+        el.style.color = textColor;
+        if (textColor === "#fff") {
+          el.style.textShadow = "0 1px 2px rgba(0,0,0,0.7)";
+        } else {
+          el.style.textShadow = "none";
+        }
+      });
+    }
+
+
+
+    function setAccentTextContrast(hexColor) {
+      // Convert hex → RGB
+      let r = parseInt(hexColor.substr(1, 2), 16);
+      let g = parseInt(hexColor.substr(3, 2), 16);
+      let b = parseInt(hexColor.substr(5, 2), 16);
+
+      // Perceived brightness formula
+      let brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+      // Decide text color
+      let textColor = brightness > 140 ? "#111" : "#fff";
+
+      // Apply globally
+      document.documentElement.style.setProperty("--accent-text", textColor);
+
+      // Update chips, badges, buttons
+      document.querySelectorAll(".chip, .badge, .btn-accent").forEach(el => {
+        el.style.color = textColor;
+        if (textColor === "#fff") {
+          el.style.textShadow = "0 1px 2px rgba(0,0,0,0.7)";
+        } else {
+          el.style.textShadow = "none";
+        }
+      });
+    }
+
+    document.getElementById("colorSelect").addEventListener("change", (e) => {
+      const color = e.target.value;
+      console.log("🎨 Color selected:", color);
+
+      const colorMap = {
+        green: "#22c55e",
+        blue: "#3b82f6",
+        purple: "#7c3aed",
+        orange: "#f97316"
+      };
+
+      let selectedColor = colorMap[color];
+
+      // ✅ Update body accent class
+      document.body.classList.remove("accent-green", "accent-blue", "accent-purple", "accent-orange");
+      document.body.classList.add(`accent-${color}`);
+
+      // ✅ Update chip text contrast
+      if (typeof setChipTextContrast === "function") {
+        setChipTextContrast(selectedColor);
+      }
+      if (typeof setAccentTextContrast === "function") {
+        setAccentTextContrast(selectedColor);
+      }
+
+      // ✅ Re-highlight current active nav button
+      const currentView = document.querySelector("nav button.border-l-4")
+        ?.getAttribute("onclick")
+        ?.replace("showView('", "")
+        ?.replace("')", "");
+
+      console.log("🔎 Current active view is:", currentView);
+
+      if (currentView) {
+        highlightActive(currentView, color);
+      }
+    });
+
+    // ✅ Initialize on load (default = purple)
+    setChipTextContrast("#7c3aed");
+    setAccentTextContrast("#7c3aed");
+
+
+
+  </script>
+
+
+
+
+
+  <!-- safelist for Tailwind (prevents purge of dynamic classes) -->
+  <div class="hidden">
+    border-green-400 bg-green-500/10
+    border-blue-400 bg-blue-500/10
+    border-purple-400 bg-purple-500/10
+    border-orange-400 bg-orange-500/10
+  </div>
+
+  <div id="tooltip"></div>
+
+
+  <!-- Floating tooltip container -->
+  <div id="tooltip"></div>
+
+
+</body>
+
+</html>
+
+
+</body>
+
+</html>

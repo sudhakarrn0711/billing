@@ -2450,19 +2450,34 @@ function openPrint(invId) {
     watermark = `<div class="stamp unpaid">UNPAID</div>`;
   }
 
-  // ✅ Product rows
-  const rows = (inv.items || []).map((it, i) => {
-    const desc = it.description || it.desc || it.details || "";
-    return `
-      <tr>
-        <td style="border:1px solid #ccc;padding:6px;text-align:center">${i + 1}</td>
-        <td style="border:1px solid #ccc;padding:6px">${it.serviceName || it.service || ''}</td>
-        <td style="border:1px solid #ccc;padding:6px">${desc}</td>
-        <td style="border:1px solid #ccc;padding:6px;text-align:center">${it.qty}</td>
-        <td style="border:1px solid #ccc;padding:6px;text-align:right">₹${(it.rate || 0).toLocaleString('en-IN')}</td>
-      </tr>
-    `;
-  }).join('');
+// ✅ Product rows (FIXED: calculate amount = qty * rate)
+const rows = (inv.items || []).map((it, i) => {
+  const desc = it.description || it.desc || it.details || "";
+
+  const qty = Number(it.qty || it.quantity || 0);
+  const rate = Number(it.rate || 0);
+
+  // ✅ If amount exists use it, else calculate
+  const amount =
+    it.amount != null
+      ? Number(it.amount)
+      : qty * rate;
+
+  return `
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px;text-align:center">${i + 1}</td>
+      <td style="border:1px solid #ccc;padding:6px">${it.serviceName || it.service || ''}</td>
+      <td style="border:1px solid #ccc;padding:6px">${desc}</td>
+      <td style="border:1px solid #ccc;padding:6px;text-align:center">${qty}</td>
+      <td style="border:1px solid #ccc;padding:6px;text-align:right">
+        ₹${rate.toLocaleString('en-IN')}
+      </td>
+      <td style="border:1px solid #ccc;padding:6px;text-align:right">
+        ₹${amount.toLocaleString('en-IN')}
+      </td>
+    </tr>
+  `;
+}).join('');
 
   // ✅ Build HTML
   const html = `
@@ -2642,7 +2657,7 @@ body {
       <h3 style="color:#9a22f6;">Product Summary</h3>
       <table class="summary-table">
         <thead>
-          <tr><th>S.No</th><th>Item</th><th>Description</th><th>Quantity</th><th>Amount</th></tr>
+          <tr><th>S.No</th><th>Item</th><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>

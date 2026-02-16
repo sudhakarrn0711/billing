@@ -2691,7 +2691,7 @@ body {
 
 <!-- ✅ Letterhead footer -->
 <div class="address-footer">
-  <div><b>Corporate Office:</b> Showp No 1, Sivagami Nagar, Valanai Colony, Orlem, Malad-W, Mumbai-400064</div>
+  <div><b>Corporate Office:</b> Shop No 1, Sivagami Nagar, Valanai Colony, Orlem, Malad-W, Mumbai-400064</div>
   <div><b>Branch Office:</b> 16/6. 2nd Floor, Start Illam, Ramakrishna 1st Cross Street, Porur, Chennai-600116</div>
   <div><b>Website:</b> www.ransangroups.com</div>
 </div>
@@ -5017,4 +5017,5 @@ function animateCounter(elId, newValue, isCurrency = true, duration = 1000) {
   }
   requestAnimationFrame(step);
 }
+
 

@@ -7,7 +7,7 @@
 
 
 
-const API_BASE = "https://script.google.com/macros/s/AKfycbzb_JqZPoLb6gS39l8nBDZoi9F00q1kRT1bhtRGpAmrrePHhT3JL_AwY-AC1V5NL89xvw/exec"; // <-- Replace with deployed URL
+const API_BASE = "https://script.google.com/macros/s/AKfycbyXoJ8KTJ1Q5iYFFj4S0O4YuB6zRA7uxoUPUJFnQ4nSjbc967aFxgEVJjmPDZVAUjkhXA/exec"; // <-- Replace with deployed URL
 
 // --- Environment Helpers ---
 // ---- ENV Handling ----

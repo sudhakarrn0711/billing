@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Customer Dashboard</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .card { border:1px solid #ddd; padding:15px; margin:10px 0; border-radius:8px; }
+    .pending { color:red; }
+    .paid { color:green; }
+  </style>
+</head>
+<body>
+
+<h2>📊 Customer Dashboard</h2>
+
+<div id="summary"></div>
+<div id="invoices"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbx4mTtgE6arxsV3yGEc10dFfnxyLQaJaXx_GuX2lmU6jzKiwt3MkzupmpgB5QDB4ms/exec";
+
+const urlParams = new URLSearchParams(window.location.search);
+const customerId = urlParams.get("customerId");
+
+fetch(API_URL + "?action=getall")
+  .then(res => res.json())
+  .then(data => {
+
+    const invoices = data.invoices.filter(i => i.customerId === customerId);
+
+    let totalPending = 0;
+
+    let html = "";
+
+    invoices.forEach(inv => {
+
+      let paid = (inv.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+      let total = Number(inv.total||0);
+      let pending = total - paid;
+
+      if (pending > 0) totalPending += pending;
+
+      html += `
+        <div class="card">
+          <b>${inv.invoiceNumber}</b><br>
+          Total: ₹${total}<br>
+          Paid: ₹${paid}<br>
+          <span class="${pending>0?'pending':'paid'}">
+            Pending: ₹${pending}
+          </span>
+        </div>
+      `;
+    });
+
+    document.getElementById("summary").innerHTML =
+      `<h3>💰 Total Pending: ₹${totalPending}</h3>`;
+
+    document.getElementById("invoices").innerHTML = html;
+  });
+</script>
+
+</body>
+</html>

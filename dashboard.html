@@ -42,7 +42,7 @@ fetch(API_URL + "?action=getall")
 
       html += `
   <div class="card">
-    <b>${inv.invoiceNumber || inv["invoice number"] || inv.id}</b><br>
+    <b>${inv.invoiceNumber || "INV-NA"}</b><br>
     Total: ₹${total}<br>
     Paid: ₹${paid}<br>
     <span class="${pending>0?'pending':'paid'}">

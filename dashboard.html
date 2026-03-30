@@ -41,15 +41,15 @@ fetch(API_URL + "?action=getall")
       if (pending > 0) totalPending += pending;
 
       html += `
-        <div class="card">
-          <b>${inv.invoiceNumber}</b><br>
-          Total: ₹${total}<br>
-          Paid: ₹${paid}<br>
-          <span class="${pending>0?'pending':'paid'}">
-            Pending: ₹${pending}
-          </span>
-        </div>
-      `;
+  <div class="card">
+    <b>${inv.invoiceNumber || inv["invoice number"] || inv.id}</b><br>
+    Total: ₹${total}<br>
+    Paid: ₹${paid}<br>
+    <span class="${pending>0?'pending':'paid'}">
+      Pending: ₹${pending}
+    </span>
+  </div>
+`;
     });
 
     document.getElementById("summary").innerHTML =

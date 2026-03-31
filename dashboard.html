@@ -2,22 +2,89 @@
 <html>
 <head>
   <title>Customer Dashboard</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: Arial; padding: 20px; }
-    .card { border:1px solid #ddd; padding:15px; margin:10px 0; border-radius:8px; }
-    .pending { color:red; }
-    .paid { color:green; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f6fb;
+      margin: 0;
+      padding: 15px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #6a11cb;
+    }
+
+    .summary {
+      background: linear-gradient(135deg, #6a11cb, #9a22f6);
+      color: white;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    }
+
+    .paid { color: green; }
+    .pending { color: red; }
+
+    .btn {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      margin-top: 8px;
+      margin-right: 5px;
+    }
+
+    .btn-download {
+      background: #6a11cb;
+      color: white;
+    }
+
+    .btn-pay {
+      background: #00b894;
+      color: white;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .logo img {
+      height: 50px;
+    }
   </style>
 </head>
+
 <body>
 
-<h2>📊 Customer Dashboard</h2>
+<div class="logo">
+  <img src="assets/ransan_logo.png">
+</div>
+
+<h2>📊 Your Dashboard</h2>
 
 <div id="summary"></div>
 <div id="invoices"></div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxORFym53fSASvIi991YA_kJaF9Nny4cRVw6SReco3Oy3_vWUuD54M-yyVVSuYBuw/exec";
+
+const API_URL = "https://script.google.com/macros/s/AKfycbw7u466GtawwJjhn8BmvpUjKgvzVGGSUXSrZC4mw1mDKxNdHNlEcUjv29MK1RyVnWrc/exec";
 
 const urlParams = new URLSearchParams(window.location.search);
 const customerId = urlParams.get("customerId");
@@ -26,21 +93,9 @@ fetch(API_URL + "?action=getall")
   .then(res => res.json())
   .then(data => {
 
-    const invoices = (data.invoices || [])
-  .map(inv => {
-
-    // ✅ Normalize invoice number
-    inv.invoiceNumber =
-      inv.invoiceNumber ||
-      inv["invoice number"] ||
-      "";
-
-    return inv;
-  })
-  .filter(i => i.customerId === customerId);
+    const invoices = data.invoices.filter(i => i.customerId === customerId);
 
     let totalPending = 0;
-
     let html = "";
 
     invoices.forEach(inv => {
@@ -51,23 +106,85 @@ fetch(API_URL + "?action=getall")
 
       if (pending > 0) totalPending += pending;
 
+      // ✅ FIX invoice number
+      let invoiceNo =
+        inv.invoiceNumber ||
+        inv.invoice_number ||
+        inv.number ||
+        inv["invoice number"] ||
+        ("INV-" + (inv.id ? inv.id.slice(-4) : "0000"));
+
+      // ✅ UPI PAYMENT LINK
+      let upi = "f051m00855@indianbk";
+      let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
+
       html += `
-  <div class="card">
-    <b>${inv.invoiceNumber ? inv.invoiceNumber : "INV-" + (inv.id ? inv.id.slice(-4) : "0000")}</b><br>
-    Total: ₹${total}<br>
-    Paid: ₹${paid}<br>
-    <span class="${pending>0?'pending':'paid'}">
-      Pending: ₹${pending}
-    </span>
-  </div>
-`;
+      <div class="card">
+        <b>${invoiceNo}</b><br><br>
+
+        Total: ₹${total}<br>
+        Paid: ₹${paid}<br>
+
+        <span class="${pending>0?'pending':'paid'}">
+          Pending: ₹${pending}
+        </span><br>
+
+        ${pending > 0 ? `
+          <a class="btn btn-pay" href="${upiLink}">
+            ⚡ Pay Now
+          </a>
+        ` : ``}
+
+        <button class="btn btn-download" onclick='downloadInvoice(${JSON.stringify(inv)})'>
+          📥 Download PDF
+        </button>
+      </div>
+      `;
     });
 
     document.getElementById("summary").innerHTML =
-      `<h3>💰 Total Pending: ₹${totalPending}</h3>`;
+      `<div class="summary">💰 Total Pending: ₹${totalPending}</div>`;
 
     document.getElementById("invoices").innerHTML = html;
   });
+
+/* =========================
+   PDF DOWNLOAD FUNCTION
+========================= */
+
+function downloadInvoice(inv) {
+
+  let win = window.open('', '_blank');
+
+  let html = `
+    <html>
+    <head>
+      <title>Invoice</title>
+      <style>
+        body { font-family: Arial; padding:20px; }
+        h2 { color:#6a11cb; }
+      </style>
+    </head>
+    <body>
+
+      <h2>RanSan Groups</h2>
+      <hr>
+
+      <h3>Invoice: ${inv.invoiceNumber || inv.id}</h3>
+
+      <p>Total: ₹${inv.total}</p>
+
+      <p>Thank you for your business!</p>
+
+    </body>
+    </html>
+  `;
+
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
+
 </script>
 
 </body>

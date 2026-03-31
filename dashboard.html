@@ -129,10 +129,9 @@ fetch(API_URL + "?action=getall")
           Pending: ₹${pending}
         </span><br>
 
-        ${pending > 0 ? `
-          <a class="btn btn-pay" href="${upiLink}">
-            ⚡ Pay Now
-          </a>
+        ${pending > 0 ? <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
+  ⚡ Pay Now
+</button>
         ` : ``}
 
         <button class="btn btn-download" onclick='downloadInvoice(${JSON.stringify(inv)})'>

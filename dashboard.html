@@ -26,7 +26,18 @@ fetch(API_URL + "?action=getall")
   .then(res => res.json())
   .then(data => {
 
-    const invoices = data.invoices.filter(i => i.customerId === customerId);
+    const invoices = (data.invoices || [])
+  .map(inv => {
+
+    // ✅ Normalize invoice number
+    inv.invoiceNumber =
+      inv.invoiceNumber ||
+      inv["invoice number"] ||
+      "";
+
+    return inv;
+  })
+  .filter(i => i.customerId === customerId);
 
     let totalPending = 0;
 
@@ -42,7 +53,7 @@ fetch(API_URL + "?action=getall")
 
       html += `
   <div class="card">
-    <b>${inv.invoiceNumber || "INV-NA"}</b><br>
+    <b>${inv.invoiceNumber ? inv.invoiceNumber : "INV-" + (inv.id ? inv.id.slice(-4) : "0000")}</b><br>
     Total: ₹${total}<br>
     Paid: ₹${paid}<br>
     <span class="${pending>0?'pending':'paid'}">

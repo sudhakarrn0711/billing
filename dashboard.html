@@ -42,12 +42,14 @@
 
     .btn {
       display: inline-block;
-      padding: 8px 12px;
-      border-radius: 6px;
+      padding: 10px 14px;
+      border-radius: 8px;
       text-decoration: none;
       font-size: 13px;
-      margin-top: 8px;
+      margin-top: 10px;
       margin-right: 5px;
+      border: none;
+      cursor: pointer;
     }
 
     .btn-download {
@@ -66,7 +68,7 @@
     }
 
     .logo img {
-      height: 50px;
+      height: 60px;
     }
   </style>
 </head>
@@ -106,7 +108,7 @@ fetch(API_URL + "?action=getall")
 
       if (pending > 0) totalPending += pending;
 
-      // ✅ FIX invoice number
+      // ✅ SAFE invoice number
       let invoiceNo =
         inv.invoiceNumber ||
         inv.invoice_number ||
@@ -114,7 +116,7 @@ fetch(API_URL + "?action=getall")
         inv["invoice number"] ||
         ("INV-" + (inv.id ? inv.id.slice(-4) : "0000"));
 
-      // ✅ UPI PAYMENT LINK
+      // ✅ UPI LINK
       let upi = "f051m00855@indianbk";
       let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
 
@@ -129,13 +131,13 @@ fetch(API_URL + "?action=getall")
           Pending: ₹${pending}
         </span><br>
 
-${pending > 0 ? `
-  <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
-    ⚡ Pay Now
-  </button>
-` : ``}
+        ${pending > 0 ? `
+          <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
+            ⚡ Pay Now
+          </button>
+        ` : ``}
 
-        <button class="btn btn-download" onclick='downloadInvoice(${JSON.stringify(inv)})'>
+        <button class="btn btn-download" onclick='downloadInvoice("${encodeURIComponent(JSON.stringify(inv))}")'>
           📥 Download PDF
         </button>
       </div>
@@ -149,10 +151,12 @@ ${pending > 0 ? `
   });
 
 /* =========================
-   PDF DOWNLOAD FUNCTION
+   DOWNLOAD PDF
 ========================= */
 
-function downloadInvoice(inv) {
+function downloadInvoice(invStr) {
+
+  const inv = JSON.parse(decodeURIComponent(invStr));
 
   let win = window.open('', '_blank');
 
@@ -185,16 +189,22 @@ function downloadInvoice(inv) {
   win.print();
 }
 
-  function payNow(upiLink, amount) {
+/* =========================
+   PAY NOW FUNCTION
+========================= */
+
+function payNow(upiLink, amount) {
 
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   if (isMobile) {
-    // ✅ Mobile → Open UPI app
-    window.location.href = upiLink;
+    // ✅ Mobile → open UPI apps
+    setTimeout(() => {
+      window.location.href = upiLink;
+    }, 200);
 
   } else {
-    // 💻 Desktop → Show QR Code
+    // 💻 Desktop → show QR
     const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(upiLink);
 
     const win = window.open('', '_blank');

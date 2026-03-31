@@ -185,6 +185,44 @@ function downloadInvoice(inv) {
   win.print();
 }
 
+  function payNow(upiLink, amount) {
+
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    // ✅ Mobile → Open UPI app
+    window.location.href = upiLink;
+
+  } else {
+    // 💻 Desktop → Show QR Code
+    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(upiLink);
+
+    const win = window.open('', '_blank');
+
+    win.document.write(`
+      <html>
+      <head>
+        <title>Scan & Pay</title>
+        <style>
+          body { text-align:center; font-family:Arial; padding:20px; }
+          img { margin-top:20px; }
+        </style>
+      </head>
+      <body>
+
+        <h2>📲 Scan & Pay</h2>
+        <p>Amount: ₹${amount}</p>
+
+        <img src="${qrUrl}" />
+
+        <p>Scan using GPay / PhonePe / Paytm</p>
+
+      </body>
+      </html>
+    `);
+  }
+}
+
 </script>
 
 </body>

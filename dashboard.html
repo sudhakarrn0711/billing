@@ -95,6 +95,9 @@ fetch(API_URL + "?action=getall")
   .then(res => res.json())
   .then(data => {
 
+
+    window.allInvoices = data.invoices;
+    
     const invoices = data.invoices.filter(i => i.customerId === customerId);
 
     let totalPending = 0;
@@ -139,7 +142,7 @@ let invoiceNo =
           </button>
         ` : ``}
 
-        <button class="btn btn-download" onclick='openPrintFromDashboard("${encodeURIComponent(JSON.stringify(inv))}")'>
+        <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
           📥 Download PDF
         </button>
       </div>
@@ -156,18 +159,17 @@ let invoiceNo =
    DOWNLOAD PDF
 ========================= */
 
-function openPrintFromDashboard(invStr) {
+function openPrintById(invId) {
 
-  try {
-    const inv = JSON.parse(decodeURIComponent(invStr));
+  // find invoice from already loaded data
+  const inv = window.allInvoices.find(x => x.id === invId);
 
-    // ✅ Call your existing openPrint
-    openPrint(inv);
-
-  } catch (e) {
-    console.error("Print Error:", e);
-    alert("Failed to open invoice");
+  if (!inv) {
+    alert("Invoice not found");
+    return;
   }
+
+  openPrint(inv);
 }
   
 function openPrint(input) {

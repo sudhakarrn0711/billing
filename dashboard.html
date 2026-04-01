@@ -139,7 +139,7 @@ let invoiceNo =
           </button>
         ` : ``}
 
-        <button class="btn btn-download" onclick='downloadInvoice("${encodeURIComponent(JSON.stringify(inv))}")'>
+        <button class="btn btn-download" onclick='openPrint(${JSON.stringify(inv)})'>
           📥 Download PDF
         </button>
       </div>
@@ -156,45 +156,378 @@ let invoiceNo =
    DOWNLOAD PDF
 ========================= */
 
-function downloadInvoice(invStr) {
+function openPrint(input) {
 
-  const inv = JSON.parse(decodeURIComponent(invStr));
+  let inv;
 
-  // ✅ USE SNAPSHOT IF EXISTS
-  const data = inv.snapshot || inv;
+  // ✅ CASE 1: Called from MAIN APP (invId)
+  if (typeof input === "string") {
 
-  let win = window.open('', '_blank');
+    let invData = state.invoices.find(x => x.id === input);
+    if (!invData) return;
 
-  let html = `
-    <html>
-    <head>
-      <title>Invoice</title>
-      <style>
-        body { font-family: Arial; padding:20px; }
-        h2 { color:#6a11cb; }
-      </style>
-    </head>
-    <body>
+    inv = Object.assign({}, invData, invData.snapshot || {});
+  }
 
-      <h2>RanSan Groups</h2>
-      <hr>
+  // ✅ CASE 2: Called from DASHBOARD (full object)
+  else if (typeof input === "object") {
 
-      <h3>Invoice: ${data.invoiceNumber || data.id}</h3>
+    inv = Object.assign({}, input, input.snapshot || {});
+  }
 
-      <p>Total: ₹${data.total}</p>
+  if (!inv) return;
 
-      <p>Status: ${data.status || ''}</p>
+  
 
-      <p>Thank you for your business!</p>
+  const cust = state.customers.find(c => c.id === inv.customerId) || {};
+  const bizData = state.businesses[inv.businessId] || {};
 
-    </body>
-    </html>
+  // ✅ Merge with defaults so biz.upi always exists
+  const biz = {
+    name: 'Your Business Name',
+    phone: '8148610567',
+    email: 'sudhakarrn0711@gmail.com',
+    address: '16/6, Star Illam, Ramarkrishna 1st Cross Street, Porur, Chennai-600116',
+    gst: '33AAAAA0000A1Z5',
+    website: 'www.ransangroups.com',
+    logo: 'assets/ransan_logo.png',
+    upi: 'sudhakarrn0711@okicici',
+    corporateOffice: 'Corporate Office: No. 123, Anna Salai, Chennai, TN - 600002',
+    branchOffice: "Branch Office: (update JSON)",
+    ...bizData
+  };
+
+  const paid = (inv.payments || []).reduce((s, p) => s + (p.amount || 0), 0);
+  const due = (inv.total || 0) - paid;
+
+  // number to words
+  function numberToWords(num) {
+    const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+      'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen',
+      'Eighteen', 'Nineteen'];
+    const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    if (num === 0) return 'Zero';
+    if (num < 20) return a[num];
+    if (num < 100) return b[Math.floor(num / 10)] + (num % 10 ? ' ' + a[num % 10] : '');
+    if (num < 1000) return a[Math.floor(num / 100)] + ' Hundred ' + (num % 100 !== 0 ? numberToWords(num % 100) : '');
+    if (num < 100000) return numberToWords(Math.floor(num / 1000)) + ' Thousand ' + (num % 1000 !== 0 ? numberToWords(num % 1000) : '');
+    if (num < 10000000) return numberToWords(Math.floor(num / 100000)) + ' Lakh ' + (num % 100000 !== 0 ? numberToWords(num % 100000) : '');
+    return numberToWords(Math.floor(num / 10000000)) + ' Crore ' + (num % 10000000 !== 0 ? numberToWords(num % 10000000) : '');
+  }
+  const amountInWords = numberToWords(inv.total || 0) + ' Only';
+
+  // ✅ QR Code Section (only if pending due > 0)
+  // ✅ QR Code Section (inside openPrint)
+  let qrSection = '';
+  if (due > 0 && biz.upi) {
+    const upiLink = `upi://pay?pa=${biz.upi}&pn=${encodeURIComponent(biz.name)}&am=${due}&cu=INR&tn=Invoice Payment`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(upiLink)}`;
+
+    console.log("✅ UPI Link:", upiLink);
+    console.log("✅ QR URL:", qrCodeUrl);
+
+    qrSection = `
+    <div class="payment">
+      <h3 style="color:#9a22f6;">Scan to Pay</h3>
+      <img src="${qrCodeUrl}" id="qrCodeImg"
+           alt="QR Code Payment"
+           style="margin-top:10px; width:200px; height:200px; border:1px solid #ccc;" />
+      <div style="margin-top:5px; font-size:13px; color:#333;">
+        Pay via UPI: <b>${biz.upi}</b>
+      </div>
+    </div>
+  `;
+  }
+
+  // ✅ Circle Stamp
+  let watermark = '';
+  if (due <= 0) {
+    watermark = `<div class="stamp paid">PAID</div>`;
+  } else if (paid > 0 && due > 0) {
+    watermark = `<div class="stamp partial">PARTIALLY PAID</div>`;
+  } else {
+    watermark = `<div class="stamp unpaid">UNPAID</div>`;
+  }
+
+  // ✅ Product rows (FIXED: calculate amount = qty * rate)
+  const rows = (inv.items || []).map((it, i) => {
+    const desc = it.description || it.desc || it.details || "";
+
+    const qty = Number(it.qty || it.quantity || 0);
+    const rate = Number(it.rate || 0);
+
+    // ✅ If amount exists use it, else calculate
+    const amount =
+      it.amount != null
+        ? Number(it.amount)
+        : qty * rate;
+
+    return `
+    <tr>
+      <td style="border:1px solid #ccc;padding:6px;text-align:center">${i + 1}</td>
+      <td style="border:1px solid #ccc;padding:6px">${it.serviceName || it.service || ''}</td>
+      <td style="border:1px solid #ccc;padding:6px">${desc}</td>
+      <td style="border:1px solid #ccc;padding:6px;text-align:center">${qty}</td>
+      <td style="border:1px solid #ccc;padding:6px;text-align:right">
+        ₹${rate.toLocaleString('en-IN')}
+      </td>
+      <td style="border:1px solid #ccc;padding:6px;text-align:right">
+        ₹${amount.toLocaleString('en-IN')}
+      </td>
+    </tr>
+  `;
+  }).join('');
+
+  // ✅ Build HTML
+  const html = `
+  <html>
+  <head>
+    <title>Invoice ${inv.invoiceNumber || inv.id}</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 10px; color:#333; position: relative; }
+      h1,h2,h3 { margin: 0; }
+      table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+      .header { text-align: center; }
+      .brand { font-size: 28px; font-weight: bold; background:#9a22f6; color:#fff; padding:6px 18px; border-radius:8px; display:inline-block; margin-top:8px; }
+      .biz-info { text-align: left; }
+      .biz-info h2 { font-size:20px; color:#6a11cb; margin-bottom:5px; }
+      .biz-info div { margin-bottom:3px; font-size:14px; }
+      hr { margin:15px 0; border:0; border-top:1px solid #ccc; }
+      .two-col { display: flex; justify-content: space-between; margin-top: 20px; }
+      .col { width: 48%; background:#f9f9ff; padding:10px; border-radius:6px; }
+      .col h3 { color:#9a22f6; margin-bottom:8px; }
+      .summary-table th { background:#6a11cb; color:#fff; text-align:left; }
+      .summary-table td, .summary-table th { border:1px solid #ccc; padding:6px; }
+      
+      
+      
+      
+      .payment { margin-top:20px; text-align:center; }
+      .signature { margin-top: 3px; text-align: right; }
+      .footer-note { margin-top:40px; text-align:center; font-size:13px; color:#555; }
+      .invoice-container { position: relative; z-index: 1; }
+      .stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        border: 6px solid; border-radius: 50%; padding: 40px 60px;
+        font-size: 32px; font-weight: bold; text-align: center; opacity: 0.15;
+        pointer-events: none; z-index: 0; }
+      .stamp.paid { border-color: green; color: green; }
+      .stamp.partial { border-color: orange; color: orange; }
+      .stamp.unpaid { border-color: red; color: red; }
+      
+      .totals-qr {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+.qr-block {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.qr-block img {
+  display: block;
+  margin: 10px auto;
+  width: 120px;
+  height: 120px;
+  border: 1px solid #ccc;
+}
+
+.amount-words {
+  margin-top: 10px;
+  font-style: italic;
+  color: #555;
+  text-align: center;
+}
+
+.totals {
+  width: 280px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.totals td {
+  padding: 6px;
+  border: 1px solid #ccc;
+  text-align: right;
+}
+.totals .label {
+  font-weight: bold;
+  color: #6a11cb;
+  text-align: left;
+}
+.totals .highlight {
+  background: #f3e8ff;
+  font-weight: bold;
+}
+
+/* ✅ Footer at bottom (letterhead style) */
+.address-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  font-size: 12px;
+  text-align: center;
+  color: #222;
+  background: #f3e8ff;
+  padding: 12px;
+  line-height: 1.6;
+  border-top: 1px solid #ddd;
+}
+.address-footer b {
+  color: #6a11cb;
+}
+.address-footer div {
+  margin: 2px 0;
+}
+
+.letterhead-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 3px solid #6a11cb;  /* professional underline */
+  padding: 10px 0;
+  background: #fff;                  /* white so it doesn't overlap content */
+  z-index: 10;
+}
+
+.company-logo {
+  height: 60px;
+  margin-right: 15px;
+}
+
+.company-name {
+  font-size: 30px;
+  font-weight: bold;
+  color: #6a11cb;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* ✅ Push content down so it doesn’t overlap header */
+body {
+  margin-top: 120px; /* adjust to match header height */
+}
+
+
+    </style>
+  </head>
+  <body>
+  <div class="invoice-container">
+    ${watermark}
+
+<!-- Letterhead Header -->
+<div class="letterhead-header">
+  <img src="${biz.logo}" alt="Company Logo" class="company-logo" />
+  <div class="company-name">RanSan Groups</div>
+</div>
+
+    <div class="biz-info">
+      <h2>${biz.name}</h2>
+      <div><b>Phone:</b> ${biz.phone}</div>
+      <div><b>Email:</b> ${biz.email}</div>
+      <div><b>Address:</b> ${biz.address}</div>
+      ${biz.gst ? `<div><b>GST:</b> ${biz.gst}</div>` : ''}
+    </div>
+    <hr/>
+
+    <div class="two-col">
+      <div class="col">
+        <h3>Bill To:</h3>
+        <div>Name: ${cust.name || '—'}</div>
+        <div>Phone: ${cust.phone || '—'}</div>
+        <div>Email: ${cust.email || '—'}</div>
+      </div>
+      <div class="col">
+        <h3>Invoice Details:</h3>
+        <div>Invoice No: ${inv.invoiceNumber || inv.id}</div>
+        <div>Date: ${inv.date ? inv.date.slice(0, 10) : ''}</div>
+        <div>Status: ${inv.status || ''}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3 style="color:#9a22f6;">Product Summary</h3>
+      <table class="summary-table">
+        <thead>
+          <tr><th>S.No</th><th>Item</th><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+
+<!-- Totals + QR side by side -->
+<div class="totals-qr">
+  <div class="qr-block">
+    <div class="amount-words">
+      Amount in Words: <b>${amountInWords}</b>
+    </div>
+    ${qrSection}
+  </div>
+  <table class="totals">
+    <tr><td class="label">Total</td><td class="highlight">₹${(inv.total || 0).toLocaleString('en-IN')}</td></tr>
+    <tr><td class="label">Paid</td><td>₹${paid.toLocaleString('en-IN')}</td></tr>
+    <tr><td class="label">Balance</td><td class="highlight">₹${due.toLocaleString('en-IN')}</td></tr>
+  </table>
+</div>
+
+
+    
+
+    
+
+    <div class="signature">
+      <div>For: ${biz.name}</div>
+      <br/><br/>
+      <div>Authorized Signatory</div>
+    </div>
+
+<!-- ✅ Letterhead footer -->
+<div class="address-footer">
+  <div><b>Corporate Office:</b> Shop No 1, Sivagami Nagar, Valanai Colony, Orlem, Malad-W, Mumbai-400064</div>
+  <div><b>Branch Office:</b> 16/6. 2nd Floor, Start Illam, Ramakrishna 1st Cross Street, Porur, Chennai-600116</div>
+  <div><b>Website:</b> www.ransangroups.com</div>
+</div>
+  </div>
+  </body>
+  </html>
   `;
 
-  win.document.write(html);
-  win.document.close();
-  win.print();
+  const printWin = window.open('', '_blank', 'width=800,height=900');
+  printWin.document.write(html);
+  printWin.document.close();
+
+  // ✅ Ensure print opens reliably
+  printWin.onload = () => {
+    const qrImg = printWin.document.getElementById('qrCodeImg');
+    let printed = false;
+
+    function doPrint() {
+      if (!printed) {
+        printed = true;
+        printWin.focus();
+        printWin.print();
+        printWin.close();
+      }
+    }
+
+    if (qrImg) {
+      qrImg.onload = () => doPrint();
+      // ⏳ fallback: print anyway after 1s
+      setTimeout(doPrint, 1000);
+    } else {
+      doPrint();
+    }
+  };
 }
+  
+
 
 /* =========================
    PAY NOW FUNCTION

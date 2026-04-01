@@ -172,6 +172,10 @@ function openPrintFromDashboard(invStr) {
   
 function openPrint(input) {
 
+
+  if (!inv.items) inv.items = [];
+if (!inv.payments) inv.payments = [];
+  
   let inv;
 
   // ✅ CASE 1: Called from MAIN APP (invId)
@@ -191,10 +195,13 @@ function openPrint(input) {
 
   if (!inv) return;
 
-  
+// ✅ SAFE fallback (dashboard has no state)
+let cust = {};
+let bizData = {};
 
-  const cust = state.customers.find(c => c.id === inv.customerId) || {};
-  const bizData = state.businesses[inv.businessId] || {};
+// Try to read from invoice itself (snapshot)
+if (inv.customer) cust = inv.customer;
+if (inv.business) bizData = inv.business;  
 
   // ✅ Merge with defaults so biz.upi always exists
   const biz = {

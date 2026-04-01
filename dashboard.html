@@ -86,7 +86,7 @@
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzQDGEchNLi1SZfPSxcgKaznJ9rCrwXagAB4SkGUwdVv3xSvnIrQjrY8zMhq7eXNMmg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby-RkMHL0UOHkj_qzlcfDjGdi7OftewhjKY76L5vsGAj1fpwQMgVKAZGdNnIVjpAhVd/exec";
 
 const urlParams = new URLSearchParams(window.location.search);
 const customerId = urlParams.get("customerId");
@@ -109,10 +109,11 @@ fetch(API_URL + "?action=getall")
       if (pending > 0) totalPending += pending;
 
       // ✅ SAFE invoice number
-      let source = inv.snapshot || inv;
+    let source = inv.snapshot || inv;
 
 let invoiceNo =
   source.invoiceNumber ||
+  source["invoice number"] ||
   source.invoice_number ||
   source.number ||
   ("INV-" + (inv.id ? inv.id.slice(-4) : "0000"));

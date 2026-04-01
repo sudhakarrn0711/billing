@@ -174,21 +174,41 @@ function openPrintById(invId) {
   
 function openPrint(input) {
 
+  let inv = null; // ✅ FIX: initialize first
 
-  if (!inv.items) inv.items = [];
-if (!inv.payments) inv.payments = [];
-  
-  let inv;
-
-  // ✅ CASE 1: Called from MAIN APP (invId)
+  // ✅ CASE 1: Called with ID
   if (typeof input === "string") {
 
-    let invData = state.invoices.find(x => x.id === input);
-    if (!invData) return;
+    if (!window.allInvoices) {
+      alert("Invoices not loaded");
+      return;
+    }
+
+    let invData = window.allInvoices.find(x => x.id === input);
+    if (!invData) {
+      alert("Invoice not found");
+      return;
+    }
 
     inv = Object.assign({}, invData, invData.snapshot || {});
   }
 
+  // ✅ CASE 2: Called with object
+  else if (typeof input === "object") {
+    inv = Object.assign({}, input, input.snapshot || {});
+  }
+
+  // ✅ NOW SAFE
+  if (!inv) {
+    alert("Invalid invoice data");
+    return;
+  }
+
+  // ✅ Prevent undefined errors
+  if (!inv.items) inv.items = [];
+  if (!inv.payments) inv.payments = [];
+
+  // 👉 CONTINUE YOUR EXISTING CODE BELOW
   // ✅ CASE 2: Called from DASHBOARD (full object)
   else if (typeof input === "object") {
 

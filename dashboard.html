@@ -97,6 +97,8 @@ fetch(API_URL + "?action=getall")
 
 
     window.allInvoices = data.invoices;
+
+    window.allCustomers = data.customers || []; // ✅ ADD THIS
     
     const invoices = data.invoices.filter(i => i.customerId === customerId);
 
@@ -217,12 +219,34 @@ function openPrint(input) {
 
   if (!inv) return;
 
-// ✅ SAFE fallback (dashboard has no state)
-let cust = {
-  name: inv.customerName || inv.name || "-",
-  phone: inv.customerPhone || inv.phone || "-",
-  email: inv.customerEmail || inv.email || "-"
-};
+let cust = {};
+
+// ✅ Try from invoice first
+if (inv.customerName || inv.customerPhone) {
+  cust = {
+    name: inv.customerName || "-",
+    phone: inv.customerPhone || "-",
+    email: inv.customerEmail || "-"
+  };
+}
+
+// ✅ Else fetch from global customers
+else if (window.allCustomers) {
+  const c = window.allCustomers.find(x => x.id === inv.customerId);
+
+  if (c) {
+    cust = {
+      name: c.name || "-",
+      phone: c.phone || "-",
+      email: c.email || "-"
+    };
+  }
+}
+
+// ✅ Final fallback
+if (!cust.name) {
+  cust = { name: "-", phone: "-", email: "-" };
+}
 
 let bizData = inv.business || {};
 

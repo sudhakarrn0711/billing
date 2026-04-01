@@ -139,7 +139,7 @@ let invoiceNo =
           </button>
         ` : ``}
 
-        <button class="btn btn-download" onclick='openPrint(${JSON.stringify(inv)})'>
+        <button class="btn btn-download" onclick='openPrintFromDashboard("${encodeURIComponent(JSON.stringify(inv))}")'>
           📥 Download PDF
         </button>
       </div>
@@ -156,6 +156,20 @@ let invoiceNo =
    DOWNLOAD PDF
 ========================= */
 
+function openPrintFromDashboard(invStr) {
+
+  try {
+    const inv = JSON.parse(decodeURIComponent(invStr));
+
+    // ✅ Call your existing openPrint
+    openPrint(inv);
+
+  } catch (e) {
+    console.error("Print Error:", e);
+    alert("Failed to open invoice");
+  }
+}
+  
 function openPrint(input) {
 
   let inv;

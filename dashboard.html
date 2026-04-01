@@ -174,7 +174,7 @@ function openPrintById(invId) {
   
 function openPrint(input) {
 
-  let inv = null; // ✅ FIX: initialize first
+  let inv = null; // ✅ initialize first
 
   // ✅ CASE 1: Called with ID
   if (typeof input === "string") {
@@ -198,13 +198,13 @@ function openPrint(input) {
     inv = Object.assign({}, input, input.snapshot || {});
   }
 
-  // ✅ NOW SAFE
+  // ✅ SAFE CHECK
   if (!inv) {
     alert("Invalid invoice data");
     return;
   }
 
-  // ✅ Prevent undefined errors
+  // ✅ prevent undefined errors
   if (!inv.items) inv.items = [];
   if (!inv.payments) inv.payments = [];
 

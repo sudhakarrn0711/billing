@@ -160,6 +160,9 @@ function downloadInvoice(invStr) {
 
   const inv = JSON.parse(decodeURIComponent(invStr));
 
+  // ✅ USE SNAPSHOT IF EXISTS
+  const data = inv.snapshot || inv;
+
   let win = window.open('', '_blank');
 
   let html = `
@@ -176,9 +179,11 @@ function downloadInvoice(invStr) {
       <h2>RanSan Groups</h2>
       <hr>
 
-      <h3>Invoice: ${inv.invoiceNumber || inv.id}</h3>
+      <h3>Invoice: ${data.invoiceNumber || data.id}</h3>
 
-      <p>Total: ₹${inv.total}</p>
+      <p>Total: ₹${data.total}</p>
+
+      <p>Status: ${data.status || ''}</p>
 
       <p>Thank you for your business!</p>
 

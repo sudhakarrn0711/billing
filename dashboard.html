@@ -109,12 +109,13 @@ fetch(API_URL + "?action=getall")
       if (pending > 0) totalPending += pending;
 
       // ✅ SAFE invoice number
-      let invoiceNo =
-        inv.invoiceNumber ||
-        inv.invoice_number ||
-        inv.number ||
-        inv["invoice number"] ||
-        ("INV-" + (inv.id ? inv.id.slice(-4) : "0000"));
+      let source = inv.snapshot || inv;
+
+let invoiceNo =
+  source.invoiceNumber ||
+  source.invoice_number ||
+  source.number ||
+  ("INV-" + (inv.id ? inv.id.slice(-4) : "0000"));
 
       // ✅ UPI LINK
       let upi = "f051m00855@indianbk";

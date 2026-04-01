@@ -111,16 +111,16 @@ fetch(API_URL + "?action=getall")
 
       if (pending > 0) totalPending += pending;
 
-      // ✅ SAFE invoice number
-    let source = inv.snapshot || inv;
+      let invoiceNo =
+  inv.invoiceNumber ||
+  inv.snapshot?.invoiceNumber ||
+  inv["Invoice Number"] ||
+  inv["invoice number"] ||
+  inv.invoice_number ||
+  inv.number ||
+  "INV-" + (inv.id ? inv.id.slice(-4) : "0000");
 
-let invoiceNo =
-  source.invoiceNumber ||
-  source["invoice number"] ||
-  source.invoice_number ||
-  source.number ||
-  ("INV-" + (inv.id ? inv.id.slice(-4) : "0000"));
-
+      
       // ✅ UPI LINK
       let upi = "f051m00855@indianbk";
       let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
@@ -218,8 +218,13 @@ function openPrint(input) {
   if (!inv) return;
 
 // ✅ SAFE fallback (dashboard has no state)
-let cust = {};
-let bizData = {};
+let cust = {
+  name: inv.customerName || inv.name || "-",
+  phone: inv.customerPhone || inv.phone || "-",
+  email: inv.customerEmail || inv.email || "-"
+};
+
+let bizData = inv.business || {};
 
 // Try to read from invoice itself (snapshot)
 if (inv.customer) cust = inv.customer;
@@ -489,7 +494,7 @@ body {
       </div>
       <div class="col">
         <h3>Invoice Details:</h3>
-        <div>Invoice No: ${inv.invoiceNumber || inv.id}</div>
+        <div>Invoice No: ${inv.invoiceumber || inv.snapshot?.invoiceNumber || inv["Invoice Number"] || inv["invoice number"] || inv.id}</div>
         <div>Date: ${inv.date ? inv.date.slice(0, 10) : ''}</div>
         <div>Status: ${inv.status || ''}</div>
       </div>

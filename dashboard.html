@@ -108,6 +108,39 @@ h2 {
 .btn-pay { background: #00b894; color: white; }
 .btn-download { background: #6a11cb; color: white; }
 
+/* DUE STATUS */
+.overdue {
+  border: 2px solid #ff3b3b;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.6; }
+}
+
+.due-soon {
+  border: 2px solid #f1c40f;
+}
+
+/* PAYMENT STATUS */
+.paid-box {
+  color: #00b894;
+  font-weight: bold;
+}
+
+.checking {
+  color: #888;
+  font-size: 12px;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  .btn {
+    width: 100%;
+    font-size: 14px;
+  }
+}    
+    
 </style>
 </head>
 
@@ -139,15 +172,6 @@ fetch(API_URL + "?action=getall")
 
     let invoices = data.invoices.filter(i => i.customerId === customerId);
 
-    // ✅ Sort: Pending first
-    invoices.sort((a, b) => {
-      const paidA = (a.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
-      const paidB = (b.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
-      const pendingA = (a.total||0) - paidA;
-      const pendingB = (b.total||0) - paidB;
-      return pendingB - pendingA;
-    });
-
     let totalAmount = 0;
     let totalPaid = 0;
     let totalPending = 0;
@@ -164,6 +188,7 @@ fetch(API_URL + "?action=getall")
       totalPaid += paid;
       if (pending > 0) totalPending += pending;
 
+      // ✅ Invoice Number
       let invoiceNo =
         inv.invoiceNumber ||
         inv.snapshot?.invoiceNumber ||
@@ -173,16 +198,45 @@ fetch(API_URL + "?action=getall")
         inv.number ||
         "INV-" + (inv.id ? inv.id.slice(-4) : "0000");
 
+      // ✅ DATE LOGIC (VERY IMPORTANT)
+      let today = new Date();
+      let dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
+
+      let statusClass = "";
+      let statusText = "";
+
+      if (pending <= 0) {
+        statusClass = "paid";
+        statusText = "Paid";
+      }
+      else if (dueDate) {
+        let diffDays = Math.ceil((dueDate - today) / (1000*60*60*24));
+
+        if (diffDays < 0) {
+          statusClass = "overdue";
+          statusText = "Overdue";
+        }
+        else if (diffDays <= 3) {
+          statusClass = "due-soon";
+          statusText = "Due Soon";
+        }
+        else {
+          statusClass = "pending";
+          statusText = "Pending";
+        }
+      }
+
+      // ✅ UPI
       let upi = "f051m00855@indianbk";
       let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
 
       html += `
-      <div class="card ${pending>0?'highlight-card':''}">
-        
+      <div class="card ${statusClass}">
+
         <div style="display:flex; justify-content:space-between;">
           <b>${invoiceNo}</b>
-          <span class="badge ${pending>0?'pending':'paid'}">
-            ${pending>0?'Pending':'Paid'}
+          <span class="badge ${statusClass}">
+            ${statusText}
           </span>
         </div>
 
@@ -190,32 +244,81 @@ fetch(API_URL + "?action=getall")
 
         ${pending > 0 ? `
           <div style="font-size:18px; font-weight:bold; color:#d63031;">
-            Pay Now: ₹${pending.toLocaleString('en-IN')}
+            Pay: ₹${pending.toLocaleString('en-IN')}
           </div>
         ` : `
-          <div style="color:#00b894; font-weight:bold;">
-            Fully Paid ✅
-          </div>
+          <div class="paid-box">✅ Fully Paid</div>
         `}
 
         <div style="margin-top:8px; font-size:13px;">
-          Total: ₹${total.toLocaleString('en-IN')} | 
+          Total: ₹${total.toLocaleString('en-IN')} |
           Paid: ₹${paid.toLocaleString('en-IN')}
         </div>
 
-        ${pending > 0 ? `
-          <button class="btn btn-pay" style="width:100%; font-size:14px;" onclick="payNow('${upiLink}', ${pending})">
-            ⚡ Pay ₹${pending}
-          </button>
+        ${dueDate ? `
+          <div style="font-size:12px; margin-top:5px;">
+            Due: ${dueDate.toLocaleDateString()}
+          </div>
         ` : ``}
 
-        <button class="btn btn-download" style="width:100%;" onclick="openPrintById('${inv.id}')">
-          📥 Download Invoice
+        ${pending > 0 ? `
+          <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
+            ⚡ Pay Now
+          </button>
+          <div class="checking">⏳ Checking payment status...</div>
+        ` : ``}
+
+        <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
+          📥 Download
         </button>
 
       </div>
       `;
     });
+
+    // ✅ SUMMARY
+    document.getElementById("summary").innerHTML = `
+      <div class="summary-grid">
+
+        <div class="summary-card pending">
+          <h4>To Pay</h4>
+          <p>₹${totalPending.toLocaleString('en-IN')}</p>
+        </div>
+
+        <div class="summary-card paid">
+          <h4>Paid</h4>
+          <p>₹${totalPaid.toLocaleString('en-IN')}</p>
+        </div>
+
+        <div class="summary-card total">
+          <h4>Total</h4>
+          <p>₹${totalAmount.toLocaleString('en-IN')}</p>
+        </div>
+
+      </div>
+    `;
+
+    document.getElementById("invoices").innerHTML =
+      `<div class="invoice-grid">${html}</div>`;
+
+  });
+
+/* =========================
+   AUTO REFRESH PAYMENT
+========================= */
+
+setInterval(() => {
+  fetch(API_URL + "?action=getall")
+    .then(res => res.json())
+    .then(data => {
+
+      // compare and reload if changed
+      if (JSON.stringify(data.invoices) !== JSON.stringify(window.allInvoices)) {
+        location.reload();
+      }
+
+    });
+}, 30000); // 30 sec
 
     // ✅ SUMMARY (Customer Friendly)
     document.getElementById("summary").innerHTML = `

@@ -137,7 +137,16 @@ fetch(API_URL + "?action=getall")
     window.allInvoices = data.invoices;
     window.allCustomers = data.customers || [];
 
-    const invoices = data.invoices.filter(i => i.customerId === customerId);
+    let invoices = data.invoices.filter(i => i.customerId === customerId);
+
+    // ✅ Sort: Pending first
+    invoices.sort((a, b) => {
+      const paidA = (a.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+      const paidB = (b.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+      const pendingA = (a.total||0) - paidA;
+      const pendingB = (b.total||0) - paidB;
+      return pendingB - pendingA;
+    });
 
     let totalAmount = 0;
     let totalPaid = 0;
@@ -164,14 +173,13 @@ fetch(API_URL + "?action=getall")
         inv.number ||
         "INV-" + (inv.id ? inv.id.slice(-4) : "0000");
 
-      // ✅ UPI LINK
       let upi = "f051m00855@indianbk";
       let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
 
       html += `
-      <div class="card">
+      <div class="card ${pending>0?'highlight-card':''}">
         
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between;">
           <b>${invoiceNo}</b>
           <span class="badge ${pending>0?'pending':'paid'}">
             ${pending>0?'Pending':'Paid'}
@@ -180,52 +188,67 @@ fetch(API_URL + "?action=getall")
 
         <br>
 
-        <div>Total: ₹${total.toLocaleString('en-IN')}</div>
-        <div>Paid: ₹${paid.toLocaleString('en-IN')}</div>
-        <div>Pending: ₹${pending.toLocaleString('en-IN')}</div>
+        ${pending > 0 ? `
+          <div style="font-size:18px; font-weight:bold; color:#d63031;">
+            Pay Now: ₹${pending.toLocaleString('en-IN')}
+          </div>
+        ` : `
+          <div style="color:#00b894; font-weight:bold;">
+            Fully Paid ✅
+          </div>
+        `}
+
+        <div style="margin-top:8px; font-size:13px;">
+          Total: ₹${total.toLocaleString('en-IN')} | 
+          Paid: ₹${paid.toLocaleString('en-IN')}
+        </div>
 
         ${pending > 0 ? `
-          <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
-            ⚡ Pay Now
+          <button class="btn btn-pay" style="width:100%; font-size:14px;" onclick="payNow('${upiLink}', ${pending})">
+            ⚡ Pay ₹${pending}
           </button>
         ` : ``}
 
-        <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
-          📥 Download PDF
+        <button class="btn btn-download" style="width:100%;" onclick="openPrintById('${inv.id}')">
+          📥 Download Invoice
         </button>
 
       </div>
       `;
     });
 
-    // ✅ MODERN SUMMARY CARDS
+    // ✅ SUMMARY (Customer Friendly)
     document.getElementById("summary").innerHTML = `
       <div class="summary-grid">
-        
-        <div class="summary-card count">
-          <h4>Total Invoices</h4>
-          <p>${invoices.length}</p>
-        </div>
 
-        <div class="summary-card total">
-          <h4>Total Amount</h4>
-          <p>₹${totalAmount.toLocaleString('en-IN')}</p>
+        <div class="summary-card pending">
+          <h4>Amount to Pay</h4>
+          <p>₹${totalPending.toLocaleString('en-IN')}</p>
         </div>
 
         <div class="summary-card paid">
-          <h4>Paid Amount</h4>
+          <h4>Paid So Far</h4>
           <p>₹${totalPaid.toLocaleString('en-IN')}</p>
         </div>
 
-        <div class="summary-card pending">
-          <h4>Pending Amount</h4>
-          <p>₹${totalPending.toLocaleString('en-IN')}</p>
+        <div class="summary-card total">
+          <h4>Total Billing</h4>
+          <p>₹${totalAmount.toLocaleString('en-IN')}</p>
         </div>
 
       </div>
     `;
 
-    // ✅ GRID LAYOUT (NO LONG SCROLL)
+    // ✅ EMPTY STATE
+    if (!html) {
+      html = `
+        <div style="text-align:center; padding:40px;">
+          <h3>No invoices found</h3>
+          <p>You’re all set 👍</p>
+        </div>
+      `;
+    }
+
     document.getElementById("invoices").innerHTML =
       `<div class="invoice-grid">${html}</div>`;
   });

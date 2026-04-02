@@ -193,7 +193,7 @@ function loadData(){
     document.getElementById("loader").style.display="none";
     isFirstLoad=false;
 
-    window.allInvoices = data.invoices || [];
+    allInvoices = data.invoices || [];
 
     let invoices = allInvoices.filter(i=>i.customerId===customerId);
 

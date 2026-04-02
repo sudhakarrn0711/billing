@@ -188,7 +188,6 @@ fetch(API_URL + "?action=getall")
       totalPaid += paid;
       if (pending > 0) totalPending += pending;
 
-      // ✅ Invoice Number
       let invoiceNo =
         inv.invoiceNumber ||
         inv.snapshot?.invoiceNumber ||
@@ -198,35 +197,27 @@ fetch(API_URL + "?action=getall")
         inv.number ||
         "INV-" + (inv.id ? inv.id.slice(-4) : "0000");
 
-      // ✅ DATE LOGIC (VERY IMPORTANT)
       let today = new Date();
       let dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
 
-      let statusClass = "";
-      let statusText = "";
+      let statusClass = "pending";
+      let statusText = "Pending";
 
       if (pending <= 0) {
         statusClass = "paid";
         statusText = "Paid";
-      }
-      else if (dueDate) {
+      } else if (dueDate) {
         let diffDays = Math.ceil((dueDate - today) / (1000*60*60*24));
 
         if (diffDays < 0) {
           statusClass = "overdue";
           statusText = "Overdue";
-        }
-        else if (diffDays <= 3) {
+        } else if (diffDays <= 3) {
           statusClass = "due-soon";
           statusText = "Due Soon";
         }
-        else {
-          statusClass = "pending";
-          statusText = "Pending";
-        }
       }
 
-      // ✅ UPI
       let upi = "f051m00855@indianbk";
       let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
 
@@ -276,6 +267,16 @@ fetch(API_URL + "?action=getall")
       `;
     });
 
+    // ✅ EMPTY STATE (inside fetch only)
+    if (!html) {
+      html = `
+        <div style="text-align:center; padding:40px;">
+          <h3>No invoices found</h3>
+          <p>You’re all set 👍</p>
+        </div>
+      `;
+    }
+
     // ✅ SUMMARY
     document.getElementById("summary").innerHTML = `
       <div class="summary-grid">
@@ -301,6 +302,11 @@ fetch(API_URL + "?action=getall")
     document.getElementById("invoices").innerHTML =
       `<div class="invoice-grid">${html}</div>`;
 
+  })
+  .catch(err => {
+    console.error(err);
+    document.getElementById("invoices").innerHTML =
+      "<p style='text-align:center;color:red'>Error loading data</p>";
   });
 
 /* =========================

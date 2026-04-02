@@ -201,11 +201,31 @@ function loadData(){
     let html="";
 
     // SORT pending first
-    invoices.sort((a,b)=>{
-      const pa=(a.total||0)-(a.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
-      const pb=(b.total||0)-(b.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
-      return pb-pa;
-    });
+invoices.sort((a, b) => {
+
+  function getPriority(inv) {
+
+    const paid = (inv.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+    const total = Number(inv.total || 0);
+    const bal = total - paid;
+
+    if (bal <= 0) return 4; // Paid (last)
+
+    const due = inv.dueDate ? new Date(inv.dueDate) : null;
+    const today = new Date();
+
+    if (due) {
+      const diff = Math.ceil((due - today) / (1000*60*60*24));
+
+      if (diff < 0) return 1;     // 🔴 Overdue
+      if (diff <= 3) return 2;    // 🟠 Due Soon
+    }
+
+    return 3; // 🟡 Pending
+  }
+
+  return getPriority(a) - getPriority(b);
+});
 
     invoices.forEach(inv=>{
 
@@ -381,34 +401,46 @@ function openPrint(input) {
 
   if (!inv) return;
 
-let cust = {};
+let cust = {
+  name: "-",
+  phone: "-",
+  email: "-"
+};
 
-// ✅ Try from invoice first
-if (inv.customerName || inv.customerPhone) {
+// ✅ 1. Direct fields (most common)
+if (inv.customerName || inv.customerPhone || inv.customerEmail) {
   cust = {
-    name: inv.customerName || "-",
-    phone: inv.customerPhone || "-",
-    email: inv.customerEmail || "-"
+    name: inv.customerName || inv.customer_name || "-",
+    phone: inv.customerPhone || inv.customer_phone || "-",
+    email: inv.customerEmail || inv.customer_email || "-"
   };
 }
 
-// ✅ Else fetch from global customers
-else if (window.allCustomers) {
+// ✅ 2. Nested object (snapshot style)
+if (inv.customer) {
+  cust = {
+    name: inv.customer.name || cust.name,
+    phone: inv.customer.phone || cust.phone,
+    email: inv.customer.email || cust.email
+  };
+}
+
+// ✅ 3. From global customers (fallback)
+if ((cust.name === "-" || cust.phone === "-") && window.allCustomers) {
   const c = window.allCustomers.find(x => x.id === inv.customerId);
 
   if (c) {
     cust = {
-      name: c.name || "-",
-      phone: c.phone || "-",
-      email: c.email || "-"
+      name: c.name || cust.name,
+      phone: c.phone || cust.phone,
+      email: c.email || cust.email
     };
   }
 }
 
-// ✅ Final fallback
-if (!cust.name) {
-  cust = { name: "-", phone: "-", email: "-" };
-}
+// ✅ DEBUG (very important)
+console.log("Customer Data:", cust);
+console.log("Invoice Data:", inv);
 
 let bizData = inv.business || {};
 

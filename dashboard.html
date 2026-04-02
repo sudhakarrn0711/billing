@@ -193,7 +193,7 @@ function loadData(){
     document.getElementById("loader").style.display="none";
     isFirstLoad=false;
 
-    allInvoices = data.invoices || [];
+    window.allInvoices = data.invoices || [];
 
     let invoices = allInvoices.filter(i=>i.customerId===customerId);
 
@@ -280,8 +280,8 @@ function loadData(){
         ${bal>0?`<div style="color:red;font-weight:bold;">₹${bal}</div>`:`<div style="color:green;">Paid</div>`}
 
           <div class="btn-row">
-            ${pending > 0 ? `
-              <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
+            ${bal > 0 ? `
+  <button class="btn btn-pay" onclick="payNow('${upiLink}', ${bal})">
                 Pay Now
               </button>
             ` : ``}
@@ -332,10 +332,16 @@ function payNow(link,amount){
 
 function openPrintById(invId) {
 
-  const inv = window.allInvoices.find(x => x.id === invId);
+  if (!window.allInvoices) {
+    alert("Invoices not loaded yet");
+    return;
+  }
+
+  const inv = window.allInvoices.find(x => String(x.id) === String(invId));
 
   if (!inv) {
-    alert("Invoice not found");
+    alert("Invoice not found: " + invId);
+    console.log("Available invoices:", window.allInvoices);
     return;
   }
 
@@ -344,9 +350,9 @@ function openPrintById(invId) {
   
 function openPrint(input) {
 
-  let inv = null; // ✅ initialize first
+  let inv = null;
 
-  // ✅ CASE 1: Called with ID
+  // CASE 1: ID
   if (typeof input === "string") {
 
     if (!window.allInvoices) {
@@ -355,6 +361,7 @@ function openPrint(input) {
     }
 
     let invData = window.allInvoices.find(x => x.id === input);
+
     if (!invData) {
       alert("Invoice not found");
       return;
@@ -363,27 +370,19 @@ function openPrint(input) {
     inv = Object.assign({}, invData, invData.snapshot || {});
   }
 
-  // ✅ CASE 2: Called with object
+  // CASE 2: Object
   else if (typeof input === "object") {
     inv = Object.assign({}, input, input.snapshot || {});
   }
 
-  // ✅ SAFE CHECK
   if (!inv) {
     alert("Invalid invoice data");
     return;
   }
 
-  // ✅ prevent undefined errors
-  if (!inv.items) inv.items = [];
-  if (!inv.payments) inv.payments = [];
-
-  // 👉 CONTINUE YOUR EXISTING CODE BELOW
-  // ✅ CASE 2: Called from DASHBOARD (full object)
-  else if (typeof input === "object") {
-
-    inv = Object.assign({}, input, input.snapshot || {});
-  }
+  // safety
+  inv.items = inv.items || [];
+  inv.payments = inv.payments || [];
 
   if (!inv) return;
 

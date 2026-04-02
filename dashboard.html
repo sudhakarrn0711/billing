@@ -5,94 +5,143 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f6fb;
-      margin: 0;
-      padding: 15px;
-    }
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #f4f6fb;
+  margin: 0;
+  padding: 15px;
+}
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    .logo img { height: 50px; }
+.logo img { height: 50px; }
 
-    h2 { color: #6a11cb; }
+h2 { color: #6a11cb; }
 
-    /* SUMMARY */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin: 20px 0;
-    }
+/* SUMMARY */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
 
-    .summary-card {
-      padding: 15px;
-      border-radius: 10px;
-      color: white;
-    }
+.summary-card {
+  padding: 15px;
+  border-radius: 10px;
+  color: white;
+}
 
-    .pending { background: #e74c3c; }
-    .paid { background: #27ae60; }
-    .total { background: #6a11cb; }
+.pending { background: #e74c3c; }
+.paid { background: #27ae60; }
+.total { background: #6a11cb; }
 
-    /* GRID */
-    .invoice-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 15px;
-    }
+/* PAY ALL */
+.pay-all {
+  background: #ff7675;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
 
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-    }
+/* GRID */
+.invoice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+}
 
-    .overdue {
-      border: 2px solid red;
-      animation: blink 1s infinite;
-    }
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
 
-    @keyframes blink {
-      50% { opacity: 0.6; }
-    }
+/* STATUS */
+.overdue {
+  border: 2px solid red;
+  animation: glow 1s infinite;
+}
 
-    .due-soon {
-      border: 2px solid orange;
-    }
+@keyframes glow {
+  50% { box-shadow: 0 0 15px red; }
+}
 
-    .badge {
-      padding: 4px 10px;
-      border-radius: 20px;
-      color: white;
-      font-size: 12px;
-    }
+.due-soon {
+  border: 2px solid orange;
+}
 
-    .badge.pending { background: #e74c3c; }
-    .badge.paid { background: #27ae60; }
-    .badge.overdue { background: red; }
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  color: white;
+  font-size: 12px;
+}
 
-    .btn {
-      display: block;
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
+.badge.pending { background: #e74c3c; }
+.badge.paid { background: #27ae60; }
+.badge.overdue { background: red; }
+.badge.due-soon { background: orange; color:black; }
 
-    .btn-pay { background: #27ae60; color: white; }
-    .btn-download { background: #6a11cb; color: white; }
+/* BUTTONS */
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
 
-    /* LOADER */
+.btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-pay { background: #27ae60; color: white; }
+.btn-download { background: #6a11cb; color: white; }
+
+/* PROGRESS */
+.progress {
+  background: #eee;
+  border-radius: 10px;
+  height: 8px;
+  margin-top: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #00b894, #55efc4);
+}
+
+/* OVERDUE TEXT */
+.overdue-text {
+  color: red;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* LOADER */
+#loader {
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
 .spinner {
   width: 40px;
   height: 40px;
@@ -106,80 +155,19 @@
   100% { transform: rotate(360deg); }
 }
 
-/* BUTTON ROW */
-.btn-row {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-row .btn {
-  flex: 1;
-}
-
-/* PROGRESS BAR */
-.progress {
-  background: #eee;
-  border-radius: 10px;
-  height: 8px;
-  margin-top: 8px;
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #00b894, #55efc4);
-}
-
-/* PAY ALL BUTTON */
-.pay-all {
-  background: #ff7675;
-  color: white;
-  padding: 12px;
-  border-radius: 10px;
-  text-align: center;
-  font-weight: bold;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-/* OVERDUE TEXT */
-.overdue-text {
-  color: red;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-    .top-refresh {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
-  background: #6a11cb;
-  width: 0%;
-  transition: width 0.3s;
-}
-
-  </style>
+</style>
 </head>
 
 <body>
 
-<div id="loader" style="
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-">
-  <div style="text-align:center">
+<!-- LOADER -->
+<div id="loader">
+  <div>
     <div class="spinner"></div>
-    <p style="margin-top:10px;color:#666;">Loading dashboard...</p>
+    <p style="text-align:center">Loading...</p>
   </div>
 </div>
-  
+
 <div class="header">
   <div class="logo">
     <img src="assets/ransan_logo.png">
@@ -197,57 +185,43 @@ const API_URL = "https://script.google.com/macros/s/AKfycby-RkMHL0UOHkj_qzlcfDjG
 const params = new URLSearchParams(window.location.search);
 const customerId = params.get("customerId");
 
-// ❌ STOP if no ID
+let isFirstLoad = true;
+
 if (!customerId) {
-  document.getElementById("invoices").innerHTML =
-    "<p style='text-align:center'>Invalid link</p>";
+  document.getElementById("invoices").innerHTML = "Invalid link";
 } else {
-
   loadData();
-
-  // 🔁 Auto refresh
   setInterval(loadData, 30000);
 }
 
 function loadData() {
 
-  let isFirstLoad = true;
-
   if (isFirstLoad) {
-  document.getElementById("loader").style.display = "flex";
-}
-
-  if (isFirstLoad) {
-  document.getElementById("loader").style.display = "flex";
-}
+    document.getElementById("loader").style.display = "flex";
+  }
 
   fetch(API_URL + "?action=getall")
     .then(res => res.json())
     .then(data => {
 
       document.getElementById("loader").style.display = "none";
+      isFirstLoad = false;
 
-      window.allInvoices = data.invoices || [];
+      let invoices = (data.invoices || []).filter(i => i.customerId === customerId);
 
-      let invoices = window.allInvoices.filter(i => i.customerId === customerId);
-
-      let totalAmount = 0;
-      let totalPaid = 0;
-      let totalPending = 0;
-
+      let totalAmount = 0, totalPaid = 0, totalPending = 0;
       let html = "";
 
-      // ✅ SORT
+      // SORT
       invoices.sort((a, b) => {
-        const paidA = (a.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
-        const paidB = (b.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
-
-        return ((b.total||0)-paidB) - ((a.total||0)-paidA);
+        const pA = (a.total||0) - (a.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
+        const pB = (b.total||0) - (b.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
+        return pB - pA;
       });
 
       invoices.forEach(inv => {
 
-        let paid = (inv.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+        let paid = (inv.payments||[]).reduce((s,p)=>s+Number(p.amount||0),0);
         let total = Number(inv.total||0);
         let pending = total - paid;
 
@@ -255,121 +229,85 @@ function loadData() {
         totalPaid += paid;
         if (pending > 0) totalPending += pending;
 
-        let progress = total ? Math.round((paid / total) * 100) : 0;
+        // ✅ FIXED INVOICE NUMBER
+        let invoiceNo =
+          inv.invoiceNumber ||
+          inv.snapshot?.invoiceNumber ||
+          inv["Invoice Number"] ||
+          inv["invoice number"] ||
+          inv.invoice_number ||
+          inv.number ||
+          "INV-" + (inv.id ? inv.id.slice(-4) : "0000");
 
-        let today = new Date();
+        invoiceNo = invoiceNo.toString().toUpperCase();
+
+        let progress = total ? Math.round((paid/total)*100) : 0;
+
         let dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
+        let today = new Date();
 
-        let statusClass = "";
-        let badgeClass = "pending";
-        let statusText = "Pending";
-        let overdueText = "";
+        let statusClass="", badgeClass="pending", statusText="Pending", overdueText="";
 
         if (pending <= 0) {
-          badgeClass = "paid";
-          statusText = "Paid";
-          statusClass = "paid-card";
+          badgeClass="paid";
+          statusText="Paid";
         }
         else if (dueDate) {
+          let diff = Math.ceil((dueDate - today)/(1000*60*60*24));
 
-          let diffDays = Math.ceil((dueDate - today) / (1000*60*60*24));
-
-          if (diffDays < 0) {
-            statusClass = "overdue";
-            badgeClass = "overdue";
-            statusText = "Overdue";
-            overdueText = `🔴 Overdue by ${Math.abs(diffDays)} days`;
-          }
-          else if (diffDays <= 3) {
-            statusClass = "due-soon";
-            badgeClass = "due-soon";
-            statusText = "Due Soon";
+          if (diff < 0) {
+            statusClass="overdue";
+            badgeClass="overdue";
+            statusText="Overdue";
+            overdueText=`🔴 Overdue by ${Math.abs(diff)} days`;
+          } else if (diff <= 3) {
+            statusClass="due-soon";
+            badgeClass="due-soon";
+            statusText="Due Soon";
           }
         }
 
         let upi = "f051m00855@indianbk";
-        let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
+        let upiLink = `upi://pay?pa=${upi}&pn=RanSan&am=${pending}&cu=INR`;
 
         html += `
         <div class="card ${statusClass}">
-
-          <div style="display:flex; justify-content:space-between;">
-            <b>let invoiceNo =
-  inv.invoiceNumber ||
-  inv.snapshot?.invoiceNumber ||
-  inv["Invoice Number"] ||
-  inv["invoice number"] ||
-  inv.invoice_number ||
-  inv.number ||
-  "INV-" + (inv.id ? inv.id.slice(-4) : "0000");</b>
+          <div style="display:flex;justify-content:space-between;">
+            <b>${invoiceNo}</b>
             <span class="badge ${badgeClass}">${statusText}</span>
           </div>
 
-          <br>
+          <div style="font-size:12px;margin-top:5px;">
+            Paid ₹${paid} / ₹${total}
+          </div>
 
-          <!-- PROGRESS -->
-          <div style="font-size:12px;">Paid ₹${paid} / ₹${total}</div>
           <div class="progress">
             <div class="progress-bar" style="width:${progress}%"></div>
           </div>
 
-          ${overdueText ? `<div class="overdue-text">${overdueText}</div>` : ``}
+          ${overdueText ? `<div class="overdue-text">${overdueText}</div>` : ""}
 
-          ${pending > 0 ? `
-            <div style="margin-top:8px;font-weight:bold;color:#d63031;">
-              Pay: ₹${pending}
-            </div>
-          ` : `<div style="color:#27ae60;font-weight:bold;">✅ Fully Paid</div>`}
+          ${pending>0 ? `<div style="color:red;font-weight:bold;">Pay ₹${pending}</div>` : `<div style="color:green;">Paid</div>`}
 
-          <!-- BUTTON ROW -->
           <div class="btn-row">
-            ${pending > 0 ? `
-              <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
-                Pay Now
-              </button>
-            ` : ``}
-
-            <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
-              Download
-            </button>
+            ${pending>0 ? `<button class="btn btn-pay" onclick="payNow('${upiLink}')">Pay Now</button>` : ""}
+            <button class="btn btn-download" onclick="openPrintById('${inv.id}')">Download</button>
           </div>
-
         </div>
         `;
       });
 
-      // ✅ PAY ALL BUTTON
-      let payAllBtn = "";
-      if (totalPending > 0) {
-        let upi = "f051m00855@indianbk";
-        let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${totalPending}&cu=INR`;
+      let payAll = totalPending>0 ? `
+        <div class="pay-all" onclick="payNow('upi://pay?pa=f051m00855@indianbk&pn=RanSan&am=${totalPending}&cu=INR')">
+          💳 Pay All ₹${totalPending}
+        </div>` : "";
 
-        payAllBtn = `
-          <div class="pay-all" onclick="payNow('${upiLink}', ${totalPending})">
-            💳 Pay All Pending ₹${totalPending.toLocaleString('en-IN')}
-          </div>
-        `;
-      }
-
-      // ✅ SUMMARY
       document.getElementById("summary").innerHTML = `
-        ${payAllBtn}
-
+        ${payAll}
         <div class="summary-grid">
-          <div class="summary-card pending">
-            <h4>To Pay</h4>
-            <p>₹${totalPending.toLocaleString('en-IN')}</p>
-          </div>
-
-          <div class="summary-card paid">
-            <h4>Paid</h4>
-            <p>₹${totalPaid.toLocaleString('en-IN')}</p>
-          </div>
-
-          <div class="summary-card total">
-            <h4>Total</h4>
-            <p>₹${totalAmount.toLocaleString('en-IN')}</p>
-          </div>
+          <div class="summary-card pending">To Pay ₹${totalPending}</div>
+          <div class="summary-card paid">Paid ₹${totalPaid}</div>
+          <div class="summary-card total">Total ₹${totalAmount}</div>
         </div>
       `;
 
@@ -378,7 +316,6 @@ function loadData() {
     });
 }
 
-/* PAY */
 function payNow(link){
   window.location.href = link;
 }

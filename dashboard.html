@@ -92,11 +92,84 @@
     .btn-pay { background: #27ae60; color: white; }
     .btn-download { background: #6a11cb; color: white; }
 
+    /* LOADER */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #ddd;
+  border-top: 4px solid #6a11cb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* BUTTON ROW */
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-row .btn {
+  flex: 1;
+}
+
+/* PROGRESS BAR */
+.progress {
+  background: #eee;
+  border-radius: 10px;
+  height: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #00b894, #55efc4);
+}
+
+/* PAY ALL BUTTON */
+.pay-all {
+  background: #ff7675;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+/* OVERDUE TEXT */
+.overdue-text {
+  color: red;
+  font-size: 12px;
+  font-weight: bold;
+}
+
   </style>
 </head>
 
 <body>
 
+<div id="loader" style="
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+">
+  <div style="text-align:center">
+    <div class="spinner"></div>
+    <p style="margin-top:10px;color:#666;">Loading dashboard...</p>
+  </div>
+</div>
+  
 <div class="header">
   <div class="logo">
     <img src="assets/ransan_logo.png">
@@ -128,100 +201,155 @@ if (!customerId) {
 
 function loadData() {
 
+  document.getElementById("loader").style.display = "flex";
+
   fetch(API_URL + "?action=getall")
     .then(res => res.json())
     .then(data => {
 
-      let invoices = (data.invoices || []).filter(i => i.customerId === customerId);
+      document.getElementById("loader").style.display = "none";
 
-      let total = 0, paid = 0, pending = 0;
+      window.allInvoices = data.invoices || [];
+
+      let invoices = window.allInvoices.filter(i => i.customerId === customerId);
+
+      let totalAmount = 0;
+      let totalPaid = 0;
+      let totalPending = 0;
 
       let html = "";
 
+      // ✅ SORT
+      invoices.sort((a, b) => {
+        const paidA = (a.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+        const paidB = (b.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+
+        return ((b.total||0)-paidB) - ((a.total||0)-paidA);
+      });
+
       invoices.forEach(inv => {
 
-        let paidAmt = (inv.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
-        let totalAmt = Number(inv.total||0);
-        let dueAmt = totalAmt - paidAmt;
+        let paid = (inv.payments || []).reduce((s,p)=>s+Number(p.amount||0),0);
+        let total = Number(inv.total||0);
+        let pending = total - paid;
 
-        total += totalAmt;
-        paid += paidAmt;
-        if (dueAmt > 0) pending += dueAmt;
+        totalAmount += total;
+        totalPaid += paid;
+        if (pending > 0) totalPending += pending;
 
-        let invoiceNo = inv.invoiceNumber || inv.id;
+        let progress = total ? Math.round((paid / total) * 100) : 0;
 
-        let dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
         let today = new Date();
+        let dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
 
-        let status = "pending";
-        let extraClass = "";
+        let statusClass = "";
+        let badgeClass = "pending";
+        let statusText = "Pending";
+        let overdueText = "";
 
-        if (dueAmt <= 0) {
-          status = "paid";
-        } else if (dueDate) {
-          let diff = Math.ceil((dueDate - today)/(1000*60*60*24));
+        if (pending <= 0) {
+          badgeClass = "paid";
+          statusText = "Paid";
+          statusClass = "paid-card";
+        }
+        else if (dueDate) {
 
-          if (diff < 0) {
-            status = "overdue";
-            extraClass = "overdue";
-          } else if (diff <= 3) {
-            extraClass = "due-soon";
+          let diffDays = Math.ceil((dueDate - today) / (1000*60*60*24));
+
+          if (diffDays < 0) {
+            statusClass = "overdue";
+            badgeClass = "overdue";
+            statusText = "Overdue";
+            overdueText = `🔴 Overdue by ${Math.abs(diffDays)} days`;
+          }
+          else if (diffDays <= 3) {
+            statusClass = "due-soon";
+            badgeClass = "due-soon";
+            statusText = "Due Soon";
           }
         }
 
         let upi = "f051m00855@indianbk";
-        let upiLink = `upi://pay?pa=${upi}&pn=RanSan&am=${dueAmt}&cu=INR`;
+        let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${pending}&cu=INR`;
 
         html += `
-        <div class="card ${extraClass}">
-          <div style="display:flex;justify-content:space-between;">
-            <b>${invoiceNo}</b>
-            <span class="badge ${status}">${status}</span>
+        <div class="card ${statusClass}">
+
+          <div style="display:flex; justify-content:space-between;">
+            <b>${inv.invoiceNumber || inv.id}</b>
+            <span class="badge ${badgeClass}">${statusText}</span>
           </div>
 
           <br>
 
-          <div><b>Pending:</b> ₹${dueAmt}</div>
-          <div>Total: ₹${totalAmt}</div>
-          <div>Paid: ₹${paidAmt}</div>
+          <!-- PROGRESS -->
+          <div style="font-size:12px;">Paid ₹${paid} / ₹${total}</div>
+          <div class="progress">
+            <div class="progress-bar" style="width:${progress}%"></div>
+          </div>
 
-          ${dueDate ? `<div>Due: ${dueDate.toLocaleDateString()}</div>` : ''}
+          ${overdueText ? `<div class="overdue-text">${overdueText}</div>` : ``}
 
-          ${dueAmt > 0 ? `
-            <button class="btn btn-pay" onclick="payNow('${upiLink}', ${dueAmt})">
-              Pay Now
+          ${pending > 0 ? `
+            <div style="margin-top:8px;font-weight:bold;color:#d63031;">
+              Pay: ₹${pending}
+            </div>
+          ` : `<div style="color:#27ae60;font-weight:bold;">✅ Fully Paid</div>`}
+
+          <!-- BUTTON ROW -->
+          <div class="btn-row">
+            ${pending > 0 ? `
+              <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
+                Pay Now
+              </button>
+            ` : ``}
+
+            <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
+              Download
             </button>
-            <div style="font-size:12px;color:#888;">Checking payment...</div>
-          ` : ''}
+          </div>
 
-          <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
-            Download
-          </button>
         </div>
         `;
       });
 
-      // EMPTY STATE
-      if (!html) {
-        html = "<p style='text-align:center'>No invoices found</p>";
+      // ✅ PAY ALL BUTTON
+      let payAllBtn = "";
+      if (totalPending > 0) {
+        let upi = "f051m00855@indianbk";
+        let upiLink = `upi://pay?pa=${upi}&pn=RanSan Groups&am=${totalPending}&cu=INR`;
+
+        payAllBtn = `
+          <div class="pay-all" onclick="payNow('${upiLink}', ${totalPending})">
+            💳 Pay All Pending ₹${totalPending.toLocaleString('en-IN')}
+          </div>
+        `;
       }
 
-      document.getElementById("invoices").innerHTML =
-        `<div class="invoice-grid">${html}</div>`;
-
+      // ✅ SUMMARY
       document.getElementById("summary").innerHTML = `
+        ${payAllBtn}
+
         <div class="summary-grid">
-          <div class="summary-card pending">To Pay<br>₹${pending}</div>
-          <div class="summary-card paid">Paid<br>₹${paid}</div>
-          <div class="summary-card total">Total<br>₹${total}</div>
+          <div class="summary-card pending">
+            <h4>To Pay</h4>
+            <p>₹${totalPending.toLocaleString('en-IN')}</p>
+          </div>
+
+          <div class="summary-card paid">
+            <h4>Paid</h4>
+            <p>₹${totalPaid.toLocaleString('en-IN')}</p>
+          </div>
+
+          <div class="summary-card total">
+            <h4>Total</h4>
+            <p>₹${totalAmount.toLocaleString('en-IN')}</p>
+          </div>
         </div>
       `;
 
-    })
-    .catch(err => {
       document.getElementById("invoices").innerHTML =
-        "<p style='text-align:center;color:red'>Error loading data</p>";
-      console.error(err);
+        `<div class="invoice-grid">${html}</div>`;
     });
 }
 

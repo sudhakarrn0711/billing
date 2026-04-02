@@ -149,6 +149,16 @@
   font-weight: bold;
 }
 
+    .top-refresh {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: #6a11cb;
+  width: 0%;
+  transition: width 0.3s;
+}
+
   </style>
 </head>
 
@@ -201,7 +211,15 @@ if (!customerId) {
 
 function loadData() {
 
+  let isFirstLoad = true;
+
+  if (isFirstLoad) {
   document.getElementById("loader").style.display = "flex";
+}
+
+  if (isFirstLoad) {
+  document.getElementById("loader").style.display = "flex";
+}
 
   fetch(API_URL + "?action=getall")
     .then(res => res.json())
@@ -276,7 +294,14 @@ function loadData() {
         <div class="card ${statusClass}">
 
           <div style="display:flex; justify-content:space-between;">
-            <b>${inv.invoiceNumber || inv.id}</b>
+            <b>let invoiceNo =
+  inv.invoiceNumber ||
+  inv.snapshot?.invoiceNumber ||
+  inv["Invoice Number"] ||
+  inv["invoice number"] ||
+  inv.invoice_number ||
+  inv.number ||
+  "INV-" + (inv.id ? inv.id.slice(-4) : "0000");</b>
             <span class="badge ${badgeClass}">${statusText}</span>
           </div>
 

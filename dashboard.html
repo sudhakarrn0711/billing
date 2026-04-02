@@ -279,10 +279,17 @@ function loadData(){
 
         ${bal>0?`<div style="color:red;font-weight:bold;">₹${bal}</div>`:`<div style="color:green;">Paid</div>`}
 
-        <div class="btn-row">
-          ${bal>0?`<button class="btn btn-pay" onclick="payNow('${upiLink}',${bal})">Pay</button>`:""}
-          <button class="btn btn-download" onclick="openPrintById('${inv.id}')">Download</button>
-        </div>
+          <div class="btn-row">
+            ${pending > 0 ? `
+              <button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">
+                Pay Now
+              </button>
+            ` : ``}
+
+            <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
+              Download
+            </button>
+          </div>
       </div>
       `;
     });

@@ -309,58 +309,7 @@ fetch(API_URL + "?action=getall")
       "<p style='text-align:center;color:red'>Error loading data</p>";
   });
 
-/* =========================
-   AUTO REFRESH PAYMENT
-========================= */
 
-setInterval(() => {
-  fetch(API_URL + "?action=getall")
-    .then(res => res.json())
-    .then(data => {
-
-      // compare and reload if changed
-      if (JSON.stringify(data.invoices) !== JSON.stringify(window.allInvoices)) {
-        location.reload();
-      }
-
-    });
-}, 30000); // 30 sec
-
-    // ✅ SUMMARY (Customer Friendly)
-    document.getElementById("summary").innerHTML = `
-      <div class="summary-grid">
-
-        <div class="summary-card pending">
-          <h4>Amount to Pay</h4>
-          <p>₹${totalPending.toLocaleString('en-IN')}</p>
-        </div>
-
-        <div class="summary-card paid">
-          <h4>Paid So Far</h4>
-          <p>₹${totalPaid.toLocaleString('en-IN')}</p>
-        </div>
-
-        <div class="summary-card total">
-          <h4>Total Billing</h4>
-          <p>₹${totalAmount.toLocaleString('en-IN')}</p>
-        </div>
-
-      </div>
-    `;
-
-    // ✅ EMPTY STATE
-    if (!html) {
-      html = `
-        <div style="text-align:center; padding:40px;">
-          <h3>No invoices found</h3>
-          <p>You’re all set 👍</p>
-        </div>
-      `;
-    }
-
-    document.getElementById("invoices").innerHTML =
-      `<div class="invoice-grid">${html}</div>`;
-  });
 
 /* =========================
    DOWNLOAD PDF

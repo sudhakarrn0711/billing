@@ -286,7 +286,7 @@ function loadData(){
               </button>
             ` : ``}
 
-            <button class="btn btn-download" onclick="openPrintById('${inv.id}')">
+            <button class="btn btn-download" onclick='openPrint(${JSON.stringify(inv)})'>
               Download
             </button>
           </div>

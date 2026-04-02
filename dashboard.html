@@ -217,14 +217,20 @@ function loadData(){
       paid+=p;
       if(bal>0) pending+=bal;
 
-      // ✅ FIXED invoice number
-      let invoiceNo = (
-        inv.invoiceNumber ||
-        inv.snapshot?.invoiceNumber ||
-        inv["Invoice Number"] ||
-        inv.number ||
-        inv.id
-      ).toString().toUpperCase();
+     // ✅ STRONG FIX (always prefer snapshot first)
+let invoiceNo =
+  inv.snapshot?.invoiceNumber ||
+  inv.invoiceNumber ||
+  inv["Invoice Number"] ||
+  inv["invoice number"] ||
+  inv.number;
+
+// fallback only if everything missing
+if (!invoiceNo) {
+  invoiceNo = "INV-" + (inv.id ? inv.id.slice(-4) : "0000");
+}
+
+invoiceNo = invoiceNo.toString().toUpperCase();
 
       let progress = t ? Math.round((p/t)*100):0;
 
@@ -316,7 +322,6 @@ function payNow(link,amount){
 ========================= */
 
 function openPrintById(invId) {
-
   const inv = window.allInvoices.find(x => x.id === invId);
 
   if (!inv) {

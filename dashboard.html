@@ -257,7 +257,15 @@ function loadData(){
       html+=`
       <div class="card ${statusClass}">
         <div style="display:flex;justify-content:space-between;">
-          <b>${invoiceNo}</b>
+          <b>${
+  inv.invoiceNumber ||
+  inv.snapshot?.invoiceNumber ||
+  inv["Invoice Number"] ||
+  inv["invoice number"] ||
+  inv.invoice_number ||
+  inv.number ||
+  "INV-" + (inv.id ? inv.id.slice(-4) : "0000")
+}</b>
           <span class="badge ${badge}">${text}</span>
         </div>
 

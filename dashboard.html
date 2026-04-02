@@ -204,6 +204,8 @@ function loadData() {
     .then(res => res.json())
     .then(data => {
 
+      window.allInvoices = data.invoices || [];
+
       document.getElementById("loader").style.display = "none";
       isFirstLoad = false;
 
@@ -290,7 +292,7 @@ function loadData() {
           ${pending>0 ? `<div style="color:red;font-weight:bold;">Pay ₹${pending}</div>` : `<div style="color:green;">Paid</div>`}
 
           <div class="btn-row">
-            ${pending>0 ? `<button class="btn btn-pay" payNow('${upiLink}', ${dueAmt})">Pay Now</button>` : ""}
+            ${pending>0 ? `<button class="btn btn-pay" onclick="payNow('${upiLink}', ${pending})">Pay Now</button>` : ""}
             <button class="btn btn-download" onclick="openPrintById('${inv.id}')">Download</button>
           </div>
         </div>
@@ -316,10 +318,40 @@ function loadData() {
     });
 }
 
-function payNow(link){
-  window.location.href = link;
-}
+function payNow(link, amount){
 
+  const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    window.location.href = link;
+  } else {
+
+    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(link);
+
+    const win = window.open('', '_blank');
+
+    win.document.write(`
+      <html>
+      <head>
+        <title>Scan & Pay</title>
+        <style>
+          body { text-align:center; font-family:Arial; padding:20px; }
+        </style>
+      </head>
+      <body>
+
+        <h2>📲 Scan & Pay</h2>
+        <p>Amount: ₹${amount}</p>
+
+        <img src="${qrUrl}" />
+
+        <p>Scan using GPay / PhonePe / Paytm</p>
+
+      </body>
+      </html>
+    `);
+  }
+}
 
 /* =========================
    DOWNLOAD PDF
@@ -327,7 +359,6 @@ function payNow(link){
 
 function openPrintById(invId) {
 
-  // find invoice from already loaded data
   const inv = window.allInvoices.find(x => x.id === invId);
 
   if (!inv) {

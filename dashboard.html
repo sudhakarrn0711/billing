@@ -290,7 +290,7 @@ function loadData() {
           ${pending>0 ? `<div style="color:red;font-weight:bold;">Pay ₹${pending}</div>` : `<div style="color:green;">Paid</div>`}
 
           <div class="btn-row">
-            ${pending>0 ? `<button class="btn btn-pay" onclick="payNow('${upiLink}')">Pay Now</button>` : ""}
+            ${pending>0 ? `<button class="btn btn-pay" payNow('${upiLink}', ${dueAmt})">Pay Now</button>` : ""}
             <button class="btn btn-download" onclick="openPrintById('${inv.id}')">Download</button>
           </div>
         </div>

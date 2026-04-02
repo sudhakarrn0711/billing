@@ -332,16 +332,11 @@ function payNow(link,amount){
 
 function openPrintById(invId) {
 
-  if (!window.allInvoices) {
-    alert("Invoices not loaded yet");
-    return;
-  }
-
-  const inv = window.allInvoices.find(x => String(x.id) === String(invId));
+  const inv = (window.allInvoices || []).find(x => String(x.id) === String(invId));
 
   if (!inv) {
-    alert("Invoice not found: " + invId);
-    console.log("Available invoices:", window.allInvoices);
+    alert("Invoice not found");
+    console.log("Invoice ID:", invId);
     return;
   }
 

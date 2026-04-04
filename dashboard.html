@@ -167,7 +167,7 @@ h2 { color:#6a11cb; }
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzpaX6BnZ-4V2uK_70xLNhz-welaMy4J0y4csGVN56bN8csRM5gLXLyA_6foR4cqf2Z/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwRi2iAsC9FYYCacrLt4VDsaksNWf2g4gFOkEwgxDCnAZQ2cAaPHfWaT66jLk0v-s1I/exec";
   
 const params = new URLSearchParams(location.search);
 
@@ -190,10 +190,16 @@ function loadData(){
     document.getElementById("loader").style.display="flex";
   }
 
-  fetch(API_URL + "?action=getall&env=" + ENV)
-    
-  .then(res=>res.json())
-  .then(data=>{
+fetch(API_URL + "?action=getall&env=" + ENV)
+  .then(res => res.json())
+  .then(data => {
+
+    console.log("API RESPONSE:", data);
+
+    if (!data || !data.invoices) {
+      document.body.innerHTML = "No data from server";
+      return;
+    }
 
     document.getElementById("loader").style.display="none";
     isFirstLoad=false;

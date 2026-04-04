@@ -168,7 +168,11 @@ h2 { color:#6a11cb; }
 <script>
 
 const API_URL = "https://script.google.com/macros/s/AKfycbxYdVXduJm27xy8okwi3-3X0I2kDZmTBPM1U6XMKHHVzeZnbKUml7sQ6InFdRu40_2h/exec";
-const customerId = new URLSearchParams(location.search).get("customerId");
+  
+const params = new URLSearchParams(location.search);
+
+const customerId = params.get("customerId");
+const ENV = params.get("env") || "test"; // fallback
 
 let isFirstLoad = true;
 let allInvoices = [];
@@ -186,24 +190,7 @@ function loadData(){
     document.getElementById("loader").style.display="flex";
   }
 
-  const urlParams = new URLSearchParams(window.location.search);
-
-// 1️⃣ Try URL param (best for external users)
-let env = urlParams.get("env");
-
-// 2️⃣ Fallback (optional - if opened from same system)
-if (!env) {
-  env = sessionStorage.getItem("env");
-}
-
-// 3️⃣ Final fallback (default safe)
-if (!env) {
-  env = "live";
-}
-
-console.log("✅ USING ENV:", env);
-
-fetch(`${API_URL}?action=getall&env=${env}`)
+  fetch(API_URL + "?action=getall&env=" + ENV)
     
   .then(res=>res.json())
   .then(data=>{

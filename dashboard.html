@@ -186,7 +186,25 @@ function loadData(){
     document.getElementById("loader").style.display="flex";
   }
 
-  fetch(API_URL+"?action=getall")
+  const urlParams = new URLSearchParams(window.location.search);
+
+// 1️⃣ Try URL param (best for external users)
+let env = urlParams.get("env");
+
+// 2️⃣ Fallback (optional - if opened from same system)
+if (!env) {
+  env = sessionStorage.getItem("env");
+}
+
+// 3️⃣ Final fallback (default safe)
+if (!env) {
+  env = "live";
+}
+
+console.log("✅ USING ENV:", env);
+
+fetch(`${API_URL}?action=getall&env=${env}`)
+    
   .then(res=>res.json())
   .then(data=>{
 

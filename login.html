@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Billing System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 flex items-center justify-center h-screen">
+
+  <div class="bg-gray-800 p-6 rounded-xl w-80 shadow-lg">
+    <h2 class="text-white text-xl font-bold mb-4 text-center">Login</h2>
+
+    <input id="username" type="text" placeholder="Username" class="w-full p-2 mb-3 rounded bg-gray-700 text-white">
+
+    <div class="relative">
+      <input id="password" type="password" placeholder="Password" class="w-full p-2 rounded bg-gray-700 text-white">
+
+      <button type="button" onclick="togglePassword()" class="absolute right-2 top-2 text-sm text-gray-300">
+        Show
+      </button>
+    </div>
+
+    <button onclick="login()" class="w-full bg-purple-600 hover:bg-purple-700 text-white p-2 rounded">
+      Login
+    </button>
+
+    <p id="error" class="text-red-400 text-sm mt-3 text-center hidden">
+      Invalid login
+    </p>
+  </div>
+
+  <script>
+
+    async function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+
+      const env = localStorage.getItem("env") || "test";
+
+      try {
+        const url = `https://script.google.com/macros/s/AKfycbz3Izq2yrhPwSDfz1UEiLoZw2MXkhKad_ObGtKMwUM2izVW8AetCph91-z-C6VqcZld/exec?action=login&username=${user}&password=${pass}&env=${env}`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // ✅ DEBUG (VERY IMPORTANT)
+        console.log("LOGIN RESPONSE:", data);
+        console.log("LOGIN ACCESS:", data.access);
+
+        if (data.success) {
+          sessionStorage.setItem("isLoggedIn", "true");
+
+          // ✅ ENV
+          sessionStorage.setItem("env", data.env || env);
+
+          // ✅ ROLE
+          sessionStorage.setItem("role", data.role);
+
+          // ✅ USERNAME
+          sessionStorage.setItem("username", data.username);
+
+          // ✅ ACCESS (NO HARDCODE)
+          sessionStorage.setItem("access", data.access);
+
+          // ✅ SAFETY CHECK (OPTIONAL BUT RECOMMENDED)
+          if (!data.access) {
+            console.warn("⚠️ No access received from backend");
+          }
+
+          window.location.href = "index.html";
+        } else {
+          document.getElementById("error").classList.remove("hidden");
+        }
+
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
+    }
+  </script>
+
+
+  <script>
+    function togglePassword() {
+      const passField = document.getElementById("password");
+      const btn = event.target;
+
+      if (passField.type === "password") {
+        passField.type = "text";
+        btn.innerText = "Hide";
+      } else {
+        passField.type = "password";
+        btn.innerText = "Show";
+      }
+    }
+  </script>
+
+
+
+</body>
+
+</html>

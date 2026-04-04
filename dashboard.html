@@ -186,7 +186,10 @@ function loadData(){
     document.getElementById("loader").style.display="flex";
   }
 
-  fetch(API_URL+"?action=getall")
+  const ENV = "live"; // or "test" for testing
+
+fetch(API_URL + "?action=getall&env=" + ENV)
+    
   .then(res=>res.json())
   .then(data=>{
 

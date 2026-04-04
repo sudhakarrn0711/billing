@@ -195,6 +195,9 @@ function loadData(){
 
     allInvoices = data.invoices || [];
 
+    window.allCustomers = data.customers || [];
+window.allInvoices = data.invoices || []; // (important for print)
+
     let invoices = allInvoices.filter(i=>i.customerId===customerId);
 
     let total=0, paid=0, pending=0;

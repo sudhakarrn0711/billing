@@ -167,12 +167,8 @@ h2 { color:#6a11cb; }
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwRi2iAsC9FYYCacrLt4VDsaksNWf2g4gFOkEwgxDCnAZQ2cAaPHfWaT66jLk0v-s1I/exec";
-  
-const params = new URLSearchParams(location.search);
-
-const customerId = params.get("customerId");
-const ENV = params.get("env") || "test"; // fallback
+const API_URL = "https://script.google.com/macros/s/AKfycbxTBg6R15XxDt_R4dgnA1A2dmE4lJMK6WF48HC6AT9rhM6uN2xF6xtURQFwG_UOKw5H/exec";
+const customerId = new URLSearchParams(location.search).get("customerId");
 
 let isFirstLoad = true;
 let allInvoices = [];
@@ -190,16 +186,9 @@ function loadData(){
     document.getElementById("loader").style.display="flex";
   }
 
-fetch(API_URL + "?action=getall&env=" + ENV)
-  .then(res => res.json())
-  .then(data => {
-
-    console.log("API RESPONSE:", data);
-
-    if (!data || !data.invoices) {
-      document.body.innerHTML = "No data from server";
-      return;
-    }
+  fetch(API_URL+"?action=getall")
+  .then(res=>res.json())
+  .then(data=>{
 
     document.getElementById("loader").style.display="none";
     isFirstLoad=false;

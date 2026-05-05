@@ -1,19 +1,12 @@
 /* =====================================================
-   MOBILE.JS — FINAL ULTRA FIXED VERSION
-   Professional Mobile Optimizer
-
-   FIXED NOW:
-   ✅ Collapse button hidden fully
-   ✅ Only Hamburger / Close toggle shown
-   ✅ Sidebar open / close same button
-   ✅ Click outside close
-   ✅ All modals responsive
-   ✅ Close buttons visible
-   ✅ Tables scrollable
-   ✅ Forms fit screen
+   MOBILE.JS — CLEAN FINAL FIXED VERSION
+   Solves:
+   ✅ No top bar on mobile
+   ✅ Env + Logout moved inside sidebar
+   ✅ Sidebar has open + close button
    ✅ Login center perfect
-   ✅ Env toggle visible
-   ✅ Logout visible
+   ✅ Modal close visible
+   ✅ Collapse hidden
 ===================================================== */
 
 (function () {
@@ -21,145 +14,113 @@
 
   const MOBILE = 768;
 
-  /* =========================
-     START
-  ========================= */
   window.addEventListener("load", initMobile);
-  window.addEventListener("resize", debounce(initMobile, 250));
+  window.addEventListener("resize", initMobile);
 
   function initMobile() {
     if (window.innerWidth > MOBILE) return;
 
     bodyFix();
     loginFix();
-    createHeader();
-    hideOldCollapseButtons();
-    moveTopActions();
-    sidebarFix();
+    createSidebarSystem();
+    hideOldButtons();
+    moveSidebarActions();
     modalFix();
-    tableFix();
-    formFix();
-    gridFix();
-    cardFix();
-    chartFix();
-    sectionFix();
+    uiFix();
   }
 
-  /* =========================
-     HELPERS
-  ========================= */
+  function qs(x){ return document.querySelector(x); }
+  function qsa(x){ return document.querySelectorAll(x); }
 
-  function qs(x) { return document.querySelector(x); }
-  function qsa(x) { return document.querySelectorAll(x); }
-
-  function debounce(fn, ms) {
-    let t;
-    return function () {
-      clearTimeout(t);
-      t = setTimeout(fn, ms);
-    };
-  }
-
-  /* =========================
+  /* ==========================================
      BODY
-  ========================= */
-
-  function bodyFix() {
+  ========================================== */
+  function bodyFix(){
     document.body.style.overflowX = "hidden";
-    document.body.classList.add("mobile-ui");
   }
 
-  /* =========================
-     LOGIN SCREEN
-  ========================= */
+  /* ==========================================
+     LOGIN PERFECT CENTER
+  ========================================== */
+  function loginFix(){
 
-  function loginFix() {
     const login =
       qs("#loginScreen") ||
       qs("#login") ||
       qs(".login-screen") ||
       qs(".login-container");
 
-    if (!login) return;
+    if(!login) return;
 
-    login.style.minHeight = "100vh";
+    login.style.position = "fixed";
+    login.style.inset = "0";
     login.style.display = "flex";
     login.style.alignItems = "center";
     login.style.justifyContent = "center";
-    login.style.padding = "20px";
+    login.style.padding = "18px";
+    login.style.background = "#f8fafc";
+    login.style.zIndex = "999999";
 
     const card = login.firstElementChild;
-    if (card) {
+
+    if(card){
       card.style.width = "100%";
       card.style.maxWidth = "420px";
-      card.style.padding = "22px";
       card.style.borderRadius = "18px";
+      card.style.padding = "22px";
     }
   }
 
-  /* =========================
-     CREATE TOP HEADER
-  ========================= */
+  /* ==========================================
+     SIDEBAR SYSTEM
+  ========================================== */
+  function createSidebarSystem(){
 
-  function createHeader() {
-    if (qs("#mobileTopBar")) return;
+    if(qs("#mobileMenuFloat")) return;
 
     const aside = qs("aside");
-    if (!aside) return;
+    if(!aside) return;
 
     aside.id = "mobileSidebar";
 
-    const bar = document.createElement("div");
-    bar.id = "mobileTopBar";
+    /* Floating open button */
+    const openBtn = document.createElement("button");
+    openBtn.id = "mobileMenuFloat";
+    openBtn.innerHTML = "☰";
 
-    bar.innerHTML = `
-      <button id="mobileMenuBtn">☰</button>
-      <div id="mobileTitle">Dashboard</div>
-      <div id="mobileTopActions"></div>
-    `;
+    document.body.appendChild(openBtn);
 
-    document.body.prepend(bar);
-
+    /* Overlay */
     const overlay = document.createElement("div");
     overlay.id = "mobileOverlay";
     document.body.appendChild(overlay);
 
+    /* Close button inside sidebar */
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "mobileCloseBtn";
+    closeBtn.innerHTML = "✕";
+    aside.prepend(closeBtn);
+
+    /* Action Area */
+    const act = document.createElement("div");
+    act.id = "mobileSidebarActions";
+    aside.appendChild(act);
+
+    /* CSS */
     const style = document.createElement("style");
     style.innerHTML = `
-      #mobileTopBar{
+      #mobileMenuFloat{
         position:fixed;
-        top:0; left:0; right:0;
-        height:56px;
-        background:#0f172a;
-        display:flex;
-        align-items:center;
-        gap:10px;
-        padding:0 12px;
-        z-index:99999;
-        border-bottom:1px solid rgba(255,255,255,.08);
-      }
-
-      #mobileMenuBtn{
-        width:38px;
-        height:38px;
+        top:14px;
+        left:14px;
+        width:42px;
+        height:42px;
         border:none;
-        background:none;
+        border-radius:10px;
+        background:#111827;
         color:#fff;
         font-size:24px;
-        border-radius:8px;
-      }
-
-      #mobileTitle{
-        color:#fff;
-        font-weight:600;
-        font-size:15px;
-      }
-
-      #mobileTopActions{
-        margin-left:auto;
-        display:flex;
-        gap:6px;
-        align-items:center;
+        z-index:99999;
       }
 
       #mobileSidebar{
@@ -172,11 +133,22 @@
         z-index:100000;
         transition:left .28s ease;
         overflow-y:auto;
-        padding-top:60px;
+        padding:14px;
       }
 
       #mobileSidebar.open{
         left:0;
+      }
+
+      #mobileCloseBtn{
+        width:40px;
+        height:40px;
+        border:none;
+        border-radius:10px;
+        background:#dc2626;
+        color:#fff;
+        font-size:22px;
+        margin-bottom:14px;
       }
 
       #mobileOverlay{
@@ -191,111 +163,54 @@
         display:block;
       }
 
-      main{
-        padding-top:64px !important;
+      #mobileSidebarActions{
+        margin-top:20px;
+        display:flex;
+        flex-direction:column;
+        gap:10px;
       }
 
-      /* hide unwanted old collapse buttons */
-      .collapse-btn,
-      .sidebar-toggle,
-      .menu-collapse,
-      [onclick*="collapse"],
-      [onclick*="toggleSidebarOld"]{
+      #mobileSidebar button,
+      #mobileSidebar a,
+      #mobileSidebar select{
+        min-height:42px;
+        width:100%;
+      }
+
+      /* hide top bars */
+      #mobileTopBar,
+      header{
         display:none !important;
+      }
+
+      main{
+        padding-top:10px !important;
       }
     `;
     document.head.appendChild(style);
 
-    qs("#mobileMenuBtn").onclick = toggleMenu;
-    qs("#mobileOverlay").onclick = closeMenu;
+    openBtn.onclick = openSidebar;
+    closeBtn.onclick = closeSidebar;
+    overlay.onclick = closeSidebar;
   }
 
-  /* =========================
-     REMOVE OLD COLLAPSE
-  ========================= */
-
-function hideOldCollapseButtons() {
-
-  function removeButtons() {
-    document.querySelectorAll("button,a,div,span").forEach(el => {
-
-      const txt = (el.innerText || "").trim().toLowerCase();
-
-      const cls = (el.className || "").toString().toLowerCase();
-
-      if (
-        txt === "collapse" ||
-        txt === "expand" ||
-        txt === "close menu" ||
-        txt === "menu" ||
-        cls.includes("collapse") ||
-        cls.includes("sidebar-toggle") ||
-        cls.includes("menu-toggle") ||
-        el.onclick?.toString().includes("collapse")
-      ) {
-        el.style.display = "none";
-        el.remove();
-      }
-
-    });
+  function openSidebar(){
+    qs("#mobileSidebar")?.classList.add("open");
+    qs("#mobileOverlay")?.classList.add("show");
   }
 
-  /* run immediately */
-  removeButtons();
-
-  /* run again after render */
-  setTimeout(removeButtons, 500);
-  setTimeout(removeButtons, 1000);
-  setTimeout(removeButtons, 2000);
-
-  /* live watch future buttons */
-  const observer = new MutationObserver(removeButtons);
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-}
-
-  /* =========================
-     MENU TOGGLE
-  ========================= */
-
-  function toggleMenu() {
-    const side = qs("#mobileSidebar");
-    const ov = qs("#mobileOverlay");
-    const btn = qs("#mobileMenuBtn");
-
-    if (!side) return;
-
-    if (side.classList.contains("open")) {
-      closeMenu();
-    } else {
-      side.classList.add("open");
-      ov.classList.add("show");
-      btn.innerHTML = "✕";
-    }
+  function closeSidebar(){
+    qs("#mobileSidebar")?.classList.remove("open");
+    qs("#mobileOverlay")?.classList.remove("show");
   }
 
-  function closeMenu() {
-    const side = qs("#mobileSidebar");
-    const ov = qs("#mobileOverlay");
-    const btn = qs("#mobileMenuBtn");
+  /* ==========================================
+     MOVE ENV + LOGOUT TO SIDEBAR
+  ========================================== */
+  function moveSidebarActions(){
 
-    if (!side) return;
-
-    side.classList.remove("open");
-    ov.classList.remove("show");
-    btn.innerHTML = "☰";
-  }
-
-  /* =========================
-     TOP ACTIONS
-  ========================= */
-
-  function moveTopActions() {
-    const wrap = qs("#mobileTopActions");
-    if (!wrap) return;
+    const wrap = qs("#mobileSidebarActions");
+    if(!wrap) return;
 
     const env =
       qs("#env-toggle") ||
@@ -307,133 +222,102 @@ function hideOldCollapseButtons() {
       qs("#logout") ||
       qs("[onclick*='logout']");
 
-    if (env && !wrap.contains(env)) {
+    if(env && !wrap.contains(env)){
       wrap.appendChild(env);
-      env.style.height = "34px";
-      env.style.fontSize = "12px";
-      env.style.maxWidth = "95px";
     }
 
-    if (logout && !wrap.contains(logout)) {
+    if(logout && !wrap.contains(logout)){
       wrap.appendChild(logout);
-      logout.style.height = "34px";
-      logout.style.padding = "6px 10px";
       logout.style.background = "#dc2626";
       logout.style.color = "#fff";
-      logout.style.borderRadius = "8px";
-      logout.style.fontSize = "12px";
+      logout.style.borderRadius = "10px";
     }
   }
 
-  /* =========================
-     SIDEBAR
-  ========================= */
+  /* ==========================================
+     HIDE OLD COLLAPSE
+  ========================================== */
+  function hideOldButtons(){
 
-  function sidebarFix() {
-    qsa("#mobileSidebar button,#mobileSidebar a").forEach(el => {
-      el.style.minHeight = "44px";
-      el.style.display = "flex";
-      el.style.alignItems = "center";
+    function removeNow(){
+      qsa("button,a,div,span").forEach(el => {
+
+        const txt = (el.innerText || "").trim().toLowerCase();
+        const cls = (el.className || "").toString().toLowerCase();
+
+        if(
+          txt === "collapse" ||
+          txt === "expand" ||
+          cls.includes("collapse") ||
+          cls.includes("sidebar-toggle")
+        ){
+          el.remove();
+        }
+
+      });
+    }
+
+    removeNow();
+    setTimeout(removeNow,500);
+    setTimeout(removeNow,1200);
+
+    new MutationObserver(removeNow).observe(document.body,{
+      childList:true,
+      subtree:true
     });
   }
 
-  /* =========================
+  /* ==========================================
      MODALS
-  ========================= */
+  ========================================== */
+  function modalFix(){
 
-  function modalFix() {
     qsa(`
       #printModal > div,
       #bizModal > div,
       #editInvoiceModal > div,
       #bulkPaymentModal > div,
       #userModal > div
-    `).forEach(modal => {
-      modal.style.width = "96vw";
-      modal.style.maxWidth = "96vw";
-      modal.style.maxHeight = "92vh";
-      modal.style.overflowY = "auto";
-      modal.style.padding = "16px";
-      modal.style.borderRadius = "18px";
+    `).forEach(m => {
+      m.style.width = "96vw";
+      m.style.maxWidth = "96vw";
+      m.style.maxHeight = "92vh";
+      m.style.overflowY = "auto";
+      m.style.borderRadius = "18px";
     });
 
-    /* make close buttons visible */
-    qsa("[onclick*='close'], .close, .modal-close").forEach(btn => {
+    qsa(".close,.modal-close,[onclick*='close']").forEach(btn=>{
       btn.style.display = "inline-flex";
-      btn.style.alignItems = "center";
-      btn.style.justifyContent = "center";
-      btn.style.minWidth = "38px";
-      btn.style.minHeight = "38px";
-      btn.style.fontSize = "20px";
+      btn.style.minWidth = "40px";
+      btn.style.minHeight = "40px";
+      btn.style.fontSize = "22px";
+      btn.style.zIndex = "999999";
     });
   }
 
-  /* =========================
-     TABLES
-  ========================= */
+  /* ==========================================
+     GENERAL UI
+  ========================================== */
+  function uiFix(){
 
-  function tableFix() {
-    qsa("table").forEach(t => {
-      if (t.parentElement) t.parentElement.style.overflowX = "auto";
+    qsa("table").forEach(t=>{
+      if(t.parentElement) t.parentElement.style.overflowX = "auto";
       t.style.minWidth = "700px";
-      t.style.fontSize = "12px";
     });
-  }
 
-  /* =========================
-     FORMS
-  ========================= */
-
-  function formFix() {
-    qsa("input,select,textarea,button").forEach(el => {
+    qsa("input,select,textarea").forEach(el=>{
+      el.style.width = "100%";
       el.style.minHeight = "42px";
-      el.style.fontSize = "14px";
-      if (el.tagName !== "BUTTON") el.style.width = "100%";
     });
-  }
 
-  /* =========================
-     GRID
-  ========================= */
-
-  function gridFix() {
-    qsa(".grid").forEach(g => {
+    qsa(".grid").forEach(g=>{
       g.style.gridTemplateColumns = "1fr";
-      g.style.gap = "12px";
     });
-  }
 
-  /* =========================
-     CARD
-  ========================= */
-
-  function cardFix() {
-    qsa(".glass,.modal-glass").forEach(c => {
-      c.style.padding = "14px";
+    qsa(".glass,.modal-glass").forEach(c=>{
       c.style.borderRadius = "16px";
     });
-  }
 
-  /* =========================
-     CHARTS
-  ========================= */
-
-  function chartFix() {
-    qsa("canvas").forEach(c => {
-      c.style.width = "100%";
-      c.style.height = "auto";
-      c.style.maxHeight = "260px";
-    });
-  }
-
-  /* =========================
-     SECTIONS
-  ========================= */
-
-  function sectionFix() {
-    qsa("section").forEach(s => {
-      s.style.paddingBottom = "80px";
-    });
   }
 
 })();

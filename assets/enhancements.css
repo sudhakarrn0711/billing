@@ -1,0 +1,78 @@
+/* Presentation overrides only; invoice/PDF templates keep their own styles. */
+@media screen {
+  body:not(.theme-minimal):not(.theme-cyberpunk):not(.theme-neoglass) {
+    background: radial-gradient(ellipse at 10% 0%, #443073 0%, transparent 48%), radial-gradient(ellipse at 95% 35%, #123f56 0%, transparent 50%), #0c1221;
+    background-attachment: fixed;
+    animation: none;
+  }
+  body:not(.theme-minimal):not(.theme-cyberpunk):not(.theme-neoglass) .glass,
+  body:not(.theme-minimal):not(.theme-cyberpunk):not(.theme-neoglass) .modal-glass {
+    background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(20,29,48,.78));
+    border: 1px solid rgba(255,255,255,.19);
+    box-shadow: 0 12px 36px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.12);
+    backdrop-filter: blur(18px) saturate(135%);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+    animation: none;
+  }
+  body:not(.theme-minimal):not(.theme-cyberpunk):not(.theme-neoglass) header.sticky {
+    background: rgba(15,22,39,.8) !important;
+    animation: none;
+    border-bottom: 1px solid rgba(255,255,255,.18) !important;
+  }
+  .btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid #38bdf8 !important; outline-offset: 3px; animation: none;
+  }
+  input[type="checkbox"]:not(.env-switch), input[type="radio"] {
+    width: 22px; height: 22px; min-height: 22px; flex: 0 0 22px; cursor: pointer; accent-color: var(--accent-color);
+  }
+  label:has(> input[type="checkbox"]:not(.env-switch)) { min-height: 44px; cursor: pointer; }
+  input, select, textarea { scroll-margin-block: 24px; }
+  [id$="Modal"].fixed { z-index: 120; padding: 16px; overflow-y: auto; align-items: center; }
+  [id$="Modal"].fixed:not(.hidden) { display: flex; }
+  [id$="Modal"].fixed > div { max-height: calc(100dvh - 32px); overflow-y: auto; min-width: 0; }
+  #loader { z-index: 150; }
+  #paymentModal > div { background-color: #172238; }
+  #mobileMenuFloat, #mobileCloseBtn, #mobileOverlay { display: none; }
+  .billing-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #mainContent { min-width: 0; }
+  body.theme-minimal header.sticky :is(h1,span,button,i) { color: #172238 !important; text-shadow: none; }
+  body.theme-minimal .modal-glass, body.theme-minimal #paymentModal > div { background: #fff; color: #172238; }
+  @media (max-width: 1023px) {
+    html,body { min-height: 100%; height: auto; }
+    body { overflow-x: hidden; }
+    header.sticky > div { padding: 12px 12px 12px 64px; gap: 12px; flex-wrap: wrap; }
+    header.sticky h1 { display: none; }
+    header.sticky > div > .flex:last-child { flex-wrap: wrap; gap: 8px; margin-left: 0; }
+    #notifPanel { width: min(320px, calc(100vw - 32px)); }
+    #sidebar {
+      position: fixed; inset: 0 auto 0 0; width: min(320px, 88vw) !important;
+      height: 100dvh; overflow-y: auto; z-index: 110;
+      transform: translateX(-105%); transition: transform .22s ease;
+      background-color: #152036;
+    }
+    #sidebar.mobile-open { transform: translateX(0); }
+    #sidebar.collapsed .label { display: initial !important; }
+    #collapseBtn { display: none; }
+    #mobileMenuFloat { display: inline-flex; position: fixed; top: 12px; left: 12px; z-index: 70; background: #23324f; color: white; }
+    #mobileCloseBtn { display: inline-flex; margin-bottom: 12px; }
+    #mobileOverlay.mobile-open { display: block; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.55); }
+    body > .grid.grid-cols-12 { display: block; padding: 12px; }
+    #mainContent > section { min-width: 0; }
+    #mainContent .grid.grid-cols-12 { grid-template-columns: minmax(0,1fr); }
+    #mainContent .grid.grid-cols-12 > * { grid-column: 1 / -1; min-width: 0; }
+    #invoiceForm .flex:has(#asCredit) { flex-wrap: wrap; gap: 8px 16px; }
+    button,.btn { min-height: 44px; touch-action: manipulation; }
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea { min-height: 44px; font-size: 16px; max-width: 100%; }
+    table input:not([type="checkbox"]),table select { min-width: 88px; }
+    #itemBody select, #editItemBody select { min-width: 160px; }
+    #itemBody input[type="text"], #editItemBody input[type="text"] { min-width: 160px; }
+    [id$="Modal"].fixed { padding: 10px; }
+    [id$="Modal"].fixed > div { width: 100%; max-width: calc(100vw - 20px); max-height: calc(100dvh - 20px); padding: 16px; }
+    #bulkPaymentModal > div > .flex { flex-wrap: wrap; gap: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; } }
+}
+@media print {
+  #mobileMenuFloat,#mobileOverlay,#mobileCloseBtn { display: none !important; }
+  .billing-table-scroll { overflow: visible; }
+}

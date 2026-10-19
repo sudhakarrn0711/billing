@@ -434,7 +434,7 @@ return {cents,money,day,validDate,days,events,ledger,ageing,invoiceBalance,settl
 if(typeof module!=='undefined'&&module.exports)module.exports=RanSanLedger;
 
 // Customer-scoped v8 API. Keep this URL aligned with your deployed Code.gs.
-const API_URL='https://script.google.com/macros/s/AKfycby1hTz5Xo5D2_zETcF8aDWQ3LMTVFWWCYX7HMViauORWBOgyzo94MP7s3jhW8PRJv7t/execs';
+const API_URL='https://script.google.com/macros/s/AKfycby1hTz5Xo5D2_zETcF8aDWQ3LMTVFWWCYX7HMViauORWBOgyzo94MP7s3jhW8PRJv7t/exec';
 const $=id=>document.getElementById(id),money=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(Number(v)||0);
 const storage={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},remove(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 function linkParts(url){const h=new URLSearchParams(url.hash.slice(1)),q=url.searchParams;return {token:h.get('token')||q.get('token'),env:h.get('env')||q.get('env')}}

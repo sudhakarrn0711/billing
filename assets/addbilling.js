@@ -1,0 +1,2235 @@
+// ========== Notifications System (Due/Overdue) ==========
+
+window._charts = window._charts || {};
+window._reportFlags = window._reportFlags || {};
+
+const charts = {};
+
+function initNotifications() {
+  const btn = document.getElementById("notifBtn");
+  const panel = document.getElementById("notifPanel");
+
+  if (!btn || !panel) return;
+
+  // Toggle dropdown on click
+  btn.addEventListener("click", () => {
+    panel.classList.toggle("hidden");
+  });
+
+  // Close if clicked outside
+  document.addEventListener("click", (e) => {
+    if (!panel.contains(e.target) && !btn.contains(e.target)) {
+      panel.classList.add("hidden");
+    }
+  });
+
+  // Initial render
+  renderNotifications();
+}
+
+// Counts match listed unpaid invoices with a valid due date, across businesses.
+function rsInvoiceReminders(invoices, currentDate = new Date()) {
+  const today = Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+  return (invoices || []).map(inv => {
+    const due = String(inv.dueDate || inv.due || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return null;
+    const parts = due.split('-').map(Number);
+    const utc = Date.UTC(parts[0], parts[1] - 1, parts[2]);
+    if (new Date(utc).toISOString().slice(0, 10) !== due) return null;
+    const paid = (inv.payments || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    if (!(Number(inv.total) > paid)) return null;
+    return { invoice: inv, due, daysLeft: Math.round((utc - today) / 86400000) };
+  }).filter(Boolean).sort((a, b) => a.due.localeCompare(b.due));
+}
+function renderNotifications() {
+  const list = document.getElementById('notifList'), badge = document.getElementById('notifBadge');
+  if (!list || !badge) return;
+  list.replaceChildren();
+  const reminders = rsInvoiceReminders(state.invoices), count = reminders.length;
+  const overdue = reminders.filter(r => r.daysLeft < 0).length;
+  badge.textContent = count > 99 ? '99+' : String(count);
+  badge.classList.toggle('hidden', count === 0);
+  const button = document.getElementById('notifBtn');
+  button?.setAttribute('aria-label', `Invoice reminders: ${count} unpaid invoices with due dates, ${overdue} overdue`);
+  if (button) button.title = `${count} unpaid invoice${count === 1 ? '' : 's'} with due dates`;
+  const total = document.getElementById('rsNotificationTotal');
+  if (total) total.textContent = String(count);
+  const summary = document.getElementById('rsNotificationSummary');
+  if (summary) summary.textContent = count ? `${count} unpaid · ${overdue} overdue · Across all businesses` : 'No unpaid invoices with a due date.';
+  const empty = document.getElementById('noNotif');
+  if (empty) empty.classList.toggle('hidden', count > 0);
+  reminders.forEach(({ invoice: inv, due, daysLeft }) => {
+    const customer = state.customers.find(c => String(c.id) === String(inv.customerId)) || {};
+    const li = document.createElement('li');
+    li.className = 'rs-notification-row';
+    const action = document.createElement('button');
+    action.type = 'button'; action.className = 'rs-notification-item';
+    const content = document.createElement('span');
+    const name = document.createElement('strong'); name.textContent = customer.name || 'Unknown customer';
+    const detail = document.createElement('small'); detail.textContent = `Invoice: ${inv.invoiceNumber || inv.id} · Due: ${due}`;
+    const businesses = Array.isArray(state.businesses) ? state.businesses : Object.values(state.businesses || {});
+    const business = businesses.find(b => String(b.id) === String(inv.businessId));
+    const businessLabel = document.createElement('span');
+    businessLabel.className = 'rs-reminder-business';
+    businessLabel.textContent = business?.name || inv.businessName || 'Unknown business';
+    content.append(name, businessLabel, detail);
+    const status = document.createElement('span');
+    status.className = 'rs-pill rs-reminder-status ' + (daysLeft < 0 ? 'rs-reminder-overdue' : daysLeft === 0 ? 'rs-reminder-today' : daysLeft === 1 ? 'rs-reminder-tomorrow' : 'rs-reminder-upcoming');
+    status.textContent = daysLeft < 0 ? 'Overdue' : daysLeft === 0 ? 'Due today' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft}d left`;
+    action.append(content, status); li.append(action);
+    action.onclick = () => { openEditInvoice(inv.id); document.getElementById('notifPanel').classList.add('hidden'); };
+    list.append(li);
+  });
+}
+
+// Hook into existing render functions
+const oldRenderInvoices = renderInvoices;
+renderInvoices = function () {
+  oldRenderInvoices();
+  renderNotifications(); // refresh alerts whenever invoices change
+};
+
+// Init after DB load
+document.addEventListener("DOMContentLoaded", initNotifications);
+
+
+// ========== PROGRESS BARS (Revenue, Credit, Invoice) ==========
+
+// 1) Revenue Goal Circular Ring
+// Animate Revenue Goal Circular Ring
+/* Compact goal: current-month invoice totals for the selected business.
+ * Shares REPORTS_MONTHLY_GOAL with the existing financial forecast.
+ * The old entry point is retained for billing.js compatibility.
+ */
+function rsMonthlyRevenueGoalData(invoices, businessId, now = new Date()) {
+  const month = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const current = (invoices || []).reduce((sum, inv) => {
+    if (businessId && businessId !== 'all' && String(inv.businessId) !== String(businessId)) return sum;
+    if (/^(void|cancelled)$/i.test(inv.status || '')) return sum;
+    if (String(inv.date || '').slice(0, 7) !== month) return sum;
+    const amount = Number(inv.total);
+    return Number.isFinite(amount) ? sum + amount : sum;
+  }, 0);
+  return { current: Math.max(0, current), month };
+}
+
+function updateRevenueGoalProgress(current, goal) {
+  const circle = document.getElementById('revGoalProgress');
+  const text = document.getElementById('revGoalText');
+  if (!circle || !text) return;
+  const select = document.getElementById('bizSelect');
+  const selected = String(select?.value || 'all');
+  const monthlyCard = document.getElementById('rsMonthlyGoalCard');
+  if (monthlyCard && typeof state !== 'undefined' && Array.isArray(state.invoices)) {
+    current = rsMonthlyRevenueGoalData(state.invoices, selected).current;
+    goal = REPORTS_MONTHLY_GOAL;
+  }
+  current = Number.isFinite(Number(current)) ? Math.max(0, Number(current)) : 0;
+  goal = Number.isFinite(Number(goal)) ? Math.max(0, Number(goal)) : 0;
+  const pct = goal > 0 ? Math.max(0, Math.min(100, Math.round(current / goal * 100))) : 0;
+  const circumference = 2 * Math.PI * Number(circle.getAttribute('r') || 50);
+  circle.setAttribute('stroke-dasharray', String(circumference));
+  circle.setAttribute('stroke-dashoffset', String(circumference * (1 - pct / 100)));
+  text.textContent = goal > 0 ? pct + '%' : '—';
+  document.getElementById('revGoalRing')?.setAttribute('aria-label', goal > 0 ? 'Monthly goal progress: ' + pct + ' percent' : 'Monthly target not set');
+  const money = value => new Intl.NumberFormat('en-IN', {style:'currency',currency:'INR',maximumFractionDigits:2}).format(value);
+  for (const [id, value] of [['rsGoalAchieved',current],['rsGoalTarget',goal],['rsGoalRemaining',Math.max(0,goal-current)]]) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = money(value);
+  }
+  const scope = document.getElementById('rsMonthlyGoalScope');
+  if (scope) scope.textContent = new Date().toLocaleDateString('en-IN',{month:'short',year:'numeric'}) + ' · ' + (selected === 'all' ? 'All businesses' : select?.selectedOptions?.[0]?.textContent.trim() || 'Selected business') + ' · Invoiced';
+  const status = document.getElementById('rsGoalStatus');
+  if (status) status.textContent = goal <= 0 ? 'Set REPORTS_MONTHLY_GOAL to a positive amount.' : current >= goal ? 'Monthly target achieved.' : money(goal-current) + ' to reach this month’s target.';
+  if (monthlyCard) monthlyCard.dataset.complete = String(goal > 0 && current >= goal);
+}
+
+function rsRefreshMonthlyRevenueGoal() {
+  if (typeof state !== 'undefined' && Array.isArray(state.invoices)) updateRevenueGoalProgress(0, REPORTS_MONTHLY_GOAL);
+}
+(function () {
+  function init() {
+    document.getElementById('bizSelect')?.addEventListener('change', () => requestAnimationFrame(rsRefreshMonthlyRevenueGoal));
+    rsRefreshMonthlyRevenueGoal();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',init);
+  else queueMicrotask(init);
+  window.addEventListener('rs:data-loaded',rsRefreshMonthlyRevenueGoal);
+  window.addEventListener('rs:mutation',() => requestAnimationFrame(rsRefreshMonthlyRevenueGoal));
+})();
+
+/* Identity colours: sorting a chart does not change an entity's colour.
+ * Delay severity remains available in the original summary/table.
+ */
+const rsDashboardColourPalette = ['#8b5cf6','#14b8a6','#3b82f6','#f59e0b','#ec4899','#f97316','#06b6d4','#6366f1','#84cc16','#d946ef','#10b981','#eab308'];
+const rsDashboardColourAssignments = {customer:new Map(),business:new Map()};
+function rsDashboardEntityColour(kind, id, entities) {
+  const map = rsDashboardColourAssignments[kind];
+  (entities || []).forEach(entity => {
+    const key = String(entity.id ?? entity.name ?? 'unknown');
+    if (!map.has(key)) map.set(key,rsDashboardColourPalette[map.size % rsDashboardColourPalette.length]);
+  });
+  const key = String(id ?? 'unknown');
+  if (!map.has(key)) map.set(key,rsDashboardColourPalette[map.size % rsDashboardColourPalette.length]);
+  return map.get(key);
+}
+
+// 2) Customer Credit Usage Bar
+function renderCustomerCreditBars() {
+  document.querySelectorAll(".cust-credit-bar").forEach(el => el.remove()); // cleanup
+
+  state.customers.forEach(cust => {
+    const row = document.getElementById(`custRow-${cust.id}`);
+    if (!row) return;
+
+    const outstanding = state.invoices
+      .filter(inv => inv.customerId === cust.id)
+      .reduce((s, inv) => s + ((inv.total || 0) - (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0)), 0);
+
+    const pct = cust.creditLimit > 0 ? Math.min(100, Math.round((outstanding / cust.creditLimit) * 100)) : 0;
+
+    const bar = document.createElement("div");
+    bar.className = "cust-credit-bar mt-1 h-1.5 bg-gray-700 rounded overflow-hidden";
+    bar.innerHTML = `<div class="h-full ${pct < 50 ? 'bg-green-400' : pct < 80 ? 'bg-orange-400' : 'bg-red-400'}" style="width:${pct}%"></div>`;
+    row.querySelector("td:last-child").appendChild(bar);
+  });
+}
+
+// 3) Invoice Payment Bar
+function renderInvoicePaymentBar(inv) {
+  const paid = (inv.payments || []).reduce((s, p) => s + (p.amount || 0), 0);
+  const total = inv.total || 0;
+  const pct = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
+
+  let barColor = "bg-green-400";
+  if (pct < 50) barColor = "bg-red-400";
+  else if (pct < 80) barColor = "bg-orange-400";
+
+  // Create unique ID so multiple rows work independently
+  const barId = "bar-" + Math.random().toString(36).substr(2, 9);
+
+  // Initially width=0, then animate to pct%
+  setTimeout(() => {
+    const bar = document.getElementById(barId);
+    if (bar) bar.style.width = pct + "%";
+  }, 50);
+
+  return `
+    <div class="h-2 bg-gray-700 rounded mt-1 overflow-hidden">
+      <div id="${barId}" class="h-2 ${barColor} transition-all duration-700 ease-in-out" style="width:0%"></div>
+    </div>`;
+}
+
+/* ===========================
+   REPORTS (Isolated Namespace)
+   =========================== */
+
+const REPORTS_MONTHLY_GOAL = 500000; // ₹ monthly goal used in burn forecast
+const Reports = {
+  charts: {},    // store Chart.js instances to destroy cleanly
+  initialized: false,
+  current: null, // current report tab
+};
+
+function reports_safeEl(id) { return document.getElementById(id); }
+function reports_showViewReports() {
+  const target = reports_safeEl('view-reports');
+  if (!target) return;
+  // Hide all other views (non-destructive)
+  document.querySelectorAll("section[id^='view-']").forEach(s => s.classList.add('hidden'));
+  target.classList.remove('hidden');
+}
+
+function reports_destroyCharts() {
+  Object.values(Reports.charts).forEach(ch => { try { ch.destroy(); } catch (e) { } });
+  Reports.charts = {};
+}
+
+function reports_formatINR(n) {
+  try { return formatINR ? formatINR(n) : new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0); }
+  catch { return `₹${(n || 0).toLocaleString('en-IN')}`; }
+}
+
+function reports_monthKey(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+function reports_dateOnlyKey(d) { return d.toISOString().slice(0, 10); }
+function reports_parseDate(v) {
+  if (!v) return null;
+  const d = (v instanceof Date) ? v : new Date(v);
+  return isNaN(+d) ? null : d;
+}
+function reports_daysBetween(d1, d2) { return Math.round((d2 - d1) / (1000 * 60 * 60 * 24)); }
+function reports_endOfMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0); }
+function reports_startOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+
+function reports_invoicesFiltered() {
+  const biz = reports_safeEl('reportsBiz')?.value || '';
+  const range = reports_safeEl('reportsRange')?.value || '30';
+  const today = new Date();
+  let from = null;
+  if (range !== 'all') {
+    from = new Date();
+    from.setDate(today.getDate() - Number(range));
+  }
+  return (state.invoices || []).filter(inv => {
+    if (biz && inv.businessId !== biz) return false;
+    const d = reports_parseDate(inv.date || inv.created || inv.invoiceDate);
+    if (from && d && d < from) return false;
+    return true;
+  });
+}
+
+function reports_paymentsOf(inv) {
+  // Normalize payments to {amount, date, method}
+  return (inv.payments || []).map(p => ({
+    amount: Number(p.amount || 0),
+    date: reports_parseDate(p.date || p.paidOn || inv.date),
+    method: (p.method || p.mode || 'Unknown').toString().toLowerCase()
+  })).filter(p => p.amount > 0 && p.date);
+}
+
+function reports_businessOptions(bizArray = state.businessesArray) {
+  const select = document.getElementById("reportBizSelect");
+  if (!select) return;
+
+  select.innerHTML = `<option value="">All Businesses</option>`;
+  (bizArray || []).forEach(b => {
+    select.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+  });
+
+  // On change → re-render reports
+  select.onchange = () => renderAllReports();
+}
+
+
+function reports_initUI() {
+  if (Reports.initialized) return;
+  Reports.initialized = true;
+
+  // Wire nav button
+  const navBtn = reports_safeEl('navReports');
+  if (navBtn) {
+    navBtn.addEventListener('click', () => {
+      reports_showViewReports();
+      Reports.current = null; // reset to home
+      reports_renderHome();
+    });
+  }
+
+  // Wire tiles
+  reports_safeEl('reportsTiles')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-report]');
+    if (!btn) return;
+    const tab = btn.getAttribute('data-report');
+    Reports.current = tab;
+    reports_showViewReports();
+    reports_renderTab(tab);
+  });
+
+  // Filters
+  ['reportsRange', 'reportsBiz'].forEach(id => {
+    const el = reports_safeEl(id);
+    if (el) el.addEventListener('change', () => {
+      if (Reports.current) {
+        reports_renderTab(Reports.current);
+      } else {
+        reports_renderHome();
+      }
+    });
+  });
+
+  // First-time population for businesses
+  reports_businessOptions();
+}
+
+function reports_renderHome() {
+  const root = reports_safeEl('reportsRoot');
+  if (!root) return;
+  reports_destroyCharts();
+  root.innerHTML = `
+    <div class="col-span-12 glass rounded-2xl p-4">
+      <div class="text-white/70">Select a report category from above to view detailed analytics.</div>
+      <ul class="list-disc pl-5 text-white/70 mt-2 text-sm space-y-1">
+        <li>Financial: Cash Flow, MoM by Category, Burn Forecast, Aging</li>
+        <li>Customer: Pareto (Top customers), CLV (est.)</li>
+        <li>Invoices: Status breakdown, Payment methods, DSO</li>
+        <li>Forecast: 6-month trend → next 3-month projection, Risk scores</li>
+      </ul>
+    </div>
+  `;
+}
+
+/* -----------------------------
+   Financial Reports
+   ----------------------------- */
+function reports_renderFinancial() {
+  const root = reports_safeEl('reportsRoot');
+  if (!root) return;
+  reports_destroyCharts();
+
+  const invs = reports_invoicesFiltered();
+  const payments = invs.flatMap(reports_paymentsOf);
+  const txs = (state.transactions || []); // optional expenses
+  const range = reports_safeEl('reportsRange')?.value || '30';
+  const from = (range === 'all') ? null : new Date(Date.now() - Number(range) * 24 * 60 * 60 * 1000);
+
+  // 1) Cash Flow Timeline (income vs expenses)
+  const incomeByDay = {};
+  payments.forEach(p => {
+    const key = reports_dateOnlyKey(p.date);
+    incomeByDay[key] = (incomeByDay[key] || 0) + p.amount;
+  });
+
+  const expenseByDay = {};
+  txs.filter(t => t && (t.type === 'expense' || t.type === 'debit')).forEach(t => {
+    const d = reports_parseDate(t.date);
+    if (!d) return;
+    if (from && d < from) return;
+    const key = reports_dateOnlyKey(d);
+    expenseByDay[key] = (expenseByDay[key] || 0) + Number(t.amount || 0);
+  });
+
+  const allKeysSet = new Set([...Object.keys(incomeByDay), ...Object.keys(expenseByDay)]);
+  const keys = Array.from(allKeysSet).sort();
+  const incomeSeries = keys.map(k => incomeByDay[k] || 0);
+  const expenseSeries = keys.map(k => expenseByDay[k] || 0);
+
+  // 2) MoM Trend by Category (service-wise revenue)
+  // Derive per item revenue by month
+  const catMonth = {}; // {month: {service: amount}}
+  invs.forEach(inv => {
+    const d = reports_parseDate(inv.date || inv.invoiceDate) || new Date();
+    const mk = reports_monthKey(d);
+    (inv.items || []).forEach(it => {
+      const cat = (it.service || it.category || 'Uncategorized').toString();
+      const amt = Number(it.total || it.amount || it.price || 0) * (it.qty || 1);
+      catMonth[mk] = catMonth[mk] || {};
+      catMonth[mk][cat] = (catMonth[mk][cat] || 0) + amt;
+    });
+  });
+  const monthKeys = Object.keys(catMonth).sort();
+  // top 5 services overall
+  const totalsByCat = {};
+  monthKeys.forEach(m => {
+    Object.entries(catMonth[m]).forEach(([c, v]) => {
+      totalsByCat[c] = (totalsByCat[c] || 0) + v;
+    });
+  });
+  const topCats = Object.entries(totalsByCat).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([c]) => c);
+  const catDatasets = topCats.map((cat, i) => ({
+    label: cat, data: monthKeys.map(m => (catMonth[m] && catMonth[m][cat]) || 0),
+    borderWidth: 2, fill: false, tension: 0.2
+  }));
+
+  // 3) Daily Burn Forecast (is monthly goal achievable?)
+  const now = new Date();
+  const monthStart = reports_startOfMonth(now);
+  const eom = reports_endOfMonth(now);
+  const daysElapsed = Math.max(1, reports_daysBetween(monthStart, now) + 1);
+  const daysInMonth = reports_daysBetween(monthStart, eom) + 1;
+  const thisMonthRevenue = payments
+    .filter(p => {
+      const d = p.date; return d && d >= monthStart && d <= eom;
+    })
+    .reduce((s, p) => s + p.amount, 0);
+  const projected = (thisMonthRevenue / daysElapsed) * daysInMonth;
+  const meetsGoal = projected >= REPORTS_MONTHLY_GOAL;
+
+  // 4) Aging Report: buckets of outstanding
+  const agingBuckets = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
+  invs.forEach(inv => {
+    const total = Number(inv.total || 0);
+    const paid = (inv.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+    const dueAmt = Math.max(0, total - paid);
+    if (dueAmt <= 0) return;
+    const dueDate = reports_parseDate(inv.dueDate || inv.due);
+    const anchor = dueDate || reports_parseDate(inv.date) || new Date();
+    const days = reports_daysBetween(anchor, new Date());
+    if (days <= 30) agingBuckets['0-30'] += dueAmt;
+    else if (days <= 60) agingBuckets['31-60'] += dueAmt;
+    else if (days <= 90) agingBuckets['61-90'] += dueAmt;
+    else agingBuckets['90+'] += dueAmt;
+  });
+
+  // Render
+  root.innerHTML = `
+    <div class="col-span-12 grid grid-cols-12 gap-4">
+      <div class="glass rounded-2xl p-4 col-span-12">
+        <div class="font-semibold mb-2">Cash Flow Timeline (Income vs Expenses)</div>
+        <canvas id="cfChart"></canvas>
+      </div>
+      <div class="glass rounded-2xl p-4 col-span-12">
+        <div class="font-semibold mb-2">MoM Trend by Category (Top 5)</div>
+        <canvas id="momCatChart"></canvas>
+      </div>
+      <div class="glass rounded-2xl p-4 col-span-12 md:col-span-6">
+        <div class="font-semibold mb-1">Daily Burn Forecast</div>
+        <div class="text-sm text-white/70 mb-2">Goal: ${reports_formatINR(REPORTS_MONTHLY_GOAL)} • Projected: <span class="${meetsGoal ? 'text-emerald-300' : 'text-amber-300'}">${reports_formatINR(projected)}</span></div>
+        <div class="h-2 bg-white/10 rounded">
+          <div class="h-2 ${meetsGoal ? 'bg-emerald-400' : 'bg-amber-400'}" style="width:${Math.min(100, Math.round((projected / REPORTS_MONTHLY_GOAL) * 100))}%; transition:width .8s;"></div>
+        </div>
+        <div class="text-xs text-white/60 mt-2">This month collected: ${reports_formatINR(thisMonthRevenue)} • Days elapsed: ${daysElapsed}/${daysInMonth}</div>
+      </div>
+      <div class="glass rounded-2xl p-4 col-span-12 md:col-span-6">
+        <div class="font-semibold mb-2">Aging Report (Outstanding)</div>
+        <canvas id="agingChart"></canvas>
+      </div>
+    </div>
+  `;
+
+  // Charts
+  const ctx1 = reports_safeEl('cfChart');
+  const ctx2 = reports_safeEl('momCatChart');
+  const ctx3 = reports_safeEl('agingChart');
+
+  if (window.Chart) {
+    Reports.charts.cf = new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: keys, datasets: [
+          { label: 'Income', data: incomeSeries, borderWidth: 2, fill: false, tension: .2 },
+          { label: 'Expenses', data: expenseSeries, borderWidth: 2, fill: false, tension: .2 }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { x: { ticks: { maxRotation: 0, autoSkip: true } } } }
+    });
+
+    Reports.charts.mom = new Chart(ctx2, {
+      type: 'line',
+      data: { labels: monthKeys, datasets: catDatasets },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    Reports.charts.aging = new Chart(ctx3, {
+      type: 'bar',
+      data: { labels: Object.keys(agingBuckets), datasets: [{ label: 'Outstanding', data: Object.values(agingBuckets) }] },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+  }
+}
+
+/* -----------------------------
+   Customer Insights
+   ----------------------------- */
+function reports_renderCustomers() {
+  const root = reports_safeEl('reportsRoot');
+  if (!root) return;
+  reports_destroyCharts();
+
+  const invs = reports_invoicesFiltered();
+  const byCust = {};
+  invs.forEach(inv => {
+    const cid = inv.customerId || 'unknown';
+    byCust[cid] = byCust[cid] || { revenue: 0, first: null, last: null, count: 0 };
+    byCust[cid].revenue += Number(inv.total || 0);
+    const d = reports_parseDate(inv.date) || new Date();
+    byCust[cid].first = (!byCust[cid].first || d < byCust[cid].first) ? d : byCust[cid].first;
+    byCust[cid].last = (!byCust[cid].last || d > byCust[cid].last) ? d : byCust[cid].last;
+    byCust[cid].count++;
+  });
+
+  // Pareto
+  const custRows = Object.entries(byCust).map(([cid, obj]) => {
+    const cust = (state.customers || []).find(c => c.id === cid);
+    return { id: cid, name: cust?.name || 'Unknown', revenue: obj.revenue };
+  }).sort((a, b) => b.revenue - a.revenue);
+
+  const totalRev = custRows.reduce((s, r) => s + r.revenue, 0) || 1;
+  let cum = 0;
+  const labels = [];
+  const bars = [];
+  const line = [];
+  custRows.forEach((r, i) => {
+    labels.push(r.name);
+    bars.push(r.revenue);
+    cum += r.revenue;
+    line.push(Math.round((cum / totalRev) * 100));
+  });
+  // 20:80 stat
+  const topCount = Math.max(1, Math.round(custRows.length * 0.2));
+  const topShare = Math.round((custRows.slice(0, topCount).reduce((s, r) => s + r.revenue, 0) / totalRev) * 100);
+
+  // CLV estimate: avg invoice value * purchase frequency per month * retention months (~12 default)
+  const RETENTION_MONTHS = 12;
+  const byCustCLV = {};
+  invs.forEach(inv => {
+    const cid = inv.customerId || 'unknown';
+    byCustCLV[cid] = byCustCLV[cid] || { total: 0, months: new Set(), count: 0 };
+    byCustCLV[cid].total += Number(inv.total || 0);
+    const d = reports_parseDate(inv.date) || new Date();
+    byCustCLV[cid].months.add(reports_monthKey(d));
+    byCustCLV[cid].count++;
+  });
+  const clvRows = Object.entries(byCustCLV).map(([cid, obj]) => {
+    const cust = (state.customers || []).find(c => c.id === cid);
+    const avgInvoice = obj.count ? obj.total / obj.count : 0;
+    const monthsActive = obj.months.size || 1;
+    const freqPerMonth = obj.count / monthsActive;
+    const clv = avgInvoice * freqPerMonth * RETENTION_MONTHS;
+    return { name: cust?.name || 'Unknown', clv: Math.round(clv), freq: freqPerMonth.toFixed(2) };
+  }).sort((a, b) => b.clv - a.clv).slice(0, 10);
+
+  // Render
+  root.innerHTML = `
+    <div class="col-span-12 grid grid-cols-12 gap-4">
+      <div class="glass rounded-2xl p-4 col-span-12">
+        <div class="font-semibold mb-2">Pareto: Top Customers Contribution</div>
+        <div class="text-sm text-white/70 mb-2">Top 20% ≈ <span class="text-emerald-300">${topShare}%</span> of revenue</div>
+        <canvas id="paretoChart"></canvas>
+      </div>
+      <div class="glass rounded-2xl p-4 col-span-12">
+        <div class="font-semibold mb-2">Top 10 Estimated CLV</div>
+        <div class="overflow-auto">
+          <table class="min-w-[600px] w-full text-sm">
+            <thead><tr class="text-white/60">
+              <th class="text-left p-2">Customer</th>
+              <th class="text-right p-2">Estimated CLV</th>
+              <th class="text-right p-2">Purchase Freq./Month</th>
+            </tr></thead>
+            <tbody>
+              ${clvRows.map(r => `
+                <tr class="border-t border-white/10">
+                  <td class="p-2">${r.name}</td>
+                  <td class="p-2 text-right">${reports_formatINR(r.clv)}</td>
+                  <td class="p-2 text-right">${r.freq}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (window.Chart) {
+    const ctx = reports_safeEl('paretoChart');
+    Reports.charts.pareto = new Chart(ctx, {
+      data: {
+        labels,
+        datasets: [
+          { type: 'bar', label: 'Revenue', data: bars },
+          { type: 'line', label: 'Cumulative %', data: line, yAxisID: 'y1', tension: .2 }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { title: { display: true, text: 'Revenue' } },
+          y1: { position: 'right', min: 0, max: 100, ticks: { callback: v => `${v}%` } }
+        }
+      }
+    });
+  }
+}
+
+/* -----------------------------
+   Invoice Reports
+   ----------------------------- */
+
+let invoiceChart, paymentChart; // store chart instances globally
+
+function reports_renderInvoices() {
+  const root = document.getElementById("reportsRoot");
+  if (!root) return;
+
+  // Clear old reports
+  root.innerHTML = "";
+
+  // Create 3 separate blocks for charts
+  root.innerHTML = `
+    <div class="col-span-12 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div id="invoiceStatusChart" class="bg-white/10 p-4 rounded-xl"></div>
+      <div id="paymentMethodChart" class="bg-white/10 p-4 rounded-xl"></div>
+      <div id="dsoChart" class="bg-white/10 p-4 rounded-xl"></div>
+    </div>
+  `;
+
+  // Prepare data safely
+  const statusData = getInvoiceStatusData();
+  const methodData = getPaymentMethodData();
+  const dsoData = getDSOData();
+
+  // Render each chart
+  renderDonutChart("invoiceStatusChart", {
+    title: "Invoice Status Breakdown",
+    labels: ["Paid", "Partial", "Pending"],
+    data: statusData
+  });
+
+  renderDonutChart("paymentMethodChart", {
+    title: "Payment Methods",
+    labels: ["Cash", "UPI", "Bank Transfer"],
+    data: methodData
+  });
+
+  renderBarChart("dsoChart", {
+    title: "Avg Days to Payment (DSO)",
+    labels: ["DSO"],
+    data: [dsoData]
+  });
+}
+
+function getInvoiceStatusData() {
+  if (!state.invoices) return [0, 0, 0];
+  let paid = 0, partial = 0, pending = 0;
+  state.invoices.forEach(inv => {
+    if (inv.status === "Paid") paid++;
+    else if (inv.status === "Partial") partial++;
+    else pending++;
+  });
+  return [paid, partial, pending];
+}
+
+function getPaymentMethodData() {
+  if (!state.invoices) return [0, 0, 0];
+  let cash = 0, upi = 0, bank = 0;
+  state.invoices.forEach(inv => {
+    (inv.payments || []).forEach(p => {
+      if (p.method === "Cash") cash++;
+      else if (p.method === "UPI") upi++;
+      else bank++;
+    });
+  });
+  return [cash, upi, bank];
+}
+
+function getDSOData() {
+  if (!state.invoices) return 0;
+  let totalDays = 0, count = 0;
+  state.invoices.forEach(inv => {
+    if (inv.date && inv.dueDate) {
+      const start = new Date(inv.date);
+      const end = new Date(inv.dueDate);
+      totalDays += (end - start) / (1000 * 60 * 60 * 24);
+      count++;
+    }
+  });
+  return count ? (totalDays / count).toFixed(1) : 0;
+}
+
+function renderDonutChart(containerId, { title, labels, data }) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<h3 class="font-semibold mb-2">${title}</h3><canvas id="${containerId}-canvas"></canvas>`;
+  const ctx = document.getElementById(`${containerId}-canvas`).getContext("2d");
+
+  new Chart(ctx, {
+    type: "doughnut",
+    data: { labels, datasets: [{ data, backgroundColor: ["#22c55e", "#f97316", "#ef4444"] }] },
+    options: { responsive: true, plugins: { legend: { position: "bottom" } } }
+  });
+}
+
+function renderBarChart(containerId, { title, labels, data }) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<h3 class="font-semibold mb-2">${title}</h3><canvas id="${containerId}-canvas"></canvas>`;
+  const ctx = document.getElementById(`${containerId}-canvas`).getContext("2d");
+
+  new Chart(ctx, {
+    type: "bar",
+    data: { labels, datasets: [{ data, backgroundColor: ["#3b82f6"] }] },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  });
+}
+
+
+
+
+
+
+
+/* -----------------------------
+   Forecast & Predictive
+   ----------------------------- */
+function reports_renderForecast() {
+  const root = reports_safeEl('reportsRoot');
+  if (!root) return;
+  reports_destroyCharts();
+
+  const invs = reports_invoicesFiltered();
+  // Revenue by month (using payments as realized revenue)
+  const byMonth = {};
+  invs.forEach(inv => {
+    const pays = reports_paymentsOf(inv);
+    pays.forEach(p => {
+      const m = reports_monthKey(p.date);
+      byMonth[m] = (byMonth[m] || 0) + p.amount;
+    });
+  });
+
+  const months = Object.keys(byMonth).sort();
+  const values = months.map(m => byMonth[m]);
+
+  // Forecast next 3 months using simple linear regression y = a + b*x
+  // x = 1..n
+  const n = values.length;
+  let nextMonths = [], forecastVals = [];
+  if (n >= 2) {
+    const xs = values.map((_, i) => i + 1);
+    const sumX = xs.reduce((s, x) => s + x, 0);
+    const sumY = values.reduce((s, y) => s + y, 0);
+    const sumXY = xs.reduce((s, x, i) => s + x * values[i], 0);
+    const sumX2 = xs.reduce((s, x) => s + x * x, 0);
+    const b = (n * sumXY - sumX * sumY) / Math.max(1, (n * sumX2 - sumX * sumX));
+    const a = (sumY - b * sumX) / n;
+
+    for (let k = 1; k <= 3; k++) {
+      const x = n + k;
+      const y = Math.max(0, a + b * x);
+      forecastVals.push(y);
+    }
+
+    // Generate next 3 month labels
+    if (months.length) {
+      const lastLabel = months[months.length - 1]; // YYYY-MM
+      const [yy, mm] = lastLabel.split('-').map(Number);
+      let y = yy, m = mm;
+      for (let k = 1; k <= 3; k++) {
+        m++; if (m > 12) { m = 1; y++; }
+        nextMonths.push(`${y}-${String(m).padStart(2, '0')}`);
+      }
+    }
+  }
+
+  // Collection Risk Score (by customer): based on average delay after due date
+  const riskRows = [];
+  (state.customers || []).forEach(c => {
+    const custInvs = invs.filter(inv => inv.customerId === c.id);
+    let lateDays = [];
+    custInvs.forEach(inv => {
+      const due = reports_parseDate(inv.dueDate || inv.due);
+      const pays = reports_paymentsOf(inv);
+      const lastPay = pays.reduce((max, p) => (!max || p.date > max) ? p.date : max, null);
+      if (due && lastPay) {
+        const diff = reports_daysBetween(due, lastPay);
+        if (diff > 0) lateDays.push(diff);
+      } else if (due) {
+        // unpaid past due counts as late until today
+        const diff = reports_daysBetween(due, new Date());
+        if (diff > 0) {
+          lateDays.push(diff);
+        }
+      }
+    });
+    const avgLate = lateDays.length ? lateDays.reduce((s, d) => s + d, 0) / lateDays.length : 0;
+    // score 0..100 (0 best, 100 worst). Cap at 90+ days -> 100
+    const score = Math.max(0, Math.min(100, Math.round((avgLate / 90) * 100)));
+    if (custInvs.length) riskRows.push({
+      name: c.name || 'Unknown', score, avgLate: Math.round(avgLate), invoices: custInvs.length
+    });
+  });
+  riskRows.sort((a, b) => b.score - a.score);
+
+  // Render
+  root.innerHTML = `
+    <div class="col-span-12 grid grid-cols-12 gap-4">
+      <div class="glass rounded-2xl p-4 col-span-12">
+        <div class="font-semibold mb-2">Revenue Forecast (next 3 months)</div>
+        <canvas id="revFcChart"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4 col-span-12">
+        <div class="font-semibold mb-2">Collection Risk Scores (higher = riskier)</div>
+        <div class="overflow-auto">
+          <table class="min-w-[600px] w-full text-sm">
+            <thead><tr class="text-white/60">
+              <th class="text-left p-2">Customer</th>
+              <th class="text-right p-2">Avg Days Late</th>
+              <th class="text-right p-2">Risk Score (0–100)</th>
+              <th class="text-right p-2">#Invoices</th>
+            </tr></thead>
+            <tbody>
+              ${riskRows.slice(0, 20).map(r => `
+                <tr class="border-t border-white/10">
+                  <td class="p-2">${r.name}</td>
+                  <td class="p-2 text-right">${r.avgLate}</td>
+                  <td class="p-2 text-right ${r.score >= 70 ? 'text-red-300' : r.score >= 40 ? 'text-amber-300' : 'text-emerald-300'}">${r.score}</td>
+                  <td class="p-2 text-right">${r.invoices}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (window.Chart) {
+    const allLabels = months.concat(nextMonths);
+    const allData = values.concat(forecastVals.map(v => null));
+    const fcData = new Array(values.length).fill(null).concat(forecastVals);
+
+    Reports.charts.revfc = new Chart(reports_safeEl('revFcChart'), {
+      data: {
+        labels: allLabels,
+        datasets: [
+          { type: 'line', label: 'Actual', data: values, borderWidth: 2, tension: .2, spanGaps: true },
+          { type: 'line', label: 'Forecast', data: fcData, borderWidth: 2, borderDash: [6, 6], tension: .2 }
+        ]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+}
+
+/* -----------------------------
+   Router for tabs
+   ----------------------------- */
+function reports_renderTab(tab) {
+  const filters = getReportFilters(); // <-- collect dates + business
+  if (tab === 'financial') return reports_renderFinancial(filters);
+  if (tab === 'customers') return reports_renderCustomers(filters);
+  if (tab === 'invoices') return reports_renderInvoices(filters);
+  if (tab === 'forecast') return reports_renderForecast(filters);
+  reports_renderHome(filters);
+}
+
+
+/* -----------------------------
+   Bootstrapping
+   ----------------------------- */
+// Initialize once DOM is ready
+document.addEventListener('DOMContentLoaded', reports_initUI);
+
+// Refresh business options after your DB/state loads.
+// If you have a place after loadDB(), call reports_businessOptions() there too.
+// Otherwise, we also refresh whenever invoices re-render (non-invasive).
+const __oldRenderInvoicesForReports = typeof renderInvoices === 'function' ? renderInvoices : null;
+if (__oldRenderInvoicesForReports) {
+  renderInvoices = function (...args) {
+    const res = __oldRenderInvoicesForReports.apply(this, args);
+    // update filters (business list) on any invoice render
+    reports_businessOptions();
+    return res;
+  };
+}
+
+
+function getReportFilters() {
+  return {
+    bizId: document.getElementById("reportsBiz")?.value || "",
+    start: document.getElementById("reportStartDate")?.value || "",
+    end: document.getElementById("reportEndDate")?.value || ""
+  };
+}
+
+
+
+function renderInvoiceReports(data) {
+  const container = document.getElementById("invoiceReports");
+  if (!container) return;
+  container.innerHTML = "";
+
+  // Filter invoices by business + date range
+  const { bizId, start, end } = getReportFilters();
+  let invoices = data.invoices || [];
+
+  if (bizId) invoices = invoices.filter(inv => inv.businessId === bizId);
+  if (start) invoices = invoices.filter(inv => new Date(inv.date) >= new Date(start));
+  if (end) invoices = invoices.filter(inv => new Date(inv.date) <= new Date(end));
+
+  // Invoice Status Breakdown (Donut)
+  const statusCounts = { Paid: 0, Partial: 0, Pending: 0 };
+  invoices.forEach(inv => {
+    const paid = (inv.payments || []).reduce((s, p) => s + (p.amount || 0), 0);
+    if (paid >= (inv.total || 0)) statusCounts.Paid++;
+    else if (paid > 0) statusCounts.Partial++;
+    else statusCounts.Pending++;
+  });
+
+  container.innerHTML += `
+    <h3 class="font-bold mt-4 mb-2">Invoice Status Breakdown</h3>
+    <canvas id="invoiceDonut"></canvas>
+  `;
+
+  // Using Chart.js for Donut
+  new Chart(document.getElementById("invoiceDonut"), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(statusCounts),
+      datasets: [{ data: Object.values(statusCounts), backgroundColor: ['#4ade80', '#facc15', '#f87171'] }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+function reports_initFilters() {
+  const bizSelect = document.getElementById("reportsBiz");
+  if (!bizSelect) return;
+
+  // Clear & fill with business names
+  bizSelect.innerHTML = `<option value="">All Businesses</option>`;
+  const bizArr = Array.isArray(state.businessesArray)
+    ? state.businessesArray
+    : Object.values(state.businessesArray || state.businesses || []);
+
+  bizArr.forEach(b => {
+    if (b && b.id && b.name) {
+      bizSelect.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+    }
+  });
+
+  // Filter change → re-render reports
+  ["reportStartDate", "reportEndDate", "reportsBiz"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("change", () => {
+        const activeTab = document.querySelector(".report-tab.active")?.dataset.report || "financial";
+        reports_renderTab(activeTab);
+      });
+    }
+  });
+}
+
+
+document.querySelector('[data-report="invoices"]').addEventListener("click", () => {
+  document.getElementById("invoiceReportsContainer").classList.remove("hidden");
+  reports_renderInvoices();
+});
+
+
+// Put this at the top of addbilling.js (after Chart.js is loaded)
+if (window.Chart) {
+  Chart.defaults.color = "#e5e7eb";
+  Chart.defaults.plugins.legend.labels.color = "#e5e7eb";
+  Chart.defaults.plugins.tooltip.titleColor = "#f9fafb";
+  Chart.defaults.plugins.tooltip.bodyColor = "#f9fafb";
+  Chart.defaults.plugins.tooltip.backgroundColor = "rgba(17,17,17,0.8)";
+  Chart.defaults.backgroundColor = "transparent";
+}
+
+let dashboardRendered = false;
+
+// Make sure global charts object exists
+// Make sure global charts object exists
+let dashboardRenderTimer = null;
+
+/* Dashboard reports use one read-only business scope. Existing entry points stay available. */
+function rsDashboardDay(value) {
+  const day = String(value || '').slice(0,10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return '';
+  const parsed = new Date(day + 'T12:00:00Z');
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0,10) === day ? day : '';
+}
+function rsDashboardLocalDay(date = new Date()) {
+  return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+}
+function rsDashboardMoney(value) {
+  return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:2}).format(Number(value)||0);
+}
+function rsDashboardBuildModel(source, businessId = 'all', now = new Date()) {
+  const cents = value => Math.round((Number(value)||0)*100);
+  const all = !businessId || String(businessId).toLowerCase() === 'all';
+  const allBusinesses = Array.isArray(source.businesses) ? source.businesses : Object.values(source.businesses || {});
+  const allCustomers = source.customers || [];
+  const invoices = (source.invoices || []).filter(inv =>
+    (all || String(inv.businessId) === String(businessId)) && !/^(void|cancelled)$/i.test(inv.status || '')
+  );
+  const businessMap = new Map(allBusinesses.filter(b => all || String(b.id) === String(businessId)).map(b=>[String(b.id),b]));
+  invoices.forEach(inv => {if (!businessMap.has(String(inv.businessId))) businessMap.set(String(inv.businessId),{id:inv.businessId,name:inv.businessName || String(inv.businessId || 'Unknown business')});});
+  const businesses = Array.from(businessMap.values());
+  const customerIds = new Set(invoices.map(inv=>String(inv.customerId)));
+  const customers = allCustomers.filter(c=>customerIds.has(String(c.id)));
+  customerIds.forEach(id=>{if(!customers.some(c=>String(c.id)===id))customers.push({id,name:id});});
+  const today = rsDashboardLocalDay(now);
+  const dayNumber = value => Date.parse(value+'T12:00:00Z')/86400000;
+  function invoiceTotal(inv) {return Math.max(0,cents(inv.total))/100;}
+  function invoicePaid(inv) {
+    const payments = Array.isArray(inv.payments) ? inv.payments : [];
+    const paid = payments.length ? payments.reduce((sum,p)=>sum+cents(p.amount),0) : cents(inv.paid);
+    return Math.max(0,Math.min(cents(inv.total),paid))/100;
+  }
+  function outstanding(inv) {return Math.max(0,cents(invoiceTotal(inv))-cents(invoicePaid(inv)))/100;}
+  const statusCounts={Paid:0,Pending:0,Overdue:0}, statusValues={Paid:0,Pending:0,Overdue:0};
+  invoices.forEach(inv=>{
+    const due=rsDashboardDay(inv.dueDate||inv.due);
+    const kind=outstanding(inv)<=0?'Paid':due&&due<today?'Overdue':'Pending';
+    statusCounts[kind]++;statusValues[kind]+=cents(invoiceTotal(inv));
+  });
+  Object.keys(statusValues).forEach(k=>statusValues[k]/=100);
+  const months=Array.from({length:6},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);
+    return {key:rsDashboardLocalDay(d).slice(0,7),label:d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'}),invoiced:0,collected:0};
+  });
+  invoices.forEach(inv=>{
+    const issue=rsDashboardDay(inv.date),month=months.find(m=>m.key===issue.slice(0,7));
+    if(month&&issue<=today)month.invoiced+=cents(invoiceTotal(inv));
+    (inv.payments||[]).forEach(p=>{
+      const date=rsDashboardDay(p.date||inv.date),bucket=months.find(m=>m.key===date.slice(0,7));
+      if(bucket&&date<=today)bucket.collected+=cents(p.amount);
+    });
+  });
+  months.forEach(m=>{m.invoiced/=100;m.collected/=100;});
+  const top=customers.map(c=>{
+    const rows=invoices.filter(inv=>String(inv.customerId)===String(c.id));
+    return {id:c.id,name:c.name||String(c.id),total:rows.reduce((s,i)=>s+cents(invoiceTotal(i)),0)/100,paid:rows.reduce((s,i)=>s+cents(invoicePaid(i)),0)/100,count:rows.length};
+  }).sort((a,b)=>b.total-a.total).slice(0,5);
+  const cashDays=Array.from({length:30},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i);
+    return {date:rsDashboardLocalDay(d),label:d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}),inflow:0,overdue:0};
+  });
+  let undatedOutstanding=0;
+  invoices.forEach(inv=>{
+    const balance=outstanding(inv),due=rsDashboardDay(inv.dueDate||inv.due);
+    if(!due){undatedOutstanding+=cents(balance);return;}
+    const diff=Math.round(dayNumber(due)-dayNumber(today));
+    if(diff<0)cashDays[0].overdue+=cents(balance);
+    else if(diff<30)cashDays[diff].inflow+=cents(balance);
+  });
+  cashDays.forEach(d=>{d.inflow/=100;d.overdue/=100;});
+  const performance=businesses.map(b=>{
+    const rows=invoices.filter(i=>String(i.businessId)===String(b.id));
+    const total=rows.reduce((s,i)=>s+cents(invoiceTotal(i)),0)/100;
+    const collected=rows.reduce((s,i)=>s+cents(invoicePaid(i)),0)/100;
+    return {id:b.id,name:b.name||String(b.id),total,collected,outstanding:Math.max(0,cents(total)-cents(collected))/100,efficiency:total>0?collected/total*100:null};
+  });
+  const total=performance.reduce((s,b)=>s+cents(b.total),0)/100, collected=performance.reduce((s,b)=>s+cents(b.collected),0)/100;
+  const delays=customers.map(c=>{
+    const rows=invoices.filter(i=>String(i.customerId)===String(c.id)), samples=[];
+    rows.forEach(inv=>{
+      const issue=rsDashboardDay(inv.date);
+      const dates=(inv.payments||[]).filter(p=>Number(p.amount)>0).map(p=>rsDashboardDay(p.date)).filter(d=>d&&d<=today&&d>=issue).sort();
+      if(issue&&dates.length)samples.push(Math.round(dayNumber(dates[dates.length-1])-dayNumber(issue)));
+    });
+    return {id:c.id,name:c.name||String(c.id),avgDelay:samples.length?Math.round(samples.reduce((s,v)=>s+v,0)/samples.length):null,noPayment:!rows.some(i=>(i.payments||[]).some(p=>Number(p.amount)>0)||Number(i.paid)>0),samples:samples.length};
+  });
+  return {businessId:String(businessId),all,invoices,customers,businesses,allCustomers,allBusinesses,today,months,top,cashDays,undatedOutstanding:undatedOutstanding/100,statusCounts,statusValues,performance,delays,invoiceTotal,invoicePaid,outstanding,efficiency:total>0?collected/total*100:null,total,collected};
+}
+function rsDashboardScope() {
+  const selected=String(document.getElementById('bizSelect')?.value||'all');
+  return rsDashboardBuildModel(state,selected);
+}
+/* Coordinate shared overview canvases with billing.js, which keeps its own chart handles. */
+function rsDashboardReleaseOverviewCharts() {
+  for (const id of ['revChart','statusChart']) {
+    const canvas=document.getElementById(id);
+    const chart=(canvas&&window.Chart?.getChart?.(canvas))||window.charts?.[id];
+    if(chart&&typeof chart.destroy==='function')chart.destroy();
+    if(window.charts)delete window.charts[id];
+  }
+}
+function rsInstallDashboardChartBridge() {
+  const original=window.renderCharts;
+  if(typeof original!=='function'||original.rsDashboardBridge)return;
+  const bridge=function(){
+    rsDashboardReleaseOverviewCharts();
+    const result=original.apply(this,arguments);
+    try {rsRenderDashboardOverviewCharts();} catch(error) {rsDashboardReportError(error);}
+    return result;
+  };
+  bridge.rsDashboardBridge=true;
+  window.renderCharts=bridge;
+}
+/* Install before loadDB can finish, rather than waiting for window.load. */
+rsInstallDashboardChartBridge();
+
+function rsDashboardReportError(error) {
+  console.error('RanSan dashboard rendering failed:',error);
+  const notice=document.getElementById('rsDashboardRenderError');
+  if(notice){notice.hidden=false;notice.textContent='Dashboard display error: '+(error?.message||String(error))+'. Please share this message if it continues.';}
+}
+function renderDashboardReports() {
+  try {
+    const notice=document.getElementById('rsDashboardRenderError');
+    if(notice){notice.hidden=true;notice.textContent='';}
+    return rsRenderDashboardReportsContent();
+  } catch(error) {
+    /* Data may already be loaded. Do not turn a report error into a loadDB error. */
+    rsDashboardReportError(error);
+  }
+}
+
+function rsDashboardDrawChart(id,config) {
+  if(!window.Chart)return;
+  const canvas=document.getElementById(id);if(!canvas)return;
+  const existing=Chart.getChart?.(canvas)||window.charts?.[id];
+  if(existing)existing.destroy();
+  config.options={...config.options,responsive:true,maintainAspectRatio:false};
+  const dark=!document.body.classList.contains('theme-minimal'),ink=dark?'#b7c5da':'#475569';
+  config.options.plugins={...config.options.plugins,legend:{position:'bottom',...config.options.plugins?.legend,labels:{boxWidth:10,font:{size:10},color:ink,...config.options.plugins?.legend?.labels}}};
+  for(const axis of Object.values(config.options.scales||{})){
+    axis.ticks={maxTicksLimit:6,...axis.ticks,color:ink,font:{size:10}};
+    axis.grid={...axis.grid,color:dark?'#ffffff0d':'#0f172a0d'};
+  }
+  window.charts=window.charts||{};
+  window.charts[id]=new Chart(canvas,config);
+}
+function rsRenderDashboardOverviewCharts(model=rsDashboardScope()) {
+  rsDashboardDrawChart('revChart',{
+    type:'bar',data:{labels:model.months.map(m=>m.label),datasets:[
+      {label:'Invoiced',data:model.months.map(m=>m.invoiced),backgroundColor:'#8b5cf6',borderRadius:4},
+      {label:'Invoice payments',data:model.months.map(m=>m.collected),backgroundColor:'#14b8a6',borderRadius:4}
+    ]},options:{scales:{y:{beginAtZero:true,ticks:{callback:v=>new Intl.NumberFormat('en-IN',{notation:'compact',maximumFractionDigits:1}).format(v)}}},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+rsDashboardMoney(c.raw)}}}}
+  });
+  rsDashboardDrawChart('statusChart',{type:'doughnut',data:{labels:Object.keys(model.statusCounts),datasets:[{data:Object.values(model.statusCounts),backgroundColor:['#14b8a6','#f59e0b','#fb7185'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw+' invoices'}}}}});
+}
+function rsRenderDashboardReportsContent() {
+  if(typeof state==='undefined')return;
+  rsRefreshMonthlyRevenueGoal();
+  const model=rsDashboardScope(),money=rsDashboardMoney,esc=escapeHtml;
+  const select=document.getElementById('bizSelect'),scope=document.getElementById('rsDashboardScopeLabel');
+  if(scope)scope.textContent=(model.all?'All businesses · Consolidated':select?.selectedOptions?.[0]?.textContent.trim()||'Selected business')+' · All-time invoices';
+  const empty=document.getElementById('rsDashboardEmpty');if(empty)empty.hidden=model.invoices.length>0;
+  rsRenderDashboardOverviewCharts(model);
+  const topColours=model.top.map(c=>rsDashboardEntityColour('customer',c.id,model.allCustomers));
+  rsDashboardDrawChart('topCustomers',{type:'bar',data:{labels:model.top.map(c=>c.name),datasets:[{label:'Invoiced',data:model.top.map(c=>c.total),backgroundColor:topColours,borderRadius:5,maxBarThickness:32}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const c=model.top[ctx.dataIndex];return ['Invoiced: '+money(c.total),'Paid / allocated: '+money(c.paid),'Outstanding: '+money(c.total-c.paid),'Invoices: '+c.count]}}}},scales:{y:{beginAtZero:true},x:{ticks:{maxRotation:0}}}}});
+  rsDashboardDrawChart('invoicesStatus',{type:'doughnut',data:{labels:Object.keys(model.statusValues),datasets:[{data:Object.values(model.statusValues),backgroundColor:['#14b8a6','#f59e0b','#fb7185'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+money(c.raw)}}}}});
+  const note=document.getElementById('rsCashFlowNote');if(note)note.textContent='Overdue balances appear on today’s bar; future bars show unpaid amounts by due date.'+(model.undatedOutstanding>0?' '+money(model.undatedOutstanding)+' has no valid due date and is excluded.':'');
+  rsDashboardDrawChart('cashFlow',{type:'bar',data:{labels:model.cashDays.map(d=>d.label),datasets:[{label:'Overdue',data:model.cashDays.map(d=>d.overdue),backgroundColor:'#fb7185',borderRadius:3},{label:'Due next 30 days',data:model.cashDays.map(d=>d.inflow),backgroundColor:'#14b8a6',borderRadius:3}]},options:{scales:{x:{stacked:true,ticks:{maxTicksLimit:5,maxRotation:0}},y:{stacked:true,beginAtZero:true}},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+money(c.raw)}}}}});
+  const businessColours=model.performance.map(b=>rsDashboardEntityColour('business',b.id,model.allBusinesses));
+  rsDashboardDrawChart('businessPerformance',{type:'bar',data:{labels:model.performance.map(b=>b.name),datasets:[{label:'Invoiced',data:model.performance.map(b=>b.total),rsEntityIds:model.performance.map(b=>b.id),backgroundColor:businessColours,borderRadius:5,maxBarThickness:36}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>money(c.raw)}}},scales:{y:{beginAtZero:true},x:{ticks:{maxRotation:0}}}}});
+  const valid=model.delays.filter(d=>d.avgDelay!==null),avg=valid.length?Math.round(valid.reduce((s,d)=>s+d.avgDelay,0)/valid.length):null;
+  const metric=document.getElementById('avgDelayMetric');if(metric)metric.textContent='Average: '+(avg===null?'No dated payment history':avg+' days');
+  const summary=document.getElementById('avgDelaySummary');
+  if(summary){
+    const cards=[
+      ['same-day','Same-day',valid.filter(d=>d.avgDelay===0).length],
+      ['slight','1–30 days',valid.filter(d=>d.avgDelay>0&&d.avgDelay<=30).length],
+      ['late','Over 30 days',valid.filter(d=>d.avgDelay>30).length],
+      ['unknown','No dated history',model.delays.filter(d=>d.avgDelay===null).length]
+    ];
+    summary.innerHTML=cards.map(([kind,label,count])=>'<div class="rs-delay-tile rs-delay-'+kind+'"><span class="rs-delay-tile-dot" aria-hidden="true"></span><span class="rs-delay-tile-label">'+label+': <strong>'+count+'</strong></span></div>').join('')+
+      '<div class="rs-delay-tile rs-delay-overall"><span class="rs-delay-tile-dot" aria-hidden="true"></span><span class="rs-delay-tile-label">Overall Avg Delay: <strong>'+(avg===null?'No dated history':avg+' days')+'</strong></span></div>';
+  }
+  const delayTable=document.getElementById('avgDelay');
+  if(delayTable){
+    const rows=model.delays.map(d=>{
+      const kind=d.avgDelay===null?'unknown':d.avgDelay===0?'same-day':d.avgDelay<=30?'slight':'late';
+      const label=d.avgDelay===null?(d.noPayment?'No payments yet':'Dates unavailable'):d.avgDelay+' days';
+      return '<tr><td>'+esc(d.name)+'</td><td><span class="rs-delay-value rs-delay-'+kind+'">'+label+'</span></td></tr>';
+    }).join('');
+    delayTable.innerHTML='<table><thead><tr><th scope="col">Customer</th><th scope="col">Avg delay</th></tr></thead><tbody>'+(rows||'<tr><td colspan="2">No customers with invoices in this scope.</td></tr>')+'</tbody></table>';
+  }
+  const delayRows=[...valid].sort((a,b)=>b.avgDelay-a.avgDelay).slice(0,10);
+  const delayColours=delayRows.map(d=>rsDashboardEntityColour('customer',d.id,model.allCustomers));
+  rsDashboardDrawChart('avgDelayChart',{type:'bar',data:{labels:delayRows.map(d=>d.name),datasets:[{label:'Days from invoice to latest payment',data:delayRows.map(d=>d.avgDelay),rsEntityIds:delayRows.map(d=>d.id),backgroundColor:delayColours,borderRadius:4,maxBarThickness:28}]},options:{scales:{y:{beginAtZero:true,title:{display:true,text:'Days'}},x:{ticks:{maxRotation:0}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+' days'}}}}});
+  const credit=document.getElementById('creditUsage');
+  if(credit){
+    const rows=model.customers.filter(c=>Number(c.creditLimit)>0);
+    credit.innerHTML='<h3>Customer Credit Usage</h3><p class="rs-report-caption">Outstanding in selected scope / customer credit limit</p><div class="rs-credit-list">'+(rows.length?rows.map(c=>{
+      const used=model.invoices.filter(i=>String(i.customerId)===String(c.id)).reduce((s,i)=>s+model.outstanding(i),0);
+      const limit=Number(c.creditLimit),pct=used/limit*100;
+      const colour=rsDashboardEntityColour('customer',c.id,model.allCustomers);
+      return '<div class="rs-credit-item" style="--rs-credit-colour:'+colour+';--rs-progress-colour:'+colour+'">'+
+        '<div class="rs-credit-label"><span class="rs-credit-customer"><i class="rs-credit-dot" aria-hidden="true"></i>'+esc(c.name||String(c.id))+'</span><strong>'+money(used)+' / '+money(limit)+'</strong></div>'+
+        '<progress max="100" value="'+Math.min(100,pct)+'" style="accent-color:'+colour+'" aria-label="'+esc(c.name||String(c.id))+' credit used" aria-valuetext="'+pct.toFixed(1)+' percent used"></progress>'+
+        '<small>'+pct.toFixed(1)+'% used</small></div>';
+    }).join(''):'<p class="rs-report-caption">No customer credit limits in this scope.</p>')+'</div>';
+  }
+  const efficiency=document.getElementById('collectionEfficiency');if(efficiency){
+    function efficiencyCard(b){const pct=b.efficiency,colour=pct===null?'#94a3b8':pct>=90?'#14b8a6':pct>=70?'#f59e0b':'#fb7185';return '<article class="rs-efficiency-item"><div class="rs-efficiency-label"><strong>'+esc(b.name)+'</strong><b style="color:'+colour+'">'+(pct===null?'—':pct.toFixed(1)+'%')+'</b></div><progress max="100" value="'+(pct??0)+'" style="--rs-progress-colour:'+colour+';accent-color:'+colour+'" aria-label="'+esc(b.name)+' invoice collection percentage"></progress><p>'+money(b.collected)+' covered / '+money(b.total)+' invoiced</p><small>'+(pct===null?'No invoice value in this scope.':'Outstanding: '+money(b.outstanding))+'</small></article>';}
+    efficiency.innerHTML='<h3>Collection Efficiency by Business</h3><p class="rs-report-caption">Recorded invoice payments ÷ invoiced value × 100. Includes allocated advances; unallocated advances are excluded.</p><div class="rs-efficiency-grid">'+(model.all?efficiencyCard({name:'Overall · weighted',total:model.total,collected:model.collected,outstanding:Math.max(0,model.total-model.collected),efficiency:model.efficiency}):'')+model.performance.map(efficiencyCard).join('')+'</div><details class="rs-report-details"><summary>How this works</summary><p>₹80,000 covered against ₹1,00,000 invoiced = 80%. This is invoice coverage, not a measure of how quickly customers pay. Each invoice’s covered amount is capped at its total so overpayments cannot raise the rate above 100%. Cancelled/void invoices are excluded. With no invoice value, the percentage is shown as —. Colours: below 70% coral, 70–89.9% amber, 90% and above teal.</p></details>';
+  }
+  renderDashboardReports.rendered=true; // Compatibility only: never blocks a refresh.
+}
+
+/* Refresh after the existing business/data/view handlers; do not mutate shared state. */
+(function(){
+  let queued=false;
+  function schedule(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;renderDashboardReports();});}
+  function init(){
+    document.getElementById('bizSelect')?.addEventListener('change',schedule);
+    for(const event of ['rs:data-loaded','rs:mutation','rs:finance-changed'])window.addEventListener(event,schedule);
+    window.addEventListener('rs:sync',event=>{if(event.detail?.phase==='saved'&&['getall','financeget'].includes(event.detail.action))schedule();});
+    rsInstallDashboardChartBridge();
+    const originalShow=window.showView;
+    if(typeof originalShow==='function')window.showView=function(name){const result=originalShow.apply(this,arguments);if(name==='dashboard')schedule();return result;};
+    schedule();
+  }
+  if(document.readyState==='complete')queueMicrotask(init);
+  else window.addEventListener('load',init,{once:true});
+})();
+
+
+//view commission report
+
+/* Commission Report Module ------------------------------------------------- */
+/* Usage:
+   1) Add the HTML snippet above to index.html
+   2) Paste this JS into billing.js (after state is available)
+   3) Call renderCommissionReport() when the user opens the "Commission Report" tab
+*/
+
+(function () {
+  // local chart handles
+  let commissTrendChart = null;
+  let commissBizChart = null;
+
+  function safeId(id) { return document.getElementById(id); }
+
+  // Build derived commission data from state.invoices
+  function buildCommissionData(filteredInvoicesList) {
+    const invoices = filteredInvoicesList || (state.invoices || []);
+    // normalize invoices array
+    const invs = window.rsFilterCommissionInvoices(Array.isArray(invoices) ? invoices : Object.values(invoices || {}));
+
+    // Utilities
+    const monthKey = (isoDate) => {
+      if (!isoDate) return 'Unknown';
+      const d = new Date(isoDate);
+      if (isNaN(d)) return 'Unknown';
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    };
+
+    // aggregates
+    const byMonth = {};
+    const byBusiness = {};
+    const byCustomer = {};
+    const byService = {}; // aggregate by serviceId via items
+    const invoiceRows = [];
+
+    for (const inv of invs) {
+      const commission = Number(inv.commission || 0);
+      const total = Number(inv.total || 0);
+      const bizId = inv.businessId || 'unknown';
+      const custId = inv.customerId || 'unknown';
+
+      // invoice row for drilldown
+      invoiceRows.push({
+        id: inv.id,
+        invoiceNumber: inv['invoice number'] || inv.invoiceNumber || inv.id,
+        date: inv.date || inv.createdAt || '',
+        businessId: bizId,
+        businessName: (state.businesses && state.businesses[bizId] && state.businesses[bizId].name) || (inv.businessName || '—'),
+        customerId: custId,
+        customerName: (state.customers || []).find(c => c.id === custId)?.name || (inv.customerName || '—'),
+        total,
+        commission,
+        status: inv.status || '—'
+      });
+
+      // by month
+      const m = monthKey(inv.date || inv.createdAt);
+      byMonth[m] = (byMonth[m] || 0) + commission;
+
+      // by business
+      byBusiness[bizId] = byBusiness[bizId] || { id: bizId, name: (state.businesses && state.businesses[bizId] && state.businesses[bizId].name) || '—', commission: 0, count: 0 };
+      byBusiness[bizId].commission += commission;
+      byBusiness[bizId].count += commission ? 1 : 0;
+
+      // by customer
+      byCustomer[custId] = byCustomer[custId] || { id: custId, name: (state.customers || []).find(c => c.id === custId)?.name || '—', commission: 0, count: 0 };
+      byCustomer[custId].commission += commission;
+      byCustomer[custId].count += commission ? 1 : 0;
+
+      // by service: accumulate commissions proportionally if items contribute.
+      if (Array.isArray(inv.items)) {
+        // split commission among items proportional to amount
+        const lineTotals = inv.items.map(it => (Number(it.qty || 0) * Number(it.rate || 0)) || 0);
+        const invoiceLineSum = lineTotals.reduce((s, x) => s + x, 0) || 0;
+        inv.items.forEach((it, idx) => {
+          const serviceId = it.serviceId || it.service || 'svc_unknown';
+          const lineShare = invoiceLineSum ? (lineTotals[idx] / invoiceLineSum) : (1 / (inv.items.length || 1));
+          const allocated = commission * lineShare;
+          byService[serviceId] = byService[serviceId] || { id: serviceId, name: (state.services || []).find(s => s.id === serviceId)?.service || it.serviceName || '—', commission: 0, count: 0 };
+          byService[serviceId].commission += allocated;
+          byService[serviceId].count += allocated ? 1 : 0;
+        });
+      }
+    }
+
+    // Convert objects into sorted arrays
+    const months = Object.keys(byMonth).sort();
+    const monthSeries = months.map(m => ({ month: m, commission: byMonth[m] || 0 }));
+
+    const businessSeries = Object.values(byBusiness).sort((a, b) => b.commission - a.commission);
+    const customerSeries = Object.values(byCustomer).sort((a, b) => b.commission - a.commission);
+    const serviceSeries = Object.values(byService).sort((a, b) => b.commission - a.commission);
+
+    // Totals
+    const totalCommission = invoiceRows.reduce((s, r) => s + Number(r.commission || 0), 0);
+    const highestSingle = invoiceRows.reduce((m, r) => Math.max(m, Number(r.commission || 0)), 0);
+    const avgPerInvoice = invoiceRows.length ? (totalCommission / invoiceRows.length) : 0;
+
+    return {
+      invoiceRows,
+      monthSeries,
+      businessSeries,
+      customerSeries,
+      serviceSeries,
+      totalCommission,
+      highestSingle,
+      avgPerInvoice
+    };
+  }
+
+  // Render KPIs
+  function renderCommissionKPIs(data) {
+    if (safeId('kpiTotalCommission')) safeId('kpiTotalCommission').textContent = formatINR(Number(data.totalCommission || 0));
+    // this month
+    const ym = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })();
+    const thisMonthVal = (data.monthSeries.find(m => m.month === ym) || {}).commission || 0;
+    if (safeId('kpiThisMonth')) safeId('kpiThisMonth').textContent = formatINR(thisMonthVal);
+    if (safeId('kpiHighest')) safeId('kpiHighest').textContent = formatINR(Number(data.highestSingle || 0));
+    if (safeId('kpiAvg')) safeId('kpiAvg').textContent = formatINR(Number(data.avgPerInvoice || 0));
+  }
+
+  // Chart helpers (uses Chart.js already on page)
+  function renderCommissionTrendChart(data) {
+    const ctx = document.getElementById('commissionTrendChart');
+    if (!ctx) return;
+    const labels = data.monthSeries.map(s => s.month);
+    const series = data.monthSeries.map(s => Number(s.commission || 0));
+
+    // destroy old
+    if (commissTrendChart) { commissTrendChart.destroy(); commissTrendChart = null; }
+
+    commissTrendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Commission',
+          data: series,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  function renderCommissionByBusinessChart(data) {
+    const ctx = document.getElementById('commissionByBusinessChart');
+    if (!ctx) return;
+
+    const labels = data.businessSeries.map(b => b.name || b.id);
+    const series = data.businessSeries.map(b => Number(b.commission || 0));
+
+    if (commissBizChart) { commissBizChart.destroy(); commissBizChart = null; }
+
+    commissBizChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Commission', data: series }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  // Render leaderboards/tables
+  function renderCommissionByCustomer(data) {
+    const tbody = safeId('commissionByCustomerBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    data.customerSeries.slice(0, 20).forEach((c, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="p-2">${i + 1}</td>
+                      <td class="p-2">${c.name || c.id}</td>
+                      <td class="p-2 text-right">${formatINR(Number(c.commission || 0))}</td>
+                      <td class="p-2">${c.count || 0}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderCommissionByService(data) {
+    const tbody = safeId('commissionByServiceBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    data.serviceSeries.slice(0, 20).forEach((s, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="p-2">${i + 1}</td>
+                      <td class="p-2">${s.name || s.id}</td>
+                      <td class="p-2 text-right">${formatINR(Number(s.commission || 0))}</td>
+                      <td class="p-2">${s.count || 0}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Invoice table rendering with filters
+  function renderCommissionInvoiceTable(filtered) {
+    const tbody = safeId('commissionInvoiceTable');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    const rows = filtered || [];
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="p-2">${r.invoiceNumber}</td>
+                      <td class="p-2">${(r.date || '').slice(0, 10)}</td>
+                      <td class="p-2">${r.businessName || '—'}</td>
+                      <td class="p-2">${r.customerName || '—'}</td>
+                      <td class="p-2 text-right">${formatINR(Number(r.total || 0))}</td>
+                      <td class="p-2 text-right">${formatINR(Number(r.commission || 0))}</td>
+                      <td class="p-2">${r.status || '—'}</td>
+                      <td class="p-2">
+                        <button class="btn" onclick="openPrint('${r.id}')">Print</button>
+                      </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Fill filter selects
+  function populateCommissionFilters() {
+    const bizSel = safeId('commissionFilterBiz');
+    const custSel = safeId('commissionFilterCust');
+    const previousBiz = bizSel?.value, previousCust = custSel?.value;
+    if (bizSel) {
+      bizSel.innerHTML = '<option value="all">All Businesses</option>' +
+        (Object.values(state.businesses || {}).map(b => `<option value="${b.id}">${b.name}</option>`).join(''));
+    }
+    if (custSel) {
+      custSel.innerHTML = '<option value="all">All Customers</option>' +
+        ((state.customers || []).map(c => `<option value="${c.id}">${c.name}</option>`).join(''));
+    }
+    if (bizSel && Array.from(bizSel.options).some(o => o.value === previousBiz)) bizSel.value = previousBiz;
+    if (custSel && Array.from(custSel.options).some(o => o.value === previousCust)) custSel.value = previousCust;
+  }
+
+  // Apply filters and re-render invoice table
+  function getFilteredInvoiceRows() {
+    const biz = safeId('commissionFilterBiz')?.value || 'all';
+    const cust = safeId('commissionFilterCust')?.value || 'all';
+    const from = safeId('commissionFrom')?.value;
+    const to = safeId('commissionTo')?.value;
+
+    const all = buildCommissionData().invoiceRows;
+    return all.filter(r => {
+      if (biz !== 'all' && r.businessId !== biz) return false;
+      if (cust !== 'all' && r.customerId !== cust) return false;
+      if (from && (r.date || '').slice(0, 10) < from) return false;
+      if (to && (r.date || '').slice(0, 10) > to) return false;
+      return true;
+    });
+  }
+
+  // Exports: CSV and Print
+  function exportCommissionCSV() {
+    const data = buildCommissionData();
+    const rows = data.invoiceRows.map(r => ({
+      invoiceNumber: r.invoiceNumber,
+      date: (r.date || '').slice(0, 10),
+      business: r.businessName,
+      customer: r.customerName,
+      total: Number(r.total || 0),
+      commission: Number(r.commission || 0),
+      status: r.status
+    }));
+    const headers = Object.keys(rows[0] || {});
+    const csv = [headers.join(',')].concat(rows.map(row => headers.map(h => {
+      let v = row[h]; if (v === null || v === undefined) v = '';
+      // escape commas/newlines
+      if (typeof v === 'string') v = `"${v.replace(/"/g, '""')}"`;
+      return v;
+    }).join(','))).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `commission_report_${(new Date()).toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportCommissionPrint() {
+    // Simple printable window: quick layout
+    const data = buildCommissionData();
+    const rows = data.invoiceRows;
+    const html = `
+      <html><head>
+      <title>Commission Report</title>
+      <style>body{font-family:Arial,Helvetica,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:6px;border:1px solid #ddd;text-align:left}</style>
+      </head><body>
+      <h2>Commission Report</h2>
+      <p>Total Commission: ${formatINR(data.totalCommission)}</p>
+      <table><thead><tr><th>Invoice</th><th>Date</th><th>Business</th><th>Customer</th><th>Total</th><th>Commission</th><th>Status</th></tr></thead>
+      <tbody>
+      ${rows.map(r => `<tr><td>${r.invoiceNumber}</td><td>${(r.date || '').slice(0, 10)}</td><td>${r.businessName}</td><td>${r.customerName}</td><td style="text-align:right">${formatINR(r.total)}</td><td style="text-align:right">${formatINR(r.commission)}</td><td>${r.status}</td></tr>`).join('')}
+      </tbody></table></body></html>
+    `;
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    // optionally call w.print(); but leave to user to confirm print
+  }
+
+  // Master render function (idempotent)
+  window.renderCommissionReport = function renderCommissionReport() {
+    // show view (hide others) — do not modify existing show/hide logic, but if you have a helper, use it.
+    // If your app has highlightActive or view switching, call that; otherwise simply show section:
+    // Example: hide other known views (conservative: don't hide anything app-wide), instead show this panel:
+    const view = safeId('view-commission-report');
+    if (!view) {
+      console.warn('Commission Report view not found in DOM.');
+      return;
+    }
+    // show it
+    view.classList.remove('hidden');
+
+    window.rsCommissionInit();
+    const rsFrom = safeId('commissionFrom')?.value, rsTo = safeId('commissionTo')?.value;
+    if (rsFrom && rsTo && rsFrom > rsTo) { showToast('Start date must be on or before end date.', 'error'); return; }
+    // build data
+    const data = buildCommissionData();
+
+    // KPIs
+    renderCommissionKPIs(data);
+
+    // Charts
+    renderCommissionTrendChart(data);
+    renderCommissionByBusinessChart(data);
+
+    // leaderboards
+    renderCommissionByCustomer(data);
+    renderCommissionByService(data);
+
+    // filters
+    populateCommissionFilters();
+
+    // default invoice table (no filters)
+    renderCommissionInvoiceTable(data.invoiceRows);
+
+    // wire events (idempotent)
+    if (safeId('commissionApplyFilters')) {
+      safeId('commissionApplyFilters').onclick = () => {
+        window.renderCommissionReport();
+        if (typeof renderCommissionAdvancedReports === "function") renderCommissionAdvancedReports();
+      };
+    }
+    if (safeId('commissionExportCSV')) {
+      safeId('commissionExportCSV').onclick = exportCommissionCSV;
+    }
+    if (safeId('commissionExportPrint')) {
+      safeId('commissionExportPrint').onclick = exportCommissionPrint;
+    }
+
+    console.log('✅ Commission report rendered');
+  };
+
+  // expose a helper to refresh data when invoices change
+  window.refreshCommissionReport = function () {
+    if (document.getElementById('view-commission-report') && !document.getElementById('view-commission-report').classList.contains('hidden')) {
+      renderCommissionReport();
+    }
+  };
+
+  // If your app calls renderAll() after saves, you can call refreshCommissionReport() from there
+  // Example (if you have a central save callback): window.refreshCommissionReport();
+})();
+
+function renderCommissionAdvancedReports() {
+  console.log("📊 Rendering Advanced Commission Reports...");
+
+  // --- Normalize state safely
+  const businesses = Object.values(state.businesses || {});
+  const customers = Array.isArray(state.customers) ? state.customers : Object.values(state.customers || {});
+  const services = Array.isArray(state.services) ? state.services : Object.values(state.services || {});
+  let invoices = Array.isArray(state.invoices) ? state.invoices : Object.values(state.invoices || {});
+
+  window.rsCommissionInit();
+  invoices = window.rsFilterCommissionInvoices(invoices);
+
+  // --- Build commissions dataset
+  const commissions = invoices.map(inv => ({
+    id: inv.id,
+    invoiceNumber: inv.invoiceNumber,
+    businessId: inv.businessId,
+    customerId: inv.customerId,
+    serviceIds: (inv.items || []).map(it => it.serviceId),
+    date: new Date(inv.date),
+    status: inv.status,
+    total: Number(inv.total || 0),
+    commission: Number(inv.commission || 0),
+    payments: inv.payments || [],
+    region: customers.find(c => c.id === inv.customerId)?.region || "Unknown",
+    agent: inv.agent || "Unassigned"
+  }));
+
+  // --- Reset old charts
+  if (window.commCharts) {
+    Object.values(window.commCharts).forEach(c => c?.destroy?.());
+  }
+  window.commCharts = {};
+
+  // --- Utility
+  const groupSum = (arr, keyFn, valFn) => {
+    const out = {};
+    arr.forEach(item => {
+      const key = keyFn(item);
+      out[key] = (out[key] || 0) + valFn(item);
+    });
+    return out;
+  };
+
+  // === 1. Commission by Time Period (Monthly)
+  const ctxPeriod = document.getElementById("commissionPeriodChart");
+  if (ctxPeriod) {
+    const grouped = groupSum(
+      commissions,
+      c => `${c.date.getFullYear()}-${String(c.date.getMonth() + 1).padStart(2, "0")}`,
+      c => c.commission
+    );
+    const labels = Object.keys(grouped).sort();
+    window.commCharts.period = new Chart(ctxPeriod, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{ label: "Commission (₹)", data: labels.map(l => grouped[l]) }]
+      }
+    });
+  }
+
+  // === 2. Commission by Payment Mode
+  const ctxPay = document.getElementById("commissionPaymentChart");
+  if (ctxPay) {
+    const grouped = {};
+    commissions.forEach(c => {
+      (c.payments || []).forEach(p => {
+        grouped[p.method] = (grouped[p.method] || 0) + c.commission;
+      });
+    });
+    window.commCharts.pay = new Chart(ctxPay, {
+      type: "doughnut",
+      data: { labels: Object.keys(grouped), datasets: [{ data: Object.values(grouped) }] }
+    });
+  }
+
+  // === 3. Commission by Status
+  const ctxStatus = document.getElementById("commissionStatusChart");
+  if (ctxStatus) {
+    const grouped = groupSum(commissions, c => c.status || "Unknown", c => c.commission);
+    window.commCharts.status = new Chart(ctxStatus, {
+      type: "pie",
+      data: { labels: Object.keys(grouped), datasets: [{ data: Object.values(grouped) }] }
+    });
+  }
+
+  // === 4. Commission Recovery Ratio
+  const totalCommission = commissions.reduce((a, b) => a + b.commission, 0);
+  const recovered = commissions.reduce((a, b) => a + (b.payments?.length ? b.commission : 0), 0);
+  const ratio = totalCommission ? (recovered / totalCommission) * 100 : 0;
+  const recoveryEl = document.getElementById("commissionRecovery");
+  if (recoveryEl) recoveryEl.textContent = ratio.toFixed(1) + "%";
+
+  // === 5. Top Customers
+  const ctxTopCust = document.getElementById("commissionTopCustomers");
+  if (ctxTopCust) {
+    const grouped = groupSum(commissions, c => c.customerId, c => c.commission);
+    const sorted = Object.entries(grouped).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    window.commCharts.topCust = new Chart(ctxTopCust, {
+      type: "bar",
+      data: {
+        labels: sorted.map(([id]) => customers.find(c => c.id === id)?.name || id),
+        datasets: [{ label: "Commission (₹)", data: sorted.map(x => x[1]) }]
+      }
+    });
+  }
+
+  // === 6. Top Services
+  const ctxTopSvc = document.getElementById("commissionTopServices");
+  if (ctxTopSvc) {
+    const grouped = {};
+    commissions.forEach(c => {
+      (c.serviceIds || []).forEach(sid => {
+        grouped[sid] = (grouped[sid] || 0) + c.commission;
+      });
+    });
+    const sorted = Object.entries(grouped).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    window.commCharts.topSvc = new Chart(ctxTopSvc, {
+      type: "bar",
+      data: {
+        labels: sorted.map(([id]) => services.find(s => s.id === id)?.service || id),
+        datasets: [{ label: "Commission (₹)", data: sorted.map(x => x[1]) }]
+      }
+    });
+  }
+
+  // === 7. Commission Aging
+  const ctxAging = document.getElementById("commissionAgingChart");
+  if (ctxAging) {
+    const now = new Date();
+    const buckets = { "0–30d": 0, "31–60d": 0, "61–90d": 0, ">90d": 0 };
+    commissions.forEach(c => {
+      const age = (now - c.date) / (1000 * 60 * 60 * 24);
+      if (age <= 30) buckets["0–30d"] += c.commission;
+      else if (age <= 60) buckets["31–60d"] += c.commission;
+      else if (age <= 90) buckets["61–90d"] += c.commission;
+      else buckets[">90d"] += c.commission;
+    });
+    window.commCharts.aging = new Chart(ctxAging, {
+      type: "bar",
+      data: { labels: Object.keys(buckets), datasets: [{ data: Object.values(buckets) }] }
+    });
+  }
+
+  // === 8. Business Commission Margin
+  const ctxMargin = document.getElementById("commissionMarginChart");
+  if (ctxMargin) {
+    const groupedComm = groupSum(commissions, c => c.businessId, c => c.commission);
+    const groupedTotal = groupSum(commissions, c => c.businessId, c => c.total);
+    const labels = Object.keys(groupedComm);
+    window.commCharts.margin = new Chart(ctxMargin, {
+      type: "bar",
+      data: {
+        labels: labels.map(id => businesses.find(b => b.id === id)?.name || id),
+        datasets: [{ label: "Margin %", data: labels.map(id => groupedTotal[id] ? (groupedComm[id] / groupedTotal[id]) * 100 : 0) }]
+      }
+    });
+  }
+
+  // === 9. Forecast vs Target
+  const ctxForecast = document.getElementById("commissionForecastChart");
+  if (ctxForecast) {
+    const grouped = groupSum(
+      commissions,
+      c => `${c.date.getFullYear()}-${String(c.date.getMonth() + 1).padStart(2, "0")}`,
+      c => c.commission
+    );
+    const labels = Object.keys(grouped).sort();
+    const data = labels.map(l => grouped[l]);
+
+    // Simple linear regression forecast (next 3 months)
+    const n = data.length;
+    const x = data.map((_, i) => i + 1);
+    const sumX = x.reduce((a, b) => a + b, 0);
+    const sumY = data.reduce((a, b) => a + b, 0);
+    const sumXY = x.reduce((a, xi, i) => a + xi * data[i], 0);
+    const sumX2 = x.reduce((a, xi) => a + xi * xi, 0);
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX || 1);
+    const intercept = (sumY - slope * sumX) / n;
+
+    const forecast = [1, 2, 3].map(i => slope * (n + i) + intercept);
+    const target = 100000; // Example static target
+
+    window.commCharts.forecast = new Chart(ctxForecast, {
+      type: "line",
+      data: {
+        labels: [...labels, "M+1", "M+2", "M+3"],
+        datasets: [
+          { label: "Actual", data: data.concat([null, null, null]), borderColor: "blue" },
+          { label: "Forecast", data: [...Array(data.length).fill(null), ...forecast], borderColor: "orange" },
+          { label: "Target", data: [...Array(data.length + 3).fill(target)], borderColor: "red", borderDash: [5, 5] }
+        ]
+      }
+    });
+  }
+
+  // === 10. Commission Payout by Agent
+  const ctxPayout = document.getElementById("commissionPayoutChart");
+  if (ctxPayout) {
+    const grouped = groupSum(commissions, c => c.agent, c => c.commission);
+    window.commCharts.payout = new Chart(ctxPayout, {
+      type: "bar",
+      data: { labels: Object.keys(grouped), datasets: [{ data: Object.values(grouped) }] }
+    });
+  }
+
+  // === 11. Commission by Region
+  const ctxRegion = document.getElementById("commissionRegionChart");
+  if (ctxRegion) {
+    const grouped = groupSum(commissions, c => c.region, c => c.commission);
+    window.commCharts.region = new Chart(ctxRegion, {
+      type: "doughnut",
+      data: { labels: Object.keys(grouped), datasets: [{ data: Object.values(grouped) }] }
+    });
+  }
+
+  console.log("✅ Advanced Commission Reports rendered");
+}
+
+/* =============== ADVANCED CUSTOMER STATEMENT - JS (standalone) =============== */
+
+/* Helper to get element by id, but do not override existing safeEl */
+function adv2_get(id) {
+  if (!id) return null;
+  if (typeof document !== "undefined" && document.getElementById(id)) return document.getElementById(id);
+  if (typeof safeEl === "function") return safeEl(id);
+  return null;
+}
+
+/* Chart handles unique to adv2 */
+let adv2_timeline_chart = null;
+let adv2_pie_chart = null;
+let adv2_paymethod_chart = null;
+
+/* Populate customer dropdown (call after state.customers loaded) */
+function adv2_populateCustomers() {
+  const sel = adv2_get("adv2_customer_select");
+  if (!sel) return;
+  sel.innerHTML = `<option value="">-- Select customer --</option>` +
+    (state.customers || []).map(c => `<option value="${c.id}">${escapeHtml(c.name || c.id)}</option>`).join("");
+  sel.onchange = () => {
+    const cid = sel.value;
+    if (cid) adv2_render(cid);
+  };
+}
+
+/* Open / Close functions */
+function adv2_open(customerId) {
+  const panel = adv2_get("adv2_panel");
+  if (!panel) return;
+  panel.classList.remove("hidden");
+  if (customerId) {
+    const sel = adv2_get("adv2_customer_select");
+    if (sel) sel.value = customerId;
+    adv2_render(customerId);
+  }
+}
+function adv2_close() {
+  const panel = adv2_get("adv2_panel");
+  if (!panel) return;
+  panel.classList.add("hidden");
+}
+adv2_get("adv2_close")?.addEventListener?.("click", adv2_close);
+
+/* Main renderer */
+function adv2_render(customerId) {
+  try {
+    if (!customerId) customerId = adv2_get("adv2_customer_select")?.value || null;
+    if (!customerId) {
+      adv2_get("adv2_summary_cards").innerHTML =
+        `<div style="color:#f87171;background:#1e293b;padding:10px;border-radius:8px">⚠ Select a customer</div>`;
+      return;
+    }
+
+    const cust = (state.customers || []).find(c => String(c.id) === String(customerId));
+    if (!cust) {
+      adv2_get("adv2_summary_cards").innerHTML =
+        `<div style="color:#f87171;background:#1e293b;padding:10px;border-radius:8px">❌ Customer not found</div>`;
+      return;
+    }
+
+    // Date range
+    let startDate = adv2_get("adv2_start")?.value ? new Date(adv2_get("adv2_start").value) : null;
+    let endDate = adv2_get("adv2_end")?.value ? new Date(adv2_get("adv2_end").value) : null;
+    const quick = adv2_get("adv2_quick_range")?.value;
+    if (!startDate && quick) {
+      const now = new Date();
+      if (quick === "30") { endDate = new Date(); startDate = new Date(); startDate.setDate(endDate.getDate() - 30); }
+      else if (quick === "90") { endDate = new Date(); startDate = new Date(); startDate.setDate(endDate.getDate() - 90); }
+      else if (quick === "fy") { const now2 = new Date(); startDate = (now2.getMonth() >= 3) ? new Date(now2.getFullYear(), 3, 1) : new Date(now2.getFullYear() - 1, 3, 1); endDate = new Date(); }
+    }
+
+    // Invoices
+    let invoices = (state.invoices || []).filter(inv => String(inv.customerId) === String(customerId));
+    const prePeriod = startDate ? (state.invoices || []).filter(inv => String(inv.customerId) === String(customerId) && new Date(inv.date) < startDate) : [];
+    if (startDate || endDate) {
+      invoices = invoices.filter(inv => {
+        const d = new Date(inv.date);
+        return (!startDate || d >= startDate) && (!endDate || d <= endDate);
+      });
+    }
+
+    // Totals
+    const totalInvoiced = invoices.reduce((s, inv) => s + (inv.total || 0), 0);
+    const totalPaid = invoices.reduce((s, inv) => s + (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0), 0);
+    const totalBalance = totalInvoiced - totalPaid;
+
+    const openingBalance = prePeriod.reduce((s, inv) => {
+      const paid = (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0);
+      return s + Math.max(0, (inv.total || 0) - paid);
+    }, 0);
+    const closingBalance = openingBalance + totalBalance;
+
+    // === Summary Cards ===
+    adv2_get("adv2_summary_cards").innerHTML = `
+      <div style="background:#1e293b;padding:12px;border-radius:10px;text-align:center">
+        <div style="color:#94a3b8;font-size:13px">Total Invoiced</div>
+        <div style="color:#60a5fa;font-weight:700;font-size:20px">${formatINR(totalInvoiced)}</div>
+      </div>
+      <div style="background:#1e293b;padding:12px;border-radius:10px;text-align:center">
+        <div style="color:#94a3b8;font-size:13px">Total Paid</div>
+        <div style="color:#34d399;font-weight:700;font-size:20px">${formatINR(totalPaid)}</div>
+      </div>
+      <div style="background:#1e293b;padding:12px;border-radius:10px;text-align:center">
+        <div style="color:#94a3b8;font-size:13px">Pending Balance</div>
+        <div style="color:#fbbf24;font-weight:700;font-size:20px">${formatINR(totalBalance)}</div>
+      </div>
+    `;
+
+    // === Opening/Closing balances ===
+    adv2_get("adv2_balances").innerHTML = `
+      <div style="display:flex;gap:20px">
+        <div style="color:#60a5fa"><b>Opening:</b> ${formatINR(openingBalance)}</div>
+        <div style="color:#34d399"><b>Closing:</b> ${formatINR(closingBalance)}</div>
+      </div>
+    `;
+
+    // === Aging Buckets ===
+    const buckets = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0 };
+    const now = new Date();
+    invoices.forEach(inv => {
+      const paid = (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0);
+      const due = Math.max(0, (inv.total || 0) - paid);
+      if (due <= 0) return;
+      const days = Math.floor((now - new Date(inv.date)) / (1000 * 60 * 60 * 24));
+      if (days <= 30) buckets["0-30"] += due;
+      else if (days <= 60) buckets["31-60"] += due;
+      else if (days <= 90) buckets["61-90"] += due;
+      else buckets["90+"] += due;
+    });
+    adv2_get("adv2_aging_buckets").innerHTML = `
+      <div style="background:#1e293b;padding:10px;border-radius:8px;min-width:120px">
+        <div style="color:#60a5fa">0-30</div><div style="font-weight:700">${formatINR(buckets["0-30"])}</div>
+      </div>
+      <div style="background:#1e293b;padding:10px;border-radius:8px;min-width:120px">
+        <div style="color:#fbbf24">31-60</div><div style="font-weight:700">${formatINR(buckets["31-60"])}</div>
+      </div>
+      <div style="background:#1e293b;padding:10px;border-radius:8px;min-width:120px">
+        <div style="color:#f97316">61-90</div><div style="font-weight:700">${formatINR(buckets["61-90"])}</div>
+      </div>
+      <div style="background:#1e293b;padding:10px;border-radius:8px;min-width:120px">
+        <div style="color:#f87171">90+</div><div style="font-weight:700">${formatINR(buckets["90+"])}</div>
+      </div>
+    `;
+
+
+        // === Invoice vs Payment Timeline (Bar Chart) ===
+    const months = {};
+    invoices.forEach(inv => {
+      const d = new Date(inv.date);
+      if (isNaN(d)) return;
+      const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      months[key] = months[key] || { invoiced: 0, paid: 0, label: d.toLocaleString("default", { month: "short", year: "numeric" }) };
+      months[key].invoiced += (inv.total || 0);
+      months[key].paid += (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0);
+    });
+    const sortedKeys = Object.keys(months).sort();
+    const labels = sortedKeys.map(k => months[k].label);
+    const invoicedData = sortedKeys.map(k => months[k].invoiced);
+    const paidData = sortedKeys.map(k => months[k].paid);
+
+    const timelineCtx = adv2_get("adv2_timeline");
+    if (timelineCtx) {
+      try { if (adv2_timeline_chart) adv2_timeline_chart.destroy(); } catch (e) {}
+      adv2_timeline_chart = new Chart(timelineCtx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            { label: "Invoiced", data: invoicedData, backgroundColor: "#2563eb" },
+            { label: "Paid", data: paidData, backgroundColor: "#10b981" }
+          ]
+        },
+        options: { responsive: true, plugins: { legend: { labels: { color: "#e2e8f0" } } }, scales: { x: { ticks: { color: "#94a3b8" } }, y: { ticks: { color: "#94a3b8" } } } }
+      });
+    }
+
+    // === Payment Distribution (Paid vs Pending) ===
+    const pieCtx = adv2_get("adv2_pie");
+    if (pieCtx) {
+      try { if (adv2_pie_chart) adv2_pie_chart.destroy(); } catch (e) {}
+      adv2_pie_chart = new Chart(pieCtx, {
+        type: "pie",
+        data: {
+          labels: ["Paid", "Pending"],
+          datasets: [{ data: [totalPaid, totalBalance], backgroundColor: ["#10b981", "#f59e0b"] }]
+        },
+        options: { plugins: { legend: { labels: { color: "#e2e8f0" } } } }
+      });
+    }
+
+    // === Payment Method Report (Pie Chart) ===
+    const pm = {};
+    invoices.forEach(inv => (inv.payments || []).forEach(p => {
+      const m = p.method || "Unknown";
+      pm[m] = (pm[m] || 0) + (p.amount || 0);
+    }));
+    const pmLabels = Object.keys(pm);
+    const pmData = pmLabels.map(l => pm[l]);
+    const pmCtx = adv2_get("adv2_paymethod");
+    if (pmCtx) {
+      try { if (adv2_paymethod_chart) adv2_paymethod_chart.destroy(); } catch (e) {}
+      adv2_paymethod_chart = new Chart(pmCtx, {
+        type: "pie",
+        data: { labels: pmLabels, datasets: [{ data: pmData, backgroundColor: generatePalette(pmLabels.length) }] },
+        options: { plugins: { legend: { labels: { color: "#e2e8f0" } } } }
+      });
+    }
+
+
+    // === Charts (timeline, pies) remain same ===
+    // (your existing chart code stays; only colors updated above)
+
+    // === Profitability ===
+    const revenue = invoices.reduce((s, i) => s + (i.total || 0), 0);
+    const discounts = invoices.reduce((s, i) => s + (i.discount || 0), 0);
+    const commissions = invoices.reduce((s, i) => s + (i.commission || ((i.commissionPct || 0) / 100 * (i.total || 0))), 0);
+    const net = revenue - discounts - commissions;
+    adv2_get("adv2_profitability").innerHTML = `
+      <div style="color:#cbd5e1;margin-bottom:6px;font-weight:600">Customer Profitability</div>
+      <div><span style="color:#60a5fa">Revenue:</span> ${formatINR(revenue)}</div>
+      <div><span style="color:#fbbf24">Discounts:</span> ${formatINR(discounts)}</div>
+      <div><span style="color:#f87171">Commissions:</span> ${formatINR(commissions)}</div>
+      <div style="margin-top:6px;font-weight:700;color:#34d399">Net: ${formatINR(net)}</div>
+    `;
+
+    // === CLV ===
+    const clvTotal = (state.invoices || []).filter(i => String(i.customerId) === String(customerId)).reduce((s, i) => s + (i.total || 0), 0);
+    const paymentsForCustomer = (state.invoices || []).filter(i => String(i.customerId) === String(customerId)).flatMap(i => i.payments || []);
+    const avgPaymentDays = paymentsForCustomer.length ? Math.round(paymentsForCustomer.reduce((s, p) => {
+      const inv = (state.invoices || []).find(ii => (ii.payments || []).some(pp => pp === p || (pp.date === p.date && pp.amount === p.amount)));
+      if (!inv || !p.date) return s;
+      return s + Math.max(0, Math.floor((new Date(p.date) - new Date(inv.date)) / (1000 * 60 * 60 * 24)));
+    }, 0) / paymentsForCustomer.length) : 0;
+    adv2_get("adv2_clv").innerHTML = `
+      <div style="color:#cbd5e1;margin-bottom:6px;font-weight:600">Customer Lifetime Value</div>
+      <div><span style="color:#60a5fa">Total invoiced:</span> ${formatINR(clvTotal)}</div>
+      <div><span style="color:#34d399">Avg payment time:</span> ${avgPaymentDays} days</div>
+      <div><span style="color:#fbbf24">Net Contribution:</span> ${formatINR(net)}</div>
+    `;
+
+    // === Credit Utilization ===
+    let creditHtml = `<div style="color:#cbd5e1;margin-bottom:6px;font-weight:600">Credit Utilization</div>`;
+    if (cust && cust.creditLimit) {
+      const used = closingBalance;
+      const limit = cust.creditLimit;
+      const pct = Math.min(100, Math.round((used / limit) * 100));
+      creditHtml += `
+        <div><span style="color:#60a5fa">Limit:</span> ${formatINR(limit)}</div>
+        <div><span style="color:#f87171">Used:</span> ${formatINR(used)}</div>
+        <div style="background:#1e293b;border-radius:6px;overflow:hidden;margin-top:6px">
+          <div style="width:${pct}%;background:linear-gradient(90deg,#2563eb,#10b981);padding:4px 0;text-align:center;font-size:12px;color:white">${pct}%</div>
+        </div>`;
+    } else {
+      creditHtml += `<div style="color:#9ca3af">No credit limit set</div>`;
+    }
+    adv2_get("adv2_credit").innerHTML = creditHtml;
+
+    // === Repeat Business ===
+    const totalInvoicesAll = (state.invoices || []).filter(i => String(i.customerId) === String(customerId)).length;
+    adv2_get("adv2_repeat").innerHTML = `
+      <div style="color:#cbd5e1;margin-bottom:6px;font-weight:600">Repeat Business</div>
+      <div><span style="color:#34d399">Invoices (period):</span> ${invoices.length}</div>
+      <div><span style="color:#60a5fa">Invoices (all time):</span> ${totalInvoicesAll}</div>
+    `;
+
+    // === Top Debtors ===
+    const balances = {};
+    (state.invoices || []).forEach(inv => {
+      const cid = String(inv.customerId);
+      const paid = (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0);
+      const due = Math.max(0, (inv.total || 0) - paid);
+      balances[cid] = (balances[cid] || 0) + due;
+    });
+    const top = Object.entries(balances).map(([cid, amt]) => {
+      const c = (state.customers || []).find(x => String(x.id) === cid) || { name: cid };
+      return { name: c.name || cid, amt };
+    }).sort((a, b) => b.amt - a.amt).slice(0, 10);
+    adv2_get("adv2_top_debtors").innerHTML = top.map(t => `
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div>${escapeHtml(t.name)}</div><div style="color:#f87171">${formatINR(t.amt)}</div>
+      </div>`).join("");
+
+    // === Invoice table ===
+    const tbody = adv2_get("adv2_invoice_tbody");
+    tbody.innerHTML = invoices.map(inv => {
+      const paid = (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0);
+      const due = Math.max(0, (inv.total || 0) - paid);
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+        <td style="padding:6px;color:#60a5fa">${escapeHtml(inv.invoiceNumber || inv.id)}</td>
+        <td style="padding:6px;color:#9ca3af">${safeDateDisplay(inv.date)}</td>
+        <td style="padding:6px;text-align:right;color:#60a5fa">${formatINR(inv.total)}</td>
+        <td style="padding:6px;text-align:right;color:#34d399">${formatINR(paid)}</td>
+        <td style="padding:6px;text-align:right;color:#fbbf24">${formatINR(due)}</td>
+        <td style="padding:6px;color:#9ca3af">${escapeHtml(inv.status || '')}</td>
+        <td style="padding:6px"><textarea data-inv-id="${escapeHtml(inv.id)}" style="width:100%;min-height:48px;background:#111827;color:#e6eef8;border:1px solid rgba(255,255,255,0.08);padding:6px;border-radius:6px">${escapeHtml(inv.notes || '')}</textarea><div style="text-align:right;margin-top:4px"><button data-inv-id="${escapeHtml(inv.id)}" class="adv2-save-note" style="background:#2563eb;color:white;padding:6px 8px;border-radius:6px">Save</button></div></td>
+      </tr>`;
+    }).join("");
+
+    // === Save Notes ===
+    setTimeout(() => {
+      document.querySelectorAll(".adv2-save-note").forEach(btn => {
+        btn.onclick = async () => {
+          const id=btn.dataset.invId,ta=document.querySelector(`textarea[data-inv-id="${id}"]`);
+          const inv=(state.invoices||[]).find(x=>String(x.id)===String(id));
+          if(!inv){showToast('Restore this archived invoice before editing notes.','warning');return}
+          btn.disabled=true;
+          try{const updated={...inv,notes:ta?.value||''};const saved=await saveInvoiceToServer(updated);const index=state.invoices.findIndex(x=>String(x.id)===String(id));if(index>=0)state.invoices[index]=saved;btn.innerText='Saved';setTimeout(()=>btn.innerText='Save',1200)}catch(error){showToast(error.message,'error')}finally{btn.disabled=false}
+        };
+      });
+    }, 50);
+
+    adv2_get("adv2_export_csv").onclick = () => adv2_exportCSV(customerId, startDate, endDate);
+    adv2_get("adv2_export_pdf").onclick = () => adv2_exportPDF(customerId, startDate, endDate);
+
+  } catch (err) {
+    console.error("adv2_render error", err);
+    adv2_get("adv2_summary_cards").innerHTML =
+      `<div style="color:#f87171;background:#1e293b;padding:10px;border-radius:8px">Error rendering report</div>`;
+  }
+}
+
+
+/* Export helpers */
+function adv2_exportCSV(customerId, startDate, endDate) {
+  const custInvoices = (state.invoices || []).filter(inv => String(inv.customerId) === String(customerId) &&
+    (!startDate || new Date(inv.date) >= startDate) && (!endDate || new Date(inv.date) <= endDate));
+  let csv = "Invoice,Date,Total,Paid,Balance,Status,Notes\n";
+  custInvoices.forEach(inv => {
+    const paid = (inv.payments || []).reduce((p, a) => p + (a.amount || 0), 0);
+    const due = Math.max(0, (inv.total || 0) - paid);
+    csv += `"${inv.invoiceNumber || inv['invoice number'] || inv.id}","${safeDateDisplay(inv.date)}","${inv.total || 0}","${paid}","${due}","${inv.status || ''}","${(inv.notes || '').replace(/\n/g, ' ')}"\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `adv2_statement_${customerId}.csv`; a.click();
+}
+function adv2_exportPDF(customerId, startDate, endDate) {
+  // simple print clone approach
+  const panel = adv2_get("adv2_panel");
+  if (!panel) return alert("Nothing to print");
+  const w = window.open("", "_blank");
+  w.document.write(`<html><head><title>Statement</title><style>body{font-family:Arial;background:#0b1220;color:#e6eef8;padding:20px}</style></head><body>${panel.innerHTML}</body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 300);
+}
+
+/* Utilities */
+function smallCardHTML(title, value) {
+  return `<div style="background:#081025;padding:12px;border-radius:10px;color:#e6eef8"><div style="color:#9aa6b2">${escapeHtml(title)}</div><div style="font-weight:700">${escapeHtml(value)}</div></div>`;
+}
+function chartOpts() {
+  return { plugins: { legend: { labels: { color: '#e6eef8' } } }, scales: { x: { ticks: { color: '#e6eef8' } }, y: { ticks: { color: '#e6eef8' } } } };
+}
+function generatePalette(n) {
+  const preset = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#7c3aed'];
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(preset[i % preset.length]);
+  return out;
+}
+function escapeHtml(s) { if (s === null || s === undefined) return ''; return String(s).replaceAll ? s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;') : String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* small wrappers for date & currency (fallback if your helpers exist) */
+function safeDateDisplay(d) {
+  try { if (typeof safeDateDisplay === 'function' && safeDateDisplay !== adv2_get) return window.safeDateDisplay(d); } catch (e) { }
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt)) return d;
+  return dt.toISOString().slice(0, 10);
+}
+function formatINR(v) { return new Intl.NumberFormat('en-IN', {style:'currency',currency:'INR',minimumFractionDigits:2}).format(Number(v)||0); }
+
+/* =============== End ADVANCED CUSTOMER STATEMENT JS =============== */
+
+
+// Responsive sidebar behavior is owned by layout.js.
+
+/* Restore identity palettes after chart updates, including theme changes. */
+(function () {
+  function install() {
+    if (!window.Chart || window.rsDashboardIdentityColoursInstalled) return;
+    window.rsDashboardIdentityColoursInstalled = true;
+    Chart.register({
+      id:'rsDashboardIdentityColours',
+      beforeUpdate(chart) {
+        const kind = chart.canvas?.id === 'avgDelayChart' ? 'customer' : chart.canvas?.id === 'businessPerformance' ? 'business' : null;
+        if (!kind || typeof state === 'undefined') return;
+        const entities = kind === 'customer' ? state.customers || [] : Object.values(state.businesses || {});
+        for (const dataset of chart.data.datasets || []) {
+          const colours = (chart.data.labels || []).map((label,index) => {
+            const entity = entities.find(e => String(e.name || e.id) === String(label));
+            return rsDashboardEntityColour(kind,dataset.rsEntityIds?.[index] ?? entity?.id ?? label,entities);
+          });
+          dataset.backgroundColor = colours;
+          dataset.hoverBackgroundColor = colours;
+          dataset.borderColor = colours;
+        }
+      }
+    });
+  }
+  install();
+})();

@@ -1,0 +1,2694 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>RanSan Groups — Billing Suite</title>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <!-- Add jsPDF + AutoTable (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="assets/app-config.js" defer></script>
+  <script src="assets/api-client.js?v=reminder-review-20261024" defer></script>
+  <script src="assets/ledger-core.js?v=calendar-20261022" defer></script>
+  <script src="assets/modern.js" defer></script>
+  <script src="assets/finance-ui.js?v=finance-20261022" defer></script>
+  <script src="assets/session-workspace.js?v=stability-20261023" defer></script>
+  <script src="assets/invoice-feedback.js?v=stability-20261023" defer></script>
+  <script src="assets/whatsapp-format.js?v=reminder-review-20261024" defer></script>
+  <script src="assets/billing.js?v=invoice-profile-logo-20261024" defer></script>
+  <script src="assets/invoice-workspace.js?v=entry-20261022" defer></script>
+  <script src="assets/addbilling.js?v=finance-20261022" defer></script>
+  <script src="assets/mobile.js?v=reminder-review-20261024" defer></script>
+  <script src="assets/invoice-confirm.js?v=invoice-profile-logo-20261024" defer></script>
+  <script src="assets/invoice-signature.js?v=invoice-productivity-20261024" defer></script>
+  <script src="assets/invoice-appearance.js?v=invoice-profile-logo-20261024" defer></script>
+  <script src="assets/invoice-document.js?v=invoice-profile-logo-20261024" defer></script>
+  <script src="assets/workspace.js?v=business-invoice-20261024" defer></script>
+  <script src="assets/layout.js" defer></script>
+  <script src="assets/modals.js" defer></script>
+  <script src="assets/users.js" defer></script>
+  <script src="assets/polish.js" defer></script>
+  <script src="assets/app-shell.js" defer></script>
+  <script src="assets/finance-workspace.js?v=finance-20261022" defer></script>
+  <script src="assets/header-workspace.js" defer></script>
+
+  <script src="assets/finance-navigation.js?v=finance-20261022" defer></script>
+  <script src="assets/dashboard-attention.js?v=attention-20261021" defer></script>
+  <script src="assets/commission-insights-config.js?v=insights-20261021" defer></script>
+  <script src="assets/commission-insights.js?v=finance-20261022" defer></script>
+
+  <script src="assets/invoice-branding-workspace.js?v=invoice-profile-logo-20261024" defer></script>
+  <script src="assets/invoice-line-tools.js?v=invoice-profile-logo-20261024" defer></script>
+  <script src="assets/invoice-productivity.js?v=invoice-profile-logo-20261024" defer></script>
+  <script src="assets/invoice-tools.js?v=invoice-profile-logo-20261024" defer></script>
+  <link rel="stylesheet" href="assets/billing.css">
+  <link rel="stylesheet" href="assets/transaction-report.css?v=transactions-fix-20261022">
+  <link rel="stylesheet" href="assets/modern.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <link rel="stylesheet" href="assets/polish.css">
+  <link rel="stylesheet" href="assets/app-shell.css">
+  <link rel="stylesheet" href="assets/workspace-v8.css">
+  <link rel="stylesheet" href="assets/dashboard-attention.css?v=attention-20261021">
+  <link rel="stylesheet" href="assets/commission-report.css?v=colours-20261022">
+  <link rel="stylesheet" href="assets/commission-insights.css?v=colours-20261022">
+  <link rel="stylesheet" href="assets/invoice-workspace.css?v=speed-20261022">
+  <link rel="stylesheet" href="assets/invoice-dialog-polish.css?v=stability-20261023">
+  <link rel="stylesheet" href="assets/invoice-tools.css?v=invoice-tools-20261023">
+  <link rel="stylesheet" href="assets/invoice-personalize.css?v=invoice-profile-logo-20261024">
+  <link rel="stylesheet" href="assets/invoice-controls.css?v=invoice-profile-logo-20261024">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base: { 900: '#0a0b0f', 800: '#0f1117', 700: '#141824' },
+            brand: { 500: '#7c3aed', 400: '#a78bfa', 300: '#c4b5fd', glow: '#6d28d9' },
+            accent: { 500: '#06b6d4', 400: '#22d3ee' },
+            warn: { 500: '#f97316' }
+          },
+          boxShadow: { glass: '0 8px 32px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.03)' }
+        }
+      }
+    }
+  </script>
+
+  <!-- Icons & Charts -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+
+</head>
+
+<body class="text-white/90">
+
+
+
+    <!-- 🔐 LOGIN PROTECTION -->
+    <script>
+      // Login check
+      if (sessionStorage.getItem("isLoggedIn") !== "true" || !sessionStorage.getItem("rs-session:" + (localStorage.getItem("billing_env") || "test"))) {
+        window.location.href = "login.html";
+      }
+    </script>
+
+
+    <header class="sticky top-0 z-50 
+  bg-white/80 dark:bg-gray-900/90
+  backdrop-blur-xl border-b border-white/30 dark:border-gray-700 
+  shadow-md">
+
+      <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
+
+        <!-- Left: Logo + Brand -->
+<div class="flex items-center space-x-3 rs-header-brand">
+  <img src="assets/ransan_logo.png" 
+       alt="Ransan Group" 
+       class="rs-brand-logo">
+
+  <span class="rs-brand-text font-extrabold text-xl">Ransan Group<small>Billing workspace</small></span>
+</div>
+
+        <!-- Center: Page Title -->
+        <h1 class="hidden md:block text-base font-semibold text-gray-900 dark:text-white text-glow">
+          Billing Dashboard
+        </h1>
+
+        <div class="env-toggle">
+          <input type="checkbox" id="envSwitch" class="env-switch" />
+          <label for="envSwitch" class="env-slider"></label>
+          <span id="envLabel" class="env-label">Test</span>
+        </div>
+
+        <!-- Right: Actions -->
+        <div class="flex items-center space-x-3">
+          <!-- Theme Toggle -->
+
+          <!-- Theme Dropdown -->
+          <div class="relative">
+            <select id="themeSelect" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm 
+           text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+              <option value="glass">Glassmorphism</option>
+              <option value="neoglass">NeoGlass</option>
+              <option value="cyberpunk">Cyberpunk HUD</option>
+              <option value="minimal">Minimal White</option>
+            </select>
+          </div>
+
+          <!-- Accent Dropdown -->
+          <div class="relative">
+            <select id="colorSelect" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm 
+           text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600">
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="purple" selected>Purple</option>
+              <option value="orange">Orange</option>
+            </select>
+          </div>
+
+
+          <!-- Notifications -->
+
+          <!-- Notifications Button with Dropdown -->
+          <div class="relative" id="notifWrapper">
+            <button id="notifBtn" type="button" aria-label="Notifications" aria-controls="notifPanel" aria-expanded="false" class="relative p-2 rounded-xl bg-gray-100 hover:bg-gray-200 
+          dark:bg-gray-700 dark:hover:bg-gray-600 transition">
+              <i data-lucide="bell" class="w-5 h-5 text-gray-700 dark:text-gray-200"></i>
+              <span id="notifBadge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+            </button>
+
+            <!-- Dropdown Panel -->
+            <div id="notifPanel" class="hidden absolute right-0 mt-2 w-80 bg-gray-900 text-white 
+              rounded-xl shadow-xl border border-gray-700 z-50 p-3">
+              <div class="rs-notification-heading"><strong>Invoice reminders</strong><span id="rsNotificationTotal" class="rs-pill rs-pill-rank">0</span></div>
+<p id="rsNotificationSummary" class="rs-notification-summary" role="status">No unpaid invoices with a due date.</p>
+              <ul id="notifList" class="space-y-1 max-h-60 overflow-y-auto"></ul>
+              <div id="noNotif" class="text-gray-400 text-sm text-center py-3">No Due Invoices 🎉</div>
+            </div>
+          </div>
+
+          <!-- Profile Dropdown -->
+          <div class="relative" id="profileWrapper">
+            <button id="profileBtn" type="button" aria-label="Account menu" aria-controls="profileMenu" aria-expanded="false" class="flex items-center gap-2 p-1.5 rounded-xl 
+    bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition">
+
+              <img src="assets/user-avatar.svg" alt="User"
+                class="h-9 w-9 rounded-xl border border-gray-200 dark:border-gray-600 shadow">
+
+              <div class="hidden md:block text-left">
+                <div id="profileName" class="text-sm font-semibold text-gray-900 dark:text-white"></div>
+                <div id="profileRole" class="text-xs text-gray-500 dark:text-gray-300"></div>
+              </div>
+
+              <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
+            </button>
+
+            <!-- Dropdown -->
+            <div id="profileMenu" class="hidden absolute right-0 mt-2 w-48 
+    bg-gray-900 text-white rounded-xl shadow-xl border border-gray-700 z-50 p-2">
+
+              <div class="px-3 py-2 border-b border-gray-700">
+                <div id="menuUserName" class="text-sm font-semibold"></div>
+                <div id="menuUserRole" class="text-xs text-gray-400"></div>
+              </div>
+
+              <button onclick="logout()" class="w-full flex items-center gap-2 px-3 py-2 mt-2 rounded-lg 
+      hover:bg-red-600/20 text-red-400">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+    </header>
+
+
+
+    <div class="grid grid-cols-12 gap-4 rs-shell">
+      <!-- Sidebar -->
+      <aside id="sidebar"
+        class="glass col-span-12 lg:col-span-3 transition-all duration-300 p-4 lg:p-5 space-y-4 no-print">
+
+        <!-- Collapse Button -->
+        <button id="collapseBtn"
+          class="p-2 bg-gray-700/50 rounded w-full flex items-center gap-2 hover:bg-gray-600 transition">
+          <i data-lucide="chevron-left"></i>
+          <span class="label">Collapse</span>
+        </button>
+
+        <!-- Business Switcher -->
+        <div class="pt-2">
+          <label class="text-[11px] text-white/60 label">Business (filter)</label>
+          <select id="bizSelect"
+            class="p-2 rounded-md bg-white text-gray-900 dark:bg-gray-800 dark:text-white w-full label"
+            onchange="onBusinessSelect(this.value)">
+            <option value="">-- All Businesses --</option>
+          </select>
+
+          <!-- This row should collapse too -->
+          <div class="flex gap-2 mt-2 label">
+            <button type="button" class="btn flex-1" onclick="editSelectedBusiness()">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+              <span class="label">Edit</span>
+            </button>
+            <button type="button" class="btn" title="Add business" onclick="createBusiness()">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span class="label">Add</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="pt-2 space-y-2">
+          <button data-nav="dashboard" class="btn w-full flex items-center justify-between"
+            onclick="showView('dashboard')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+              <span class="label">Dashboard</span>
+            </span>
+            <span class="chip label">Overview</span>
+          </button>
+
+          <button data-nav="commission-report" class="btn w-full flex items-center justify-between"
+            onclick="showView('commission-report')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="percent" class="w-4 h-4"></i>
+              <span class="label">Commission Report</span>
+            </span>
+            <span class="chip label">Commission</span>
+          </button>
+
+          <button data-nav="transactions" class="btn w-full flex items-center justify-between"
+            onclick="showView('transactions')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="repeat" class="w-4 h-4"></i>
+              <span class="label">Transactions</span>
+            </span>
+            <span class="chip label" id="txChip">Ledger</span>
+          </button>
+
+          <button data-nav="invoices" class="btn w-full flex items-center justify-between"
+            onclick="showView('invoices')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+              <span class="label">Invoices</span>
+            </span>
+            <span class="chip label" id="invoiceCount">0</span>
+          </button>
+
+          <button data-nav="customers" class="btn w-full flex items-center justify-between"
+            onclick="showView('customers')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="users" class="w-4 h-4"></i>
+              <span class="label">Customers</span>
+            </span>
+            <span class="chip label" id="customerCount">0</span>
+          </button>
+
+          <!-- Customer Ledger -->
+          <button data-nav="customerLedger" class="btn w-full flex items-center justify-between"
+            onclick="showView('customerLedger')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="book-open" class="w-4 h-4"></i>
+              <span class="label">Customer Ledger</span>
+            </span>
+            <span class="chip label">Ledger</span>
+          </button>
+
+          <button data-nav="services" class="btn w-full flex items-center justify-between"
+            onclick="showView('services')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="boxes" class="w-4 h-4"></i>
+              <span class="label">Services</span>
+            </span>
+            <span class="chip label">Catalog</span>
+          </button>
+
+          <button data-nav="statement" class="btn w-full flex items-center justify-between"
+            onclick="showView('statement')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+              <span class="label">Customer Statement</span>
+            </span>
+            <span class="chip label">Statement</span>
+          </button>
+
+          <button data-nav="reports" class="btn w-full flex items-center justify-between" onclick="showView('reports')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="chart-pie" class="w-4 h-4"></i>
+              <span class="label">Reports</span>
+            </span>
+            <span class="chip label">Reports</span>
+          </button>
+
+          <button data-nav="users" class="btn w-full flex items-center justify-between" onclick="showView('users')">
+            <span class="flex items-center gap-2">
+              <i data-lucide="user" class="w-4 h-4"></i>
+              <span class="label">Manage Users</span>
+            </span>
+            <span class="chip label">User</span>
+          </button>
+
+
+<button data-nav="collections" class="btn w-full flex items-center gap-2" onclick="showView('collections')"><span aria-hidden="true">◇</span><span class="label">Collection Centre</span></button>
+<button data-nav="ageing" class="btn w-full flex items-center gap-2" onclick="showView('ageing')"><span aria-hidden="true">◇</span><span class="label">Receivables Ageing</span></button>
+<button data-nav="ledger" class="btn w-full flex items-center gap-2" onclick="showView('ledger')"><span aria-hidden="true">◇</span><span class="label">Unified Ledger</span></button>
+<button data-nav="commission-settlement" class="btn w-full flex items-center gap-2" onclick="showView('commission-settlement')"><span aria-hidden="true">◇</span><span class="label">Commission Settlement</span></button>
+<button data-nav="business-comparison" class="btn w-full flex items-center gap-2" onclick="showView('business-comparison')"><span aria-hidden="true">◇</span><span class="label">Business Comparison</span></button>
+<button data-nav="reconciliation" class="btn w-full flex items-center gap-2" onclick="showView('reconciliation')"><span aria-hidden="true">◇</span><span class="label">Reconciliation</span></button>
+<button data-nav="audit" class="btn w-full flex items-center gap-2" onclick="showView('audit')"><span aria-hidden="true">◇</span><span class="label">Audit Trail</span></button>
+<button data-nav="archive" class="btn w-full flex items-center gap-2" onclick="showView('archive')"><span aria-hidden="true">◇</span><span class="label">Archive & Restore</span></button>
+<button data-nav="portal" class="btn w-full flex items-center gap-2" onclick="showView('portal')"><span aria-hidden="true">◇</span><span class="label">Customer Access</span></button>
+        </nav>
+
+        <!-- Export / Import -->
+        <div class="pt-2">
+          <button class="btn w-full flex items-center gap-2" onclick="exportData()">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span class="label">Export JSON</span>
+          </button>
+          <label class="btn w-full mt-2 flex items-center gap-2 cursor-pointer">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            <span class="label">Import JSON</span>
+            <input id="importFile" type="file" accept="application/json" class="hidden" />
+          </label>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-[11px] text-white/50 pt-2">
+          <div class="label">RanSan Groups • Billing workspace</div>
+          <div class="flex items-center gap-1 opacity-80" title="Billing workspace">
+            <i data-lucide="shield" class="w-3 h-3"></i>
+            <span class="label">Connected to your billing workspace.</span>
+          </div>
+        </footer>
+      </aside>
+
+
+      <!-- Main -->
+      <main id="mainContent" class="col-span-12 lg:col-span-9 transition-all duration-300">
+
+        <!-- SUMMARY BAR (dashboard) -->
+        <section id="view-dashboard" class="space-y-6">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-white/70 text-sm">Total Invoiced (<span id="sumBizName">All</span>)</span>
+                <span class="badge"><i data-lucide="trending-up" class="w-3 h-3"></i> MoM</span>
+              </div>
+              <div class="text-2xl font-semibold mt-2" id="sumRevenue">₹0</div>
+              <div class="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
+                <div class="h-2 bg-brand-500/60 rounded-full animate-pulseSoft" id="goalBar" style="width:35%"></div>
+              </div>
+            </div>
+
+            <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-white/70 text-sm">Pending</span>
+                <span class="badge"><i data-lucide="clock" class="w-3 h-3"></i> Due</span>
+              </div>
+              <div class="text-2xl font-semibold mt-2 text-amber-300" id="sumPending">₹0</div>
+              <div class="text-[11px] text-white/60 mt-1" id="pendingCount">0 invoices</div>
+            </div>
+
+            <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-white/70 text-sm">Received</span>
+                <span class="badge"><i data-lucide="check-circle" class="w-3 h-3"></i> Settled</span>
+              </div>
+              <div class="text-2xl font-semibold mt-2 text-emerald-300" id="sumReceived">₹0</div>
+              <div class="text-[11px] text-white/60 mt-1" id="paidCount">0 invoices</div>
+            </div>
+
+            <div class="glass col-span-12 md:col-span-3 rounded-2xl p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-white/70 text-sm">Credit Outstanding</span>
+                <span class="badge"><i data-lucide="credit-card" class="w-3 h-3"></i> Terms</span>
+              </div>
+              <div class="text-2xl font-semibold mt-2 text-sky-300" id="sumCredit">₹0</div>
+              <div class="text-[11px] text-white/60 mt-1" id="creditNote">—</div>
+            </div>
+          </div>
+
+
+
+
+          <section id="rsDashboardAttention" aria-label="Dashboard needs attention"></section>
+
+          <!-- Dashboard chart grid: revenue beside compact goal and status cards. -->
+          <div class="grid grid-cols-12 gap-4 rs-dashboard-chart-grid">
+            <div class="glass col-span-12 lg:col-span-8 rounded-2xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="activity" class="w-4 h-4"></i>
+                  <h3 class="font-semibold">Revenue &amp; Collections</h3>
+                </div>
+                <div class="text-xs text-white/60">Last 6 months</div>
+              </div>
+              <div class="rs-compact-chart rs-revenue-chart"><canvas id="revChart" height="220"></canvas></div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-4 rs-dashboard-side-cards">
+              <!-- Revenue Goal Circular Progress: existing ring IDs preserved. -->
+              <article id="rsMonthlyGoalCard" class="glass rounded-2xl p-4" aria-labelledby="rsMonthlyGoalTitle">
+                <h3 id="rsMonthlyGoalTitle" class="font-semibold">Monthly Revenue Goal</h3>
+                <p id="rsMonthlyGoalScope" class="rs-goal-scope">Invoiced this month</p>
+                <div class="rs-goal-content">
+                  <svg id="revGoalRing" viewBox="0 0 112 112" width="100" height="100" role="img" aria-label="Monthly goal progress: 0 percent">
+                    <circle class="rs-goal-track" cx="56" cy="56" r="50" stroke-width="6" fill="none" />
+                    <circle id="revGoalProgress" cx="56" cy="56" r="50" stroke-width="6" fill="none"
+                      stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="314.159" transform="rotate(-90 56 56)" />
+                    <text id="revGoalText" x="56" y="56" dominant-baseline="middle" text-anchor="middle">0%</text>
+                  </svg>
+                  <dl class="rs-goal-amounts" aria-live="polite">
+                    <div><dt>Achieved</dt><dd id="rsGoalAchieved">₹0</dd></div>
+                    <div><dt>Target</dt><dd id="rsGoalTarget">₹0</dd></div>
+                    <div><dt>Remaining</dt><dd id="rsGoalRemaining">₹0</dd></div>
+                  </dl>
+                </div>
+                <p id="rsGoalStatus" class="rs-goal-note">Waiting for invoice data…</p>
+              </article>
+
+            </div>
+          </div>
+
+          <!-- Compact dashboard reports: scoped by the header business selector. -->
+          <div id="dashboardReports" class="mt-6">
+            <div class="rs-report-heading"><h2>Dashboard Reports</h2><span id="rsDashboardScopeLabel" class="rs-report-scope" aria-live="polite">All businesses · Consolidated</span></div>
+            <p class="rs-report-caption">Revenue &amp; Collections: last six months through today. Goal: current month. Other reports: all-time invoices, except the 30-day cash-flow projection.</p>
+            <p id="rsDashboardRenderError" class="rs-report-empty" role="alert" hidden></p>
+            <p id="rsDashboardEmpty" class="rs-report-empty" hidden>No invoices for this business. The reports below show empty values.</p>
+            <div id="reports" class="rs-compact-reports">
+              <article class="glass rs-compact-report"><h3>Top Customers</h3><p class="rs-report-caption">Top five by invoiced value</p><div class="rs-compact-chart"><canvas id="topCustomers"></canvas></div></article>
+              <article class="glass rs-compact-report"><h3>Invoice Status</h3><div class="rs-status-pair"><div><p class="rs-report-caption">By invoice count</p><div class="rs-status-chart"><canvas id="statusChart"></canvas></div></div><div><p class="rs-report-caption">By invoice value</p><div class="rs-status-chart"><canvas id="invoicesStatus"></canvas></div></div></div><p class="rs-status-legend"><span>● Paid</span><span>● Pending</span><span>● Overdue</span></p></article>
+              <article class="glass rs-compact-report rs-report-wide rs-delay-report">
+                <h3>Avg Payment Delay</h3>
+                <div class="rs-delay-layout">
+                  <div class="rs-delay-table-panel">
+                    <p class="rs-report-caption">All customers in the selected business scope</p>
+                    <div id="avgDelay" class="rs-report-table" role="region" aria-label="Customer average payment delays" tabindex="0"></div>
+                  </div>
+                  <div class="rs-delay-content">
+                    <div id="avgDelayMetric" class="rs-delay-metric" aria-live="polite"></div>
+                    <div id="avgDelaySummary" class="rs-delay-summary" aria-live="polite"></div>
+                    <div class="rs-compact-chart rs-delay-chart"><canvas id="avgDelayChart"></canvas></div>
+                    <p class="rs-report-caption">Chart: up to ten highest recorded averages. Days from invoice issue to latest dated payment; partial payments count. This is not days overdue.</p>
+                  </div>
+                </div>
+              </article>
+              <article class="glass rs-compact-report"><h3>Cash Flow (Next 30 Days)</h3><div class="rs-compact-chart"><canvas id="cashFlow"></canvas></div><p id="rsCashFlowNote" class="rs-report-caption"></p></article>
+              <article class="glass rs-compact-report"><h3>Business Performance</h3><p class="rs-report-caption">All businesses compared, or the selected business only</p><div class="rs-compact-chart"><canvas id="businessPerformance"></canvas></div></article>
+              <article id="creditUsage" class="glass rs-compact-report"></article>
+              <article id="collectionEfficiency" class="glass rs-compact-report rs-report-wide"></article>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- TRANSACTIONS View -->
+        <section id="view-transactions" class="hidden space-y-4">
+          <div class="rs-tx-heading">
+            <h3 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="list"></i> Transactions</h3>
+            <div class="rs-tx-meta"><span id="rsTxScope">All businesses</span><span id="rsTxCount" role="status" aria-live="polite">0 matching entries</span></div>
+          </div>
+          <div class="grid grid-cols-12 gap-4 rs-tx-summary">
+            <div class="glass rs-tx-kpi rs-tx-kpi-invoiced"><div>Total Invoiced</div><div id="txTotal">₹0</div><small>Filtered results · all pages</small></div>
+            <div class="glass rs-tx-kpi rs-tx-kpi-payments"><div>Payments Recorded</div><div id="txPayments">₹0</div><small>Filtered results · all pages</small></div>
+            <div class="glass rs-tx-kpi rs-tx-kpi-balance"><div>Outstanding Balance</div><div id="txBalance">₹0</div><small>Selected business · all dates</small></div>
+            <div class="glass rs-tx-kpi rs-tx-kpi-credits"><div>Transaction Count</div><div id="txCredits">0</div><small>Filtered results · all pages</small></div>
+          </div>
+          <div class="glass rs-tx-filters">
+            <label class="rs-tx-search">Search<input id="rsTxSearch" type="search" placeholder="Invoice ref, customer or UTR" autocomplete="off"></label>
+            <label>From date<input id="rsTxFrom" type="date"></label>
+            <label>To date<input id="rsTxTo" type="date"></label>
+            <label>Type<select id="rsTxType"><option value="">All types</option><option value="Invoice">Invoice</option><option value="Payment">Payment</option></select></label>
+            <label>Payment method<select id="rsTxMethod"><option value="">All methods</option></select></label>
+            <div class="rs-tx-filter-actions"><button type="button" class="btn" id="rsTxReset">Reset filters</button><button type="button" class="btn" id="rsTxCSV">Export CSV</button><button type="button" class="btn" id="rsTxPrint">Print / PDF</button></div>
+            <p id="rsTxFilterStatus" class="rs-tx-filter-status" role="status">Totals for filtered results include all matching pages. Outstanding uses the selected business across all dates.</p>
+          </div>
+          <div class="glass rounded-2xl rs-tx-table-card">
+            <div class="rs-tx-table-heading"><span>Invoices &amp; payments</span><small>Latest first · click an invoice reference to preview</small></div>
+            <div class="rs-tx-table-scroll" tabindex="0" role="region" aria-label="Invoice and payment transactions">
+              <table class="min-w-full text-sm"><caption class="rs-tx-sr-only">Filtered invoice and payment activity for the selected business</caption>
+                <thead><tr><th scope="col">Date</th><th scope="col">Type</th><th scope="col">Invoice Ref</th><th scope="col">Business</th><th scope="col">Customer</th><th scope="col" class="text-right">Amount</th><th scope="col">Method</th><th scope="col">Payment Ref / UTR</th></tr></thead>
+                <tbody id="txTable"></tbody>
+              </table>
+            </div>
+            <div class="rs-tx-pagination"><label>Rows per page<select id="rsTxPageSize"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label><span id="rsTxPageInfo" role="status" aria-live="polite">0 matching entries</span><div><button type="button" class="btn" id="rsTxPrevious">Previous</button><button type="button" class="btn" id="rsTxNext">Next</button></div></div>
+          </div>
+        </section>
+
+        <!-- INVOICES view (create + list + summary) -->
+        <section id="view-invoices" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="file-plus" class="w-4 h-4"></i>
+              <h3 class="font-semibold">Invoices</h3>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn" onclick="resetInvoiceForm()">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Invoice summary & list -->
+          <!-- Invoice summary & KPIs -->
+          <div class="grid grid-cols-12 gap-4 rs-invoice-kpis">
+            <!-- Commission (instead of Total Invoices) -->
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl rs-invoice-kpi rs-invoice-kpi-commission"><span class="rs-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7v10l9 4 9-4V7zM3 7l9 4 9-4M12 11v10"/></svg></span>
+              <span>Commission (Earnings)</span>
+              <div id="invCommissionKPI" class="text-2xl font-bold text-emerald-400">₹0</div>
+            </div>
+
+            <!-- Total Amount -->
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl rs-invoice-kpi rs-invoice-kpi-amount"><span class="rs-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-13 5h4"/></svg></span>
+              <span>Total Amount</span>
+              <div id="invAmount" class="text-2xl font-bold text-sky-300">₹0</div>
+            </div>
+
+            <!-- Paid -->
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl rs-invoice-kpi rs-invoice-kpi-paid"><span class="rs-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
+              <span>Paid</span>
+              <div id="invPaid" class="text-2xl font-bold text-emerald-300">₹0</div>
+            </div>
+
+            <!-- Balance -->
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl rs-invoice-kpi rs-invoice-kpi-balance"><span class="rs-kpi-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5m0 3v.1M10 3h4l8 16H2z"/></svg></span>
+              <span>Balance</span>
+              <div id="invBalance" class="text-2xl font-bold text-rose-300">₹0</div>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-4 rs-invoice-editor">
+            <div class="rs-invoice-editor-heading"><div class="rs-invoice-heading-copy"><span class="rs-invoice-eyebrow">BILLING WORKSPACE</span><div class="rs-invoice-title-row"><h3>Create invoice</h3><span id="rsIssuingBusinessBadge" class="rs-issuing-badge" role="status">Choose an issuing business</span></div></div><p>Customer, services and payment details in one place.</p></div>
+            <!-- Invoice Form -->
+            <form id="invoiceForm" onsubmit="event.preventDefault(); saveInvoice();">
+<div id="rsDraftBar" class="rs-draft-bar" hidden><span id="rsDraftText" role="status"></span><button type="button" id="rsRestoreDraft">Restore draft</button><button type="button" id="rsDiscardDraft">Discard draft</button></div>
+<p id="rsInvoiceAsyncStatus" class="rs-entry-status" role="status" hidden></p>
+<div id="rsDelivery" class="rs-delivery" role="status" hidden></div>
+              <section class="rs-compose-panel rs-compose-customer"><h4 class="rs-form-step"><span>01</span> Customer &amp; dates</h4>
+              <div class="grid grid-cols-12 gap-4 rs-invoice-details">
+                <!-- Customer -->
+                <div class="col-span-12 md:col-span-6">
+                  <label for="invCustomer" class="text-xs text-white/60">Customer</label>
+                  <select id="invCustomer"
+                    class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"></select>
+                  <div class="flex items-center gap-2 mt-2 text-xs text-white/60">
+                    <span>Credit Limit:</span><span id="custCreditLimit">—</span>
+                    <span>•</span>
+                    <span>Terms (days):</span><span id="custTerms">—</span>
+                  </div>
+                </div>
+
+                <!-- Invoice & Due -->
+                <div class="col-span-6 md:col-span-3">
+                  <label for="invDate" class="text-xs text-white/60">Invoice Date</label>
+                  <input type="date" id="invDate"
+                    class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+                </div>
+                <div class="col-span-6 md:col-span-3">
+                  <label for="invDue" class="text-xs text-white/60">Due Date</label>
+                  <input type="date" id="invDue" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+                </div>
+
+
+              </div>
+
+
+
+              <div class="rs-invoice-optional grid grid-cols-12 gap-4"><label class="col-span-12 md:col-span-6" for="invCustomerAddress">Customer address (optional)<textarea id="invCustomerAddress" rows="2" maxlength="2000" placeholder="Address for this invoice; otherwise uses the saved customer address"></textarea></label><label class="col-span-12 md:col-span-6" for="invBookingReference">Booking / service reference (optional)<input id="invBookingReference" maxlength="160" placeholder="Booking, trip or service reference"></label></div>
+              </section><section class="rs-compose-panel rs-compose-services"><div class="rs-compose-services-heading"><h4 class="rs-form-step"><span>02</span> Services &amp; pricing</h4><button class="btn" type="button" onclick="addItemRow()"><i data-lucide="plus"></i> Add item</button></div>
+              <div class="rs-quick-services"><label for="rsQuickService">Recent &amp; favourite services</label><div><select id="rsQuickService"><option value="">Choose a service…</option></select><button type="button" class="btn" id="rsQuickAddService">Add service</button><button type="button" class="btn" id="rsQuickFavourite">★ Toggle favourite</button></div><div id="rsQuickServiceChips"></div><small>Uses current service prices. Recents are updated after saving an invoice.</small></div>
+              <!-- Items table -->
+              <div class="mt-4 overflow-x-auto scroll-thin">
+                <table class="min-w-full text-sm">
+                  <thead class="text-white/60">
+                    <tr>
+                      <th scope="col" class="text-left p-2">Service</th>
+                      <th scope="col" class="text-left p-2">Description</th>
+                      <th scope="col" class="text-left p-2">Qty</th>
+                      <th scope="col" class="text-left p-2">Rate</th>
+                      <th scope="col" class="text-left p-2">Amount</th>
+                      <th scope="col" class="text-left p-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="itemBody"></tbody>
+                </table>
+              </div>
+
+              </section>
+              <div id="rsPaymentFields" class="rs-payment" hidden>
+<label for="rsPaymentAmount">Amount received (₹)<input id="rsPaymentAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Enter amount received"></label>
+<label for="rsPaymentMethod">Payment method<select id="rsPaymentMethod"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option></select></label>
+<p class="rs-payment-review-hint">After entering the amount, method and optional UTR below, click <strong>Review &amp; save invoice</strong>. The final review will show a <strong>Payment being recorded</strong> card with its date, method and reference.</p>
+</div>
+<div class="rs-payment-meta" id="rsPaymentMeta" hidden><label>Reference / UTR<input id="rsPaymentReference" placeholder="Optional payment reference"></label><label>Receipt link<input id="rsPaymentReceipt" type="url" placeholder="https://..."></label></div>
+              <section class="rs-compose-panel rs-compose-review"><h4 class="rs-form-step"><span>03</span> Review &amp; payment</h4>
+              <!-- Totals -->
+              <div class="grid grid-cols-12 gap-4 mt-4">
+                <div class="col-span-12 md:col-span-8">
+                  <label for="invNotes" class="text-xs text-white/60">Notes</label>
+                  <textarea id="invNotes" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" rows="3"
+                    placeholder="Purchase order, brief, etc."></textarea>
+                  <div class="flex items-center gap-3 mt-2">
+                    <label class="inline-flex items-center gap-2 text-sm">
+                      <input id="asCredit" type="checkbox" class="accent-brand-500" /> Credit Sale
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm">
+                      <input id="takePaymentNow" type="checkbox" class="accent-emerald-400" /> Record Payment Now
+                    </label>
+                  </div>
+                </div>
+
+                <div class="col-span-12 md:col-span-4">
+                  <div class="glass rounded-xl p-3">
+                    <!-- Subtotal -->
+                    <div class="flex items-center justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span id="invSubTotal">₹0</span>
+                    </div>
+
+                    <div id="rsInvoiceTaxLine" class="flex items-center justify-between text-sm mt-1" hidden><span>Tax</span><span id="invTaxTotal">₹0</span></div>
+                    <!-- Discount -->
+                    <div class="flex items-center justify-between text-sm mt-1">
+                      <span>Discount</span>
+                      <input id="discount" type="number" value="0"
+                        class="w-24 bg-white/5 border border-white/10 rounded-lg p-1 text-right"
+                        oninput="recalcTotals()" />
+                    </div>
+
+                    <!-- Commission (Manual Entry) -->
+                    <div class="flex items-center justify-between text-sm mt-1">
+                      <span>Commission</span>
+                      <input id="invCommission" type="number" value="0"
+                        class="w-24 bg-white/5 border border-white/10 rounded-lg p-1 text-right" placeholder="₹0" />
+                    </div>
+
+                    <!-- Grand Total -->
+                    <div class="flex items-center justify-between text-lg font-semibold mt-3">
+                      <span>Total</span>
+                      <span id="invTotal">₹0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="rs-compose-submit"><p>Review the total and payment details before saving.</p><button class="btn bg-brand-500/30 hover:bg-brand-500/40 border-brand-500/50" type="submit"><i data-lucide="clipboard-check"></i> Review &amp; save invoice</button></div>
+              </section>
+            </form>
+          </div>
+
+          <div class="rs-invoice-toolbar">
+          <button class="btn bg-red-600/20 text-red-400 hover:bg-red-600/30" onclick="openBulkDeleteInvoiceModal()">
+            <i data-lucide="trash-2"></i> Delete Selected
+          </button>
+
+          <button class="btn bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30"
+            onclick="openBulkWhatsAppReminderModal()">
+            <i data-lucide="send"></i> Send Reminders
+          </button>
+
+
+<label class="rs-invoice-link-option"><input id="rsInvoiceReminderLink" type="checkbox"> Include protected statement link in reminders (extra request per customer)</label>
+          </div>
+          <div class="rs-register-filter-card"><div class="rs-register-filters"><label>Search invoices<input id="rsInvSearch" type="search" placeholder="Invoice, customer or booking reference"></label><label>Status<select id="rsInvStatus"><option value="">All statuses</option><option value="pending">Pending</option><option value="partial">Partial</option><option value="credit">Credit</option><option value="paid">Paid</option><option value="cancelled">Cancelled</option><option value="void">Void</option></select></label><label>Issue date from<input id="rsInvFrom" type="date"></label><label>Issue date to<input id="rsInvTo" type="date"></label><label class="rs-inv-check"><input id="rsInvOverdue" type="checkbox"> Overdue only</label></div><div class="rs-register-export"><button type="button" class="btn" id="rsInvClear">Clear filters</button><button type="button" class="btn" id="rsInvCSV">Export filtered CSV</button><button type="button" class="btn" id="rsInvPrint">Print / PDF filtered</button></div><p id="rsInvScope" role="status"></p><small>Invoice KPIs cover the filtered selection across all pages. Bulk actions use checked rows on the current page.</small></div>
+          <div class="glass rounded-2xl rs-invoice-table-card"><div class="rs-invoice-list-heading"><h3>Invoice register</h3><span id="rsInvoiceListCount" role="status"></span></div><p class="rs-profile-legend">Business profile: <strong>Issued profile</strong> uses saved details from creation. <strong>Current business details</strong> means the original profile was not recorded. Click a profile pill to inspect it.</p><div class="rs-invoice-table-scroll" tabindex="0" role="region" aria-label="Invoice register">
+            <table class="min-w-full text-sm">
+              <thead class="text-white/60">
+                <tr>
+                  <th scope="col" class="text-left p-2"></th>
+                  <th scope="col" class="text-left p-2">Invoice No</th>
+                  <th id="rsInvoiceProfileHeader" scope="col" class="text-left p-2">Business profile</th>
+                  <th scope="col" class="text-left p-2">Business</th>
+                  <th scope="col" class="text-left p-2">Date</th>
+                  <th scope="col" class="text-left p-2">Customer</th>
+                  <th scope="col" class="text-left p-2">Items</th>
+                  <th scope="col" class="text-left p-2">Total</th>
+                  <th scope="col" class="text-left p-2">Commission (Earnings)</th> <!-- ✅ Added -->
+                  <th scope="col" class="text-left p-2">Paid</th>
+                  <th scope="col" class="text-left p-2">Due</th>
+                  <th scope="col" class="text-left p-2">Status</th>
+                  <th scope="col" class="text-left p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="invoiceTable"></tbody>
+            </table>
+          </div><div class="rs-register-pagination"><label>Rows per page <select id="rsInvPageSize"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label><span id="rsInvPageLabel" role="status"></span><div><button id="rsInvPrev" type="button" class="btn">Previous</button><button id="rsInvNext" type="button" class="btn">Next</button></div></div></div>
+          <div id="invoiceModuleContainer"></div>
+        </section>
+
+
+        <!-- CUSTOMERS view with service filter -->
+        <section id="view-customers" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="users" class="w-4 h-4"></i>
+              <h3 class="font-semibold">Customers</h3>
+            </div>
+            <button class="btn" onclick="openCustomerModal()">
+              <i data-lucide="user-plus" class="w-4 h-4"></i> Add Customer
+            </button>
+          </div>
+
+          <div id="customerFilterLabel" class="text-sm text-white/70 mb-2"></div>
+          <div id="businessButtons" class="flex gap-2 my-3"></div>
+
+
+
+          <!-- Customer Table -->
+          <div class="glass rounded-2xl p-4 mt-3">
+            <div class="overflow-x-auto scroll-thin">
+              <table class="min-w-full text-sm">
+                <thead class="text-white/60">
+                  <tr>
+                    <th class="text-left p-2">Name</th>
+                    <th class="text-left p-2">Phone</th>
+                    <th class="text-left p-2">Service</th>
+                    <th class="text-left p-2">Credit Limit</th>
+                    <th class="text-left p-2">Terms (days)</th>
+                    <th class="text-left p-2">Outstanding</th>
+                    <th class="text-left p-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="customerTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- CUSTOMER MODAL -->
+        <div id="customerModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+          <div class="modal-glass w-[800px] max-w-[95vw]">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-white/10">
+              <div class="flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-5 h-5"></i>
+                <h3 class="font-semibold">Add Customer</h3>
+              </div>
+              <button class="btn" onclick="closeCustomerModal()"><i data-lucide="x"></i></button>
+            </div>
+
+            <!-- Two-column form -->
+            <div class="grid grid-cols-2 gap-4 p-4">
+              <div>
+                <label class="text-xs text-white/60">Business</label>
+                <select id="custService"
+                  class="p-2 rounded-md bg-white text-gray-900 dark:bg-gray-800 dark:text-white"></select>
+              </div>
+
+              <div>
+                <label class="text-xs text-white/60">Customer Name</label>
+                <input id="custName" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+              </div>
+
+              <div>
+                <label class="text-xs text-white/60">Phone</label>
+                <input id="custPhone" type="tel" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+              </div>
+
+              <div>
+                <label class="text-xs text-white/60">Email</label>
+                <input id="custEmail" type="email"
+                  class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+              </div>
+
+              <div>
+                <label class="text-xs text-white/60">Credit Limit</label>
+                <input id="custCredit" type="number"
+                  class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+              </div>
+
+              <div>
+                <label class="text-xs text-white/60">Terms (days)</label>
+                <input id="custTermsInput" type="number"
+                  class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2" />
+              </div>
+
+              <div class="col-span-2">
+                <label class="text-xs text-white/60">Notes</label>
+                <textarea id="custNotes" rows="3"
+                  class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"></textarea>
+              </div>
+            </div>
+
+            <!-- Actions row in two columns -->
+            <div class="grid grid-cols-2 gap-2 p-4 border-t border-white/10">
+              <button class="btn w-full" onclick="closeCustomerModal()">Cancel</button>
+              <button id="custSaveBtn" class="btn w-full bg-green-600 hover:bg-green-500"
+                onclick="handleSaveCustomer()">Save</button>
+            </div>
+          </div>
+        </div>
+
+
+
+
+        <!-- SERVICES view -->
+        <section id="view-services" class="hidden space-y-4">
+          <div class="glass rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="boxes" class="w-4 h-4"></i>
+                <h3 class="font-semibold">Service Catalog</h3>
+              </div>
+              <div class="flex gap-2">
+                <!-- Add Service button -->
+                <button type="button" class="btn" onclick="openServiceModal()">
+                  <i data-lucide="plus"></i> Add Service
+                </button>
+
+                <!-- Global Delete Service button -->
+                <button type="button" class="btn bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                  onclick="openDeleteServiceModal()">
+                  <i data-lucide="trash-2"></i> Delete Service
+                </button>
+              </div>
+            </div>
+
+            <!-- Dynamic grid where services render -->
+            <div id="serviceCatalog" class="grid grid-cols-12 gap-4"></div>
+          </div>
+
+          <!-- Module container for Add/Edit/Delete Service -->
+          <div id="serviceModuleContainer"></div>
+        </section>
+
+
+
+
+        <!-- CUSTOMER LEDGER view -->
+        <section id="view-customerLedger" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="book-open" class="w-4 h-4"></i>
+              <h3 class="font-semibold">Customer Ledger</h3>
+            </div>
+            <div>
+              <label class="block text-xs text-white/60 mb-1">Customer</label>
+              <select id="ledgerCustomerFilter" class="bg-white/10 border border-white/20 rounded-lg p-2">
+                <option value="">-- All Customers --</option>
+                <!-- options will be populated dynamically -->
+              </select>
+            </div>
+            <!-- add next to ledger filters / header -->
+            <button id="downloadStatementBtn" class="p-1.5 rounded-lg hover:bg-white/10 text-white/80"
+              onclick="generateCustomerStatement()" title="Download Statement">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+            </button>
+            <div>
+              <label class="block text-xs text-white/60 mb-1">Status</label>
+              <select id="ledgerStatusFilter" class="bg-white/10 border border-white/20 rounded-lg p-2">
+                <option value="">-- All Status --</option>
+                <option value="Paid">Paid</option>
+                <option value="Partial">Partial</option>
+                <option value="Pending">Pending</option>
+                <option value="Credit">Credit</option>
+              </select>
+            </div>
+          </div>
+
+
+          <!-- Totals -->
+          <div class="grid grid-cols-3 gap-4 text-sm">
+            <div class="glass p-3 rounded-lg">
+              <div class="text-white/70">Total Invoiced</div>
+              <div id="custTotalInvoiced" class="text-lg font-semibold">₹0</div>
+            </div>
+            <div class="glass p-3 rounded-lg">
+              <div class="text-white/70">Total Paid</div>
+              <div id="custTotalPaid" class="text-lg font-semibold text-emerald-400">₹0</div>
+            </div>
+            <div class="glass p-3 rounded-lg">
+              <div class="text-white/70">Balance Due</div>
+              <div id="custTotalBalance" class="text-lg font-semibold text-amber-400">₹0</div>
+            </div>
+          </div>
+
+
+          <!-- Ledger Table -->
+          <div class="glass rounded-2xl p-4 mt-3">
+            <div class="overflow-x-auto scroll-thin">
+              <table class="min-w-full text-sm">
+                <thead class="text-white/60">
+                  <tr>
+                    <th class="p-2 text-left">Invoice #</th>
+                    <th class="p-2 text-left">Date</th>
+                    <th class="p-2 text-left">Customer</th>
+                    <th class="p-2 text-right">Total</th>
+                    <th class="p-2 text-right">Paid</th>
+                    <th class="p-2 text-right">Balance</th>
+                    <th class="p-2 text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="ledgerTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-statement" class="hidden space-y-4">
+<p class="rs-report-note">Use Customer Statement for a quick balance overview. Use Advanced Customer Statement below for date ranges, ageing and detailed exports. Each view keeps its own customer selection.</p>
+          <!-- Header -->
+          <div class="flex items-center justify-between p-4 border-b border-white/10">
+            <h2 class="text-xl font-semibold text-white">Customer Statement</h2>
+
+            <div class="flex items-center gap-3">
+              <select id="statementCustomerSelect" class="bg-gray-800 text-white rounded-lg px-3 py-1.5 text-sm"
+                onchange="renderStatementDashboard(this.value)">
+                <!-- JS will populate options -->
+              </select>
+
+              <button onclick="closeStatementDashboard()" class="text-white/70 hover:text-white" title="Close">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="statementSummaryCards">
+              <!-- JS will inject total invoiced, paid, pending -->
+            </div>
+
+            <!-- Pie Chart -->
+            <div class="bg-white/5 rounded-xl p-4 w-full max-w-sm">
+              <h3 class="text-white mb-2">Payment Distribution</h3>
+              <canvas id="statementPieChart" height="120"></canvas>
+            </div>
+
+            <!-- Invoice List -->
+            <!-- Invoices + Summary -->
+            <div class="bg-white/5 rounded-xl p-4">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-white">Invoices</h3>
+
+              </div>
+
+              <table class="w-full text-sm text-white/80">
+                <thead>
+                  <tr class="border-b border-white/10">
+                    <th class="p-2 text-left">Invoice</th>
+                    <th class="p-2 text-left">Date</th>
+                    <th class="p-2 text-right">Total</th>
+                    <th class="p-2 text-right">Paid</th>
+                    <th class="p-2 text-right">Balance</th>
+                    <th class="p-2 text-left">Status</th>
+                    <th class="p-2 text-left">Due Date</th>
+                  </tr>
+                </thead>
+                <tbody id="statementInvoiceList"></tbody>
+              </table>
+
+              <!-- ✅ Summary Bar -->
+              <div id="statementSummaryBar" class="mt-4 bg-gray-800/60 rounded-lg p-3 text-white text-sm">
+                <!-- JS injects summary cards + buttons -->
+              </div>
+            </div>
+
+
+          </div>
+
+          <h3 style="color:white;margin:0;font-size:18px">Advanced Customer Statement (Independent)</h3>
+          <div class="flex items-center justify-between mb-3">
+
+            <div class="flex items-center gap-3">
+
+
+              <!-- Customer select (independent) -->
+              <select id="adv2_customer_select"
+                style="background:#111827;color:#fff;padding:6px;border-radius:6px;margin-left:8px"></select>
+
+              <!-- Quick ranges -->
+              <select id="adv2_quick_range" style="background:#111827;color:#fff;padding:6px;border-radius:6px">
+                <option value="">Quick range</option>
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="fy">This FY</option>
+              </select>
+
+              <label style="color:#ddd;margin-left:8px">From</label>
+              <input id="adv2_start" type="date" style="background:#111827;color:#fff;padding:6px;border-radius:6px" />
+              <label style="color:#ddd;margin-left:8px">To</label>
+              <input id="adv2_end" type="date" style="background:#111827;color:#fff;padding:6px;border-radius:6px" />
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button id="adv2_export_csv"
+                style="background:#059669;color:white;padding:6px 10px;border-radius:6px">Export CSV</button>
+              <button id="adv2_export_pdf"
+                style="background:#2563eb;color:white;padding:6px 10px;border-radius:6px">Export PDF</button>
+              <button id="adv2_close" style="background:transparent;color:#ddd;padding:6px">Close</button>
+            </div>
+          </div>
+
+          <!-- Summary cards -->
+          <div id="adv2_summary_cards"
+            style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px">
+          </div>
+
+          <!-- Opening / Closing balances -->
+          <div id="adv2_balances"
+            style="background:#0b1220;padding:12px;border-radius:10px;color:#e6eef8;margin-bottom:12px"></div>
+
+          <!-- Aging buckets -->
+          <div id="adv2_aging_buckets" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap"></div>
+
+          <!-- Timeline chart -->
+          <div style="background:#0b1220;padding:12px;border-radius:10px;margin-bottom:12px">
+            <div style="color:#cbd5e1;margin-bottom:8px">Invoice vs Payment Timeline</div>
+            <canvas id="adv2_timeline" height="140"></canvas>
+          </div>
+
+          <!-- Payment method pie -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <div style="flex:1;min-width:220px;background:#0b1220;padding:12px;border-radius:10px">
+              <div style="color:#cbd5e1;margin-bottom:8px">Payment Distribution</div>
+              <canvas id="adv2_pie" height="120"></canvas>
+            </div>
+
+            <div style="width:320px;min-width:220px;background:#0b1220;padding:12px;border-radius:10px">
+              <div style="color:#cbd5e1;margin-bottom:8px">Payment Method</div>
+              <canvas id="adv2_paymethod" height="120"></canvas>
+            </div>
+          </div>
+
+          <!-- Profitability / CLV / Repeat -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <div id="adv2_profitability"
+              style="flex:1;min-width:220px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8"></div>
+            <div id="adv2_clv"
+              style="width:280px;min-width:220px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8">
+            </div>
+            <div id="adv2_credit"
+              style="width:280px;min-width:220px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8">
+            </div>
+            <div id="adv2_repeat"
+              style="width:220px;min-width:200px;background:#0f172a;padding:12px;border-radius:10px;color:#e6eef8">
+            </div>
+          </div>
+
+          <!-- Top Debtors -->
+          <div style="background:#0b1220;padding:12px;border-radius:10px;margin-bottom:12px;color:#e6eef8">
+            <div style="color:#cbd5e1;margin-bottom:8px">Top Debtors</div>
+            <div id="adv2_top_debtors"></div>
+          </div>
+
+          <!-- Invoice list + notes -->
+          <div style="background:#0b1220;padding:12px;border-radius:10px;color:#e6eef8">
+            <div style="color:#cbd5e1;margin-bottom:8px">Invoices & Notes</div>
+            <table id="adv2_invoice_table" style="width:100%;border-collapse:collapse;color:#e6eef8">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.06)">
+                  <th style="text-align:left;padding:6px">Invoice</th>
+                  <th style="text-align:left;padding:6px">Date</th>
+                  <th style="text-align:right;padding:6px">Total</th>
+                  <th style="text-align:right;padding:6px">Paid</th>
+                  <th style="text-align:right;padding:6px">Balance</th>
+                  <th style="text-align:left;padding:6px">Status</th>
+                  <th style="text-align:left;padding:6px">Notes</th>
+                </tr>
+              </thead>
+              <tbody id="adv2_invoice_tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+
+
+
+        <section id="view-reports" class="space-y-6 hidden">
+          <!-- Header -->
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold">Reports</h2>
+            <div class="flex gap-2">
+              <!-- Quick filters (optional) -->
+              <select id="reportsRange" class="px-2 py-1 rounded-lg bg-white/10">
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="180">Last 180 days</option>
+                <option value="365">Last 365 days</option>
+                <option value="all">All time</option>
+              </select>
+
+              <div class="flex gap-2 items-center">
+                <!-- Date Range Filters -->
+                <label>Start:</label>
+                <input type="date" id="reportStartDate" class="border p-1 rounded">
+
+                <label>End:</label>
+                <input type="date" id="reportEndDate" class="border p-1 rounded">
+
+                <!-- Business Filter -->
+                <select id="reportsBiz" class="px-2 py-1 rounded-lg bg-white/10">
+                  <option value="">All Businesses</option>
+                  <!-- Filled dynamically via JS -->
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report Categories -->
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="reportsTiles">
+            <button data-report="financial" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+              <div class="text-3xl mb-2">📊</div>
+              <div class="font-semibold">Financial Reports</div>
+              <div class="text-white/60 text-sm">Cash flow, MoM trend, aging, burn forecast</div>
+            </button>
+
+            <button data-report="customers" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+              <div class="text-3xl mb-2">👥</div>
+              <div class="font-semibold">Customer Insights</div>
+              <div class="text-white/60 text-sm">Pareto, CLV</div>
+            </button>
+
+            <button data-report="invoices" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+              <div class="text-3xl mb-2">🧾</div>
+              <div class="font-semibold">Invoice Reports</div>
+              <div class="text-white/60 text-sm">Status, payment methods, DSO</div>
+            </button>
+
+            <button data-report="forecast" class="glass rounded-2xl p-4 hover:scale-[1.01] transition text-left">
+              <div class="text-3xl mb-2">📈</div>
+              <div class="font-semibold">Forecast & Predictive</div>
+              <div class="text-white/60 text-sm">Revenue forecast, collection risk</div>
+            </button>
+          </div>
+
+          <!-- Content render target -->
+          <div id="reportsRoot" class="grid grid-cols-12 gap-4"></div>
+        </section>
+
+
+
+        <!-- Commission Report Tab (hidden by default) -->
+        <section id="view-commission-report" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+              <h3 class="font-semibold">Commission Report</h3>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn" id="commissionExportCSV">Export CSV</button>
+              <button class="btn" id="commissionExportPrint">Export / Print</button>
+            </div>
+          </div>
+
+<div class="rs-report-period glass rs-commission-filters">
+  <label for="rsCommissionPeriod">Commission period<select id="rsCommissionPeriod"><option value="month">Current month</option><option value="year">Current calendar year</option><option value="all">All time</option><option value="custom">Custom dates</option></select></label>
+  <label for="commissionFilterBiz">Business<select id="commissionFilterBiz" aria-label="Commission business"><option value="all">All Businesses</option></select></label>
+  <label for="commissionFilterCust">Customer<select id="commissionFilterCust" aria-label="Commission customer"><option value="all">All Customers</option></select></label>
+  <label for="commissionFrom">From<input id="commissionFrom" aria-label="Commission start date" type="date"></label>
+  <label for="commissionTo">Through<input id="commissionTo" aria-label="Commission end date" type="date"></label>
+  <button id="commissionApplyFilters" class="btn" type="button">Apply</button>
+  <span id="rsCommissionPeriodLabel" class="rs-pill rs-pill-info" aria-live="polite"></span>
+  <small>Business, customer and period apply to every commission chart, table and export.</small>
+</div>
+          <!-- KPI cards -->
+          <div class="grid grid-cols-12 gap-4" id="commission-kpis">
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+              <span>Total Commission</span>
+              <div id="kpiTotalCommission" class="text-2xl font-bold text-emerald-400">₹0</div>
+            </div>
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+              <span>This Month</span>
+              <div id="kpiThisMonth" class="text-2xl font-bold text-sky-300">₹0</div>
+            </div>
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+              <span>Highest Single</span>
+              <div id="kpiHighest" class="text-2xl font-bold text-amber-300">₹0</div>
+            </div>
+            <div class="glass col-span-12 md:col-span-3 p-4 rounded-2xl">
+              <span>Avg / Invoice</span>
+              <div id="kpiAvg" class="text-2xl font-bold text-rose-300">₹0</div>
+            </div>
+          </div>
+
+          <section id="rsCommissionInsights" aria-label="Commission decision summaries"></section>
+
+          <!-- Charts -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="glass col-span-12 md:col-span-6 p-4 rounded-2xl rs-commission-chart-card">
+              <h4 class="font-medium mb-2">Commission Trend</h4>
+              <div class="rs-commission-chart"><canvas id="commissionTrendChart"></canvas></div>
+            </div>
+            <div class="glass col-span-12 md:col-span-6 p-4 rounded-2xl rs-commission-chart-card">
+              <h4 class="font-medium mb-2">Commission by Business</h4>
+              <div class="rs-commission-chart"><canvas id="commissionByBusinessChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Leaderboards & Drilldown -->
+          <div class="grid grid-cols-12 gap-4">
+            <div class="glass col-span-12 md:col-span-6 p-4 rounded-2xl rs-commission-customers">
+              <h4 class="font-medium mb-2">Top Customers by Commission</h4>
+              <div class="rs-commission-table-scroll"><table class="min-w-full text-sm">
+                <thead class="text-white/60">
+                  <tr>
+                    <th class="p-2 text-left">#</th>
+                    <th class="p-2 text-left">Customer</th>
+                    <th class="p-2 text-right">Commission</th>
+                    <th class="p-2 text-left">Invoices</th>
+                  </tr>
+                </thead>
+                <tbody id="commissionByCustomerBody"></tbody>
+              </table></div>
+            </div>
+
+            <div class="glass col-span-12 md:col-span-6 p-4 rounded-2xl rs-commission-services">
+              <h4 class="font-medium mb-2">Top Services by Commission</h4>
+              <div class="rs-commission-table-scroll"><table class="min-w-full text-sm">
+                <thead class="text-white/60">
+                  <tr>
+                    <th class="p-2 text-left">#</th>
+                    <th class="p-2 text-left">Service</th>
+                    <th class="p-2 text-right">Commission</th>
+                    <th class="p-2 text-left">Invoices</th>
+                  </tr>
+                </thead>
+                <tbody id="commissionByServiceBody"></tbody>
+              </table></div>
+            </div>
+          </div>
+
+          <!-- Invoice level drilldown -->
+          <div class="glass rounded-2xl p-4 rs-commission-drilldown">
+            <h4 class="font-medium mb-2">Invoice drilldown <span class="rs-pill rs-pill-violet">Details &amp; filters</span></h4>
+
+            <p class="rs-commission-caption">Uses the business, customer and period selected above.</p>
+
+            <div class="rs-commission-table-scroll"><table class="min-w-full text-sm">
+              <thead class="text-white/60">
+                <tr>
+                  <th class="p-2 text-left">Invoice No</th>
+                  <th class="p-2 text-left">Date</th>
+                  <th class="p-2 text-left">Business</th>
+                  <th class="p-2 text-left">Customer</th>
+                  <th class="p-2 text-right">Total</th>
+                  <th class="p-2 text-right">Commission</th>
+                  <th class="p-2 text-left">Status</th>
+                  <th class="p-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="commissionInvoiceTable"></tbody>
+            </table></div>
+          </div>
+          <!-- 📊 Advanced Commission Reports -->
+
+<p class="rs-report-note">Advanced charts use the same commission period, business and customer filters shown above.</p>
+          <div id="commissionAdvanced" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Commission by Time Period</h3>
+              <div class="rs-commission-chart"><canvas id="commissionPeriodChart"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Commission by Payment Mode</h3><p class="rs-commission-caption">Estimated allocation using invoice payments; includes an Unallocated balance.</p>
+              <div class="rs-commission-chart"><canvas id="commissionPaymentChart"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Commission by Status</h3>
+              <div class="rs-commission-chart"><canvas id="commissionStatusChart"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-recovery">
+              <h3 class="text-lg font-semibold mb-2">Commission Recovery Ratio</h3>
+              <div id="commissionRecovery" class="text-3xl font-bold text-emerald-400" aria-live="polite">0%</div><p class="rs-commission-caption">Legacy indicator: commission on invoices with payment history ÷ total commission. This does not confirm commission receipts.</p>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card rs-commission-customers">
+              <h3 class="text-lg font-semibold mb-2">Top Customers by Commission</h3>
+              <div class="rs-commission-chart"><canvas id="commissionTopCustomers"></canvas></div>
+            </div>
+            <div class="glass p-4 rounded-xl rs-commission-chart-card rs-commission-services">
+              <h3 class="text-lg font-semibold mb-2">Top Services by Commission</h3>
+              <div class="rs-commission-chart"><canvas id="commissionTopServices"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Commission Aging</h3><p class="rs-commission-caption">Earned commission by invoice age; not outstanding settlement ageing.</p>
+              <div class="rs-commission-chart"><canvas id="commissionAgingChart"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Business Commission Margin</h3>
+              <div class="rs-commission-chart"><canvas id="commissionMarginChart"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Commission Forecast vs Target</h3><p class="rs-commission-caption">Illustrative trend projection; existing example target ₹1,00,000 per month.</p>
+              <div class="rs-commission-chart"><canvas id="commissionForecastChart"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Commission Payout by Agent</h3><p class="rs-commission-caption">Commission attributed to each agent; not recorded payout transactions.</p>
+              <div class="rs-commission-chart"><canvas id="commissionPayoutChart"></canvas></div>
+            </div>
+
+            <div class="glass p-4 rounded-xl rs-commission-chart-card">
+              <h3 class="text-lg font-semibold mb-2">Commission by Region</h3>
+              <div class="rs-commission-chart"><canvas id="commissionRegionChart"></canvas></div>
+            </div>
+
+          </div>
+
+        </section>
+
+
+<section id="view-users" class="hidden space-y-4">
+<div class="rs-users-heading"><div><p class="rs-eyebrow">WORKSPACE SETTINGS</p><h2>Manage users</h2><p>Manage team roles and access to your billing workspace.</p></div><button class="btn" onclick="openUserModal()">+ Add user</button></div>
+<form id="rsAdminForm" class="glass rs-admin-form"><div><strong>Verify administrator access</strong><p>Use your existing admin credentials to manage users.</p></div><label>Username<input id="rsAdminName" autocomplete="username" required></label><label>Password<input id="rsAdminPassword" type="password" autocomplete="current-password" required></label><button class="btn" type="submit">Verify</button></form>
+<div class="rs-user-kpis"><div class="glass"><span>Total users</span><strong id="rsUserTotal">—</strong></div><div class="glass"><span>Administrators</span><strong id="rsUserAdmins">—</strong></div><div class="glass"><span>Viewers</span><strong id="rsUserViewers">—</strong></div></div>
+<div class="glass rs-user-list"><div class="rs-user-toolbar"><label for="rsUserSearch">Search users<input id="rsUserSearch" type="search" placeholder="Name, role or access"></label><button class="btn" onclick="loadUsers()">Refresh</button></div><p id="rsUserStatus" role="status">Verify administrator access to load users.</p><table class="min-w-full text-sm"><thead><tr><th>Username</th><th>Role</th><th>Menu access</th><th>Actions</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+</section>
+
+<section id="view-finance" class="hidden space-y-4"><div class="rs-finance-heading"><div><p class="rs-eyebrow">RANSAN FINANCE WORKSPACE</p><h2 id="rsFinanceTitle">Collection Centre</h2><p id="rsFinanceDescription"></p></div><div class="rs-fin-actions"><button type="button" class="btn" id="rsFinanceRefresh">Refresh</button><button type="button" class="btn" id="rsFinanceCSV">Export CSV</button><button type="button" class="btn rs-action-print" id="rsFinancePrint">Print / PDF</button></div></div><div id="rsFinanceTabs" class="rs-fin-tabs" role="tablist" aria-label="Finance reports"></div><div class="glass rs-fin-filters"><label>Business<select id="rsFinBusiness"></select></label><label>Customer<select id="rsFinCustomer"></select></label><label>From<input type="date" id="rsFinFrom"></label><label>As of / To<input type="date" id="rsFinTo"></label><label>Saved view<select id="rsFinSaved"></select></label><button type="button" class="btn" id="rsFinSaveFilter">Save view</button><button type="button" class="btn" id="rsFinApply">Apply</button></div><p id="rsFinanceStatus" role="status" class="rs-fin-note"></p><div id="rsFinancePending" class="rs-fin-warning" hidden></div><div id="rsFinanceContent"></div></section>
+      </main>
+    </div>
+
+<footer class="rs-site-footer"><span class="rs-footer-brand"><span class="rs-footer-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></svg></span><span>© 2026 <strong>RanSan Technology</strong></span></span><a class="rs-footer-website" href="https://www.ransangroups.com" target="_blank" rel="noopener noreferrer"><span class="rs-footer-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a18 18 0 0 1 0 18 18 18 0 0 1 0-18Z"/></svg></span><span>www.ransangroups.com</span></a><span class="rs-footer-credit"><span class="rs-footer-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-14-2 18"/></svg></span><span>Designed &amp; powered by <strong>RanSan Technology</strong></span></span></footer>
+    <!-- PRINT / INVOICE MODAL -->
+    <div id="printModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+      <div class="glass rounded-2xl p-6 w-[900px] max-w-[95vw] print-card">
+        <div class="flex items-center justify-between no-print">
+          <div class="flex items-center gap-2"><i data-lucide="receipt" class="w-5 h-5"></i>
+            <h3 class="font-semibold">Invoice Preview</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn" onclick="window.print()"><i data-lucide="printer"></i> Print</button>
+            <button class="btn" onclick="closePrint()"><i data-lucide="x"></i> Close</button>
+          </div>
+        </div>
+        <div id="printArea" class="mt-4 bg-white text-black rounded-xl p-6"></div>
+      </div>
+    </div>
+
+    <!-- BUSINESS EDITOR MODAL -->
+    <div id="bizModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+      <div class="modal-glass w-[680px] max-w-[95vw]">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="building-2" class="w-5 h-5"></i>
+            <h3 class="font-semibold">Business Settings</h3>
+          </div>
+          <button class="btn" onclick="closeBizEditor()"><i data-lucide="x"></i></button>
+        </div>
+
+        <!-- Form -->
+        <div class="grid grid-cols-12 gap-3 mt-4">
+
+          <!-- Name -->
+          <div class="col-span-12 md:col-span-6">
+            <label class="text-xs text-white/60">Name</label>
+            <input id="bizName" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="Your Company Pvt Ltd" />
+          </div>
+
+          <!-- Invoice Prefix -->
+          <div class="col-span-6 md:col-span-3">
+            <label class="text-xs text-white/60">Invoice Prefix</label>
+            <input id="bizPrefix" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="TECH" />
+          </div>
+
+          <!-- GSTIN -->
+          <div class="col-span-6 md:col-span-3">
+            <label class="text-xs text-white/60">GSTIN</label>
+            <input id="bizGST" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="22AAAAA0000A1Z5" />
+          </div>
+
+          <!-- Currency -->
+          <div class="col-span-6 md:col-span-3">
+            <label class="text-xs text-white/60">Currency</label>
+            <input id="bizCurrency" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="INR" />
+          </div>
+
+          <!-- Phone -->
+          <div class="col-span-6 md:col-span-3">
+            <label class="text-xs text-white/60">Phone</label>
+            <input id="bizPhone" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="+91 98765 43210" />
+          </div>
+
+          <!-- Email -->
+          <div class="col-span-12 md:col-span-6">
+            <label class="text-xs text-white/60">Email</label>
+            <input id="bizEmail" type="email" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="info@company.com" />
+          </div>
+
+          <div class="col-span-12 rs-business-section-title">Invoice identity &amp; payment details</div>
+          <div class="col-span-12"><label for="bizAddress">Business address</label><textarea id="bizAddress" rows="2" placeholder="Address printed below the business name"></textarea></div>
+          <div class="col-span-12 md:col-span-6"><label for="bizUPI">UPI ID</label><input id="bizUPI" placeholder="business@bank" /></div>
+          <div class="col-span-12 md:col-span-6"><label for="bizGPay">GPay phone number</label><input id="bizGPay" type="tel" placeholder="Business payment phone" /></div>
+          <div class="col-span-12 md:col-span-6"><label for="bizWebsite">Website</label><input id="bizWebsite" placeholder="www.yourbusiness.com" /></div>
+          <div class="col-span-12 md:col-span-6"><label for="bizLogo">Logo image URL / asset path</label><input id="bizLogo" placeholder="https://… or assets/logo.png" /></div>
+          <div class="col-span-12 rs-business-section-title">Office addresses</div>
+          <div class="col-span-12 md:col-span-6"><label for="bizCorporateOffice">Corporate office</label><textarea id="bizCorporateOffice" rows="3" placeholder="Corporate office address"></textarea></div>
+          <div class="col-span-12 md:col-span-6"><label for="bizBranchOffice">Branch office</label><textarea id="bizBranchOffice" rows="3" placeholder="Branch office address"></textarea></div>
+          <div class="col-span-12 rs-business-section-title">Invoice authorization</div>
+          <div class="col-span-12"><label class="rs-business-sign-toggle"><input id="bizShowSignature" type="checkbox" checked /> Show the authorized signature on this business's invoices</label><p class="rs-business-hint">Uses the attached signature by default. Disable it for businesses where this signature should not appear.</p></div>
+          <div class="col-span-12 md:col-span-6"><label for="bizSignatory">Signatory name (optional)</label><input id="bizSignatory" placeholder="Authorized signatory name" /></div>
+          <div class="col-span-12 md:col-span-6"><label for="bizSignatureUrl">Alternative signature image (optional)</label><input id="bizSignatureUrl" placeholder="Leave empty to use your attached signature" /></div>
+
+          <section class="col-span-12 rs-business-appearance"><div class="rs-appearance-heading"><h4>Invoice Appearance</h4><p>Applies to new invoices. Issued profiles keep their captured settings.</p></div><div class="rs-appearance-fields">
+<label class="rs-appearance-check"><input id="bizGroupBranding" type="checkbox" checked> Show parent group branding</label>
+<label>Group name<input id="bizGroupName" maxlength="100" placeholder="RanSan Groups"></label><label>Group logo URL / asset path<input id="bizGroupLogo" placeholder="https://… or assets/group-logo.png"></label><div class="rs-group-logo-check"><button id="rsCheckGroupLogo" type="button" class="btn">Check group logo</button><a id="rsGroupLogoLink" target="_blank" rel="noopener noreferrer" hidden>Open image URL ↗</a><p id="rsGroupLogoStatus" role="status" aria-live="polite">Use assets/ransan_logo.png after uploading that file to the website.</p><img id="rsGroupLogoImage" alt="Group logo loading check" hidden></div>
+<label>Accent color <span id="rsAppearanceAccentLabel"></span><input id="bizInvoiceAccent" type="color" value="#6d28d9"></label><label>Secondary color <span id="rsAppearanceSecondaryLabel"></span><input id="bizInvoiceSecondary" type="color" value="#0f766e"></label>
+<label>Spacing<select id="bizInvoiceSpacing"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label><label>Logo size (32–96 px)<input id="bizInvoiceLogoSize" type="number" min="32" max="96" value="62"></label><label>Signature width (100–220 px)<input id="bizInvoiceSignatureSize" type="number" min="100" max="220" value="160"></label>
+<label class="rs-appearance-check"><input id="bizInvoicePaymentHistory" type="checkbox"> Include payment history on new printed invoices</label>
+<div class="rs-appearance-footer-field">          <!-- Footer -->
+          <div class="col-span-12">
+            <label class="text-xs text-white/60">Invoice Footer</label>
+            <input id="bizFooter" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="Thank you for your business" />
+          </div>
+
+</div></div><div class="rs-appearance-preview-heading"><strong>Live sample preview</strong><button id="rsRefreshAppearancePreview" type="button" class="btn">Refresh preview</button></div><p class="rs-business-hint">Sample data only. Previewing does not save settings, create an invoice or send a message.</p><iframe id="rsBusinessAppearancePreview" title="Sample invoice appearance preview" sandbox="allow-same-origin" referrerpolicy="no-referrer"></iframe></section>
+          <!-- WhatsApp Base -->
+          <div class="col-span-12 md:col-span-6">
+            <label class="text-xs text-white/60">WhatsApp Base</label>
+            <input id="bizWA" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2"
+              placeholder="https://wa.me" />
+          </div>
+
+          <!-- Internal Notes -->
+          <div class="col-span-12">
+            <label class="text-xs text-white/60">Internal Notes</label>
+            <textarea id="bizNote" class="w-full mt-1 bg-white/5 border border-white/10 rounded-xl p-2 rounded-xl"
+              placeholder="Internal notes about this business..."></textarea>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-between mt-4">
+          <button class="btn" onclick="deleteBusiness()"><i data-lucide="trash-2"></i> Delete</button>
+          <div class="flex gap-2">
+            <button class="btn" onclick="saveBusiness()"><i data-lucide="save"></i> Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Invoice Modal -->
+    <div id="editInvoiceModal" class="hidden fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50" role="dialog" aria-modal="true" aria-labelledby="editInvoiceTitle">
+      <form class="rs-invoice-dialog" id="rsEditInvoiceForm" onsubmit="event.preventDefault(); saveEditedInvoice();">
+        <header class="rs-invoice-dialog-head"><span class="rs-dialog-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M8 8h4m-4 4h2m-2 5h5m1-8 5-5 2 2-5 5-3 1z"/></svg></span><div><span class="rs-invoice-eyebrow">INVOICE WORKSPACE</span><h2 id="editInvoiceTitle">Edit invoice</h2><p>Review details, adjust items and save with confidence.</p></div><button type="button" class="btn" onclick="closeEditInvoice()" aria-label="Close edit invoice">✕ Close</button></header>
+        <div class="rs-invoice-dialog-body">
+          <section class="rs-entry-section"><h3><span>01</span> Customer &amp; dates</h3><div class="rs-entry-grid"><label class="rs-entry-wide" for="editInvCustomer">Customer<select id="editInvCustomer" disabled></select><small>The customer stays linked to this invoice.</small></label><label for="editInvDate">Issue date<input id="editInvDate" type="date" required></label><label for="editInvDue">Due date<input id="editInvDue" type="date"></label></div></section>
+          <section class="rs-entry-section"><div class="rs-entry-section-head"><h3><span>02</span> Services &amp; pricing</h3><button type="button" class="btn" onclick="addEditItemRow()">＋ Add item</button></div><div class="rs-edit-items-scroll"><table><thead><tr><th>Service</th><th>Description</th><th>Qty</th><th>Rate</th><th>Tax %</th><th>Amount</th><th></th></tr></thead><tbody id="editItemBody"></tbody></table></div></section>
+          <div class="rs-entry-review"><section class="rs-entry-section"><h3><span>03</span> Notes</h3><label>Customer address (optional)<textarea id="editCustomerAddress" maxlength="2000" rows="2"></textarea></label><label>Booking / service reference (optional)<input id="editBookingReference" maxlength="160"></label><label for="editInvNotes">Invoice notes<textarea id="editInvNotes" rows="5" placeholder="Reference, instructions or additional details"></textarea></label></section><section id="editInvoiceTotals" class="rs-entry-section rs-entry-totals"><h3>Invoice summary</h3><div><span>Subtotal</span><strong id="subtotalValue">₹0</strong></div><div><span>Tax</span><strong id="editTaxValue">₹0</strong></div><label for="discountInput">Discount<input id="discountInput" type="number" min="0" step="0.01" value="0" oninput="updateEditTotals()"></label><label for="editCommissionInput">Commission<input id="editCommissionInput" type="number" min="0" step="0.01" value="0"></label><div class="rs-entry-grand"><span>Grand total</span><strong id="grandTotalValue">₹0</strong></div></section></div>
+          <p id="editInvoiceStatus" role="status" class="rs-entry-status">Existing payments and record links are retained.</p>
+        </div>
+        <footer class="rs-invoice-dialog-foot"><span>Review the total before saving.</span><div><button type="button" class="btn" onclick="closeEditInvoice()">Cancel</button><button id="editInvoiceSave" type="submit" class="btn rs-entry-primary">Save changes</button></div></footer>
+      </form>
+    </div>
+
+    <!-- Bulk Payment Allocation Modal -->
+    <div id="bulkPaymentModal" role="dialog" aria-modal="true" aria-labelledby="rsBulkDialogTitle"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+      <div class="glass w-full max-w-3xl rs-invoice-dialog rs-bulk-dialog">
+        <div class="rs-invoice-dialog-head"><span class="rs-dialog-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M14 17h7m-3-3 3 3-3 3"/></svg></span>
+          <div><span class="rs-invoice-eyebrow">CUSTOMER RECEIPTS</span><h2 id="rsBulkDialogTitle">Allocate bulk payment</h2><p>Check current balances and distribute the actual receipt.</p></div>
+          <button type="button" onclick="closeBulkPaymentModal()" class="btn" aria-label="Close bulk payment">✕ Close</button>
+        </div>
+
+        <div class="rs-invoice-dialog-body">
+        <p id="bulkPaymentLoadStatus" class="rs-dialog-load" role="status" hidden></p><button id="bulkPaymentLoadRetry" type="button" class="btn" hidden>Retry balance check</button>
+        <!-- Header -->
+        <div class="rs-bulk-receipt-entry mb-4 flex gap-4 items-center">
+          <div>
+            <label class="block text-xs text-white/60">Customer</label>
+            <span id="bulkPaymentCustomerName" class="font-semibold"></span>
+          </div>
+          <div>
+            <label for="bulkPaymentAmountInput" class="block text-xs text-white/60">Amount Received</label>
+            <input id="bulkPaymentAmountInput" type="number" min="0.01" step="0.01" inputmode="decimal"
+              class="bg-white/10 border border-white/20 rounded-lg p-2 w-32 text-right"
+              oninput="bulkAutoAllocateFIFO()">
+          </div>
+        </div>
+
+        <div class="rs-invoice-bulk-meta"><label>Receipt date<input type="date" id="bulkPaymentDate" onchange="bulkAutoAllocateFIFO()"></label><label>Method<select id="bulkPaymentMethod"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option></select></label><button id="bulkPaymentFIFO" type="button" class="btn" onclick="bulkAutoAllocateFIFO()">Allocate oldest first</button><button id="bulkPaymentRefresh" type="button" class="btn" onclick="if(bulkAllocCustomer)openBulkPaymentModal(bulkAllocCustomer.id)">Refresh balances</button></div>
+        <p class="rs-fin-note">Allocations use the selected business and the latest recorded balances. Earlier receipts belong in Finance Centre advances.</p>
+        <p id="bulkPaymentPending" class="rs-fin-warning" hidden></p><button id="bulkPaymentDiscard" type="button" class="btn" hidden>Discard checked request and refresh</button>
+        <div class="rs-bulk-summary" aria-label="Payment allocation summary">
+          <div class="rs-bulk-pending"><span>Pending before payment</span><strong id="bulkPaymentPendingBefore">₹0</strong></div>
+          <div class="rs-bulk-received"><span>Amount received</span><strong id="bulkPaymentReceived">₹0</strong></div>
+          <div class="rs-bulk-allocated"><span>Allocated</span><strong id="bulkPaymentAllocated">₹0</strong></div>
+          <div class="rs-bulk-remaining"><span>Remaining to allocate</span><strong id="bulkPaymentRemaining" role="status" aria-live="polite">₹0</strong></div>
+          <div class="rs-bulk-after"><span>Pending after allocation</span><strong id="bulkPaymentPendingAfter">₹0</strong></div>
+        </div>
+        <p class="rs-bulk-summary-help">Pending covers the invoices listed below. “After allocation” is a preview until saved. Remaining is the receipt amount still to allocate.</p>
+        <!-- Invoice List -->
+        <div class="overflow-x-auto max-h-80 mb-4">
+          <table class="min-w-full text-sm">
+            <thead class="text-white/60">
+              <tr>
+                <th class="p-2 text-left">Invoice</th>
+                <th class="p-2 text-left">Date</th>
+                <th class="p-2 text-right">Due</th>
+                <th class="p-2 text-right">Allocate</th>
+              </tr>
+            </thead>
+            <tbody id="bulkPaymentAllocTable"></tbody>
+          </table>
+        </div>
+
+        </div>
+        <!-- Footer -->
+        <div class="rs-invoice-dialog-foot">
+          <div class="rs-bulk-footer-balance">
+            <span>Remaining <strong id="bulkPaymentRemainingFooter">₹0</strong></span><span>Pending after <strong id="bulkPaymentPendingAfterFooter">₹0</strong></span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeBulkPaymentModal()"
+              class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Cancel</button>
+            <button id="bulkPaymentSave" type="button" onclick="saveBulkPaymentAllocation()"
+              class="btn rs-entry-primary">Save allocations</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="userModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center">
+      <div class="bg-gray-900 p-6 rounded-xl w-96 space-y-3">
+
+        <h3 id="modalTitle" class="text-lg font-semibold">Add User</h3>
+
+        <label class="rs-field">Username<input id="uUsername" placeholder="Username" autocomplete="off" class="input w-full"></label>
+        <label class="rs-field">Password<input id="uPassword" type="password" placeholder="Password" autocomplete="new-password" class="input w-full"></label>
+
+        <label class="rs-field">Role<select id="uRole" class="input w-full">
+          <option value="admin">Admin</option>
+          <option value="viewer">Viewer</option>
+        </select></label>
+
+        <!-- Sidebar Access -->
+        <div>
+          <label class="text-sm">Access Menu:</label>
+          <div id="accessList" class="grid grid-cols-2 gap-1 text-sm"></div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button onclick="closeUserModal()" class="px-3 py-1 bg-gray-600 rounded">Cancel</button>
+          <button id="rsSaveUser" onclick="saveUser()" class="px-3 py-1 bg-green-500 rounded">Save</button>
+        </div>
+
+      </div>
+    </div>
+
+
+
+    <!-- Loader -->
+    <div id="loader" class="hidden fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+      <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toastContainer" aria-label="Notifications"></div>
+
+
+    <!-- Initial Loader -->
+    <div id="initialLoader" class="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+      <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        console.log("Current ENV:", RUN_ENV);
+      });
+    </script>
+
+
+    <script>
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const themeSelect = document.getElementById("themeSelect");
+        const colorSelect = document.getElementById("colorSelect");
+
+        // 🔹 Theme change
+        if (themeSelect) {
+          themeSelect.addEventListener("change", (e) => {
+            document.body.classList.remove("theme-glass", "theme-neoglass", "theme-cyberpunk", "theme-minimal");
+            document.body.classList.add(`theme-${e.target.value}`);
+          });
+        }
+
+        // 🔹 Accent color change
+        if (colorSelect) {
+          colorSelect.addEventListener("change", (e) => {
+            updateAccent(e.target.value);
+          });
+
+          // Initialize with default
+          updateAccent(colorSelect.value);
+        }
+      });
+
+      /**
+       * Apply accent to body + update nav highlight
+       */
+      function updateAccent(color) {
+        console.log("🎨 updateAccent called with:", color);
+
+        // Remove old accents
+        document.body.classList.remove("accent-green", "accent-blue", "accent-purple", "accent-orange");
+        document.body.classList.add(`accent-${color}`);
+
+        // Find current active view
+        const currentView = document.querySelector("nav button.border-l-4")?.getAttribute("onclick")
+          ?.replace("showView('", "").replace("')", "");
+
+        console.log("🔎 Current active view is:", currentView);
+
+        if (currentView) {
+          highlightActive(currentView, color);
+        }
+      }
+
+
+
+
+
+      function setChipTextContrast(hexColor) {
+        // Convert hex → RGB
+        let r = parseInt(hexColor.substr(1, 2), 16);
+        let g = parseInt(hexColor.substr(3, 2), 16);
+        let b = parseInt(hexColor.substr(5, 2), 16);
+
+        // Perceived brightness formula
+        let brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+        // Decide text color
+        let textColor = brightness > 140 ? "#111" : "#fff";
+
+        // Apply globally
+        document.documentElement.style.setProperty("--chip-text", textColor);
+
+        // Update all chips immediately
+        document.querySelectorAll(".chip").forEach(el => {
+          el.style.color = textColor;
+          if (textColor === "#fff") {
+            el.style.textShadow = "0 1px 2px rgba(0,0,0,0.7)";
+          } else {
+            el.style.textShadow = "none";
+          }
+        });
+      }
+
+
+
+      function setAccentTextContrast(hexColor) {
+        // Convert hex → RGB
+        let r = parseInt(hexColor.substr(1, 2), 16);
+        let g = parseInt(hexColor.substr(3, 2), 16);
+        let b = parseInt(hexColor.substr(5, 2), 16);
+
+        // Perceived brightness formula
+        let brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+        // Decide text color
+        let textColor = brightness > 140 ? "#111" : "#fff";
+
+        // Apply globally
+        document.documentElement.style.setProperty("--accent-text", textColor);
+
+        // Update chips, badges, buttons
+        document.querySelectorAll(".chip, .badge, .btn-accent").forEach(el => {
+          el.style.color = textColor;
+          if (textColor === "#fff") {
+            el.style.textShadow = "0 1px 2px rgba(0,0,0,0.7)";
+          } else {
+            el.style.textShadow = "none";
+          }
+        });
+      }
+
+      document.getElementById("colorSelect").addEventListener("change", (e) => {
+        const color = e.target.value;
+        console.log("🎨 Color selected:", color);
+
+        const colorMap = {
+          green: "#22c55e",
+          blue: "#3b82f6",
+          purple: "#7c3aed",
+          orange: "#f97316"
+        };
+
+        let selectedColor = colorMap[color];
+
+        // ✅ Update body accent class
+        document.body.classList.remove("accent-green", "accent-blue", "accent-purple", "accent-orange");
+        document.body.classList.add(`accent-${color}`);
+
+        // ✅ Update chip text contrast
+        if (typeof setChipTextContrast === "function") {
+          setChipTextContrast(selectedColor);
+        }
+        if (typeof setAccentTextContrast === "function") {
+          setAccentTextContrast(selectedColor);
+        }
+
+        // ✅ Re-highlight current active nav button
+        const currentView = document.querySelector("nav button.border-l-4")
+          ?.getAttribute("onclick")
+          ?.replace("showView('", "")
+          ?.replace("')", "");
+
+        console.log("🔎 Current active view is:", currentView);
+
+        if (currentView) {
+          highlightActive(currentView, color);
+        }
+      });
+
+      // ✅ Initialize on load (default = purple)
+      setChipTextContrast("#7c3aed");
+      setAccentTextContrast("#7c3aed");
+
+
+
+    </script>
+
+
+
+
+
+    <!-- safelist for Tailwind (prevents purge of dynamic classes) -->
+    <div class="hidden">
+      border-green-400 bg-green-500/10
+      border-blue-400 bg-blue-500/10
+      border-purple-400 bg-purple-500/10
+      border-orange-400 bg-orange-500/10
+    </div>
+
+
+
+
+    <!-- Floating tooltip container -->
+    <div id="tooltip"></div>
+
+    <script>
+      function logout() { return window.rsLogout(); }
+    </script>
+
+    <!-- Session activity is managed by session-workspace.js. Browser Back does not sign out. -->
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+
+        const role = sessionStorage.getItem("role");
+        let access = sessionStorage.getItem("access");
+
+        console.log("ROLE:", role);
+        console.log("ACCESS RAW:", access);
+
+        // 👑 Admin → show all
+        if (role === "admin") return;
+
+        if (role === "viewer") {
+
+          // ✅ If access = "all" → show everything
+          if (access === "all") {
+            console.log("Full access granted");
+
+            document.querySelectorAll("[data-nav]").forEach(btn => {
+              btn.style.display = "flex";
+            });
+
+            return; // 🔥 VERY IMPORTANT
+          }
+
+          // ❌ Hide all first
+          document.querySelectorAll("[data-nav]").forEach(btn => {
+            btn.style.display = "none";
+          });
+
+          // ✅ Fallback
+          if (!access || access === "null" || access === "undefined") {
+            console.warn("No access → fallback to dashboard");
+
+            access = "dashboard";
+          }
+
+          // ✅ Normalize
+          const allowedMenus = access
+            .toLowerCase()
+            .split(",")
+            .map(m => m.trim())
+            .filter(Boolean);
+
+          console.log("ALLOWED MENUS:", allowedMenus);
+
+          // ✅ Show only allowed menus
+          allowedMenus.forEach(menu => {
+            const el = document.querySelector(`[data-nav="${menu}"]`);
+            if (el) {
+              el.style.display = "flex";
+            } else {
+              console.warn("Menu not found:", menu);
+            }
+          });
+
+          // ✅ Always show business dropdown
+          const bizSection = document.querySelector("#bizSelect")?.closest("div");
+          if (bizSection) bizSection.style.display = "block";
+
+          // ✅ Auto open first menu
+          setTimeout(() => {
+            if (allowedMenus.length > 0) {
+              showView(allowedMenus[0]);
+            }
+          }, 200);
+        }
+      });
+    </script>
+
+    <script>
+      function applyViewerRestrictions() {
+        const role = sessionStorage.getItem("role");
+
+        if (role === "viewer") {
+
+          // 🔒 Disable Edit buttons
+          document.querySelectorAll("button").forEach(btn => {
+            const text = btn.innerText.toLowerCase();
+
+            if (text.includes("edit")) {
+              btn.disabled = true;
+              btn.style.opacity = "0.5";
+              btn.title = "Viewer cannot edit invoices";
+            }
+
+            if (text.includes("delete")) {
+              btn.disabled = true;
+              btn.style.opacity = "0.5";
+              btn.title = "Viewer cannot delete invoices";
+            }
+          });
+        }
+      }
+
+      // Run initially
+      document.addEventListener("DOMContentLoaded", applyViewerRestrictions);
+
+      // 🔁 IMPORTANT: Re-run after table refresh
+      const observer = new MutationObserver(applyViewerRestrictions);
+      observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+
+
+
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const access = sessionStorage.getItem("access");
+
+        if (!access || access === "all") return;
+
+        const allowed = access.split(",");
+
+        document.querySelectorAll("[data-nav]").forEach(btn => {
+          const nav = btn.getAttribute("data-nav");
+
+          if (!allowed.includes(nav)) {
+            btn.style.display = "none";
+          }
+        });
+      });
+    </script>
+
+    <!-- Manage User start-->
+
+    
+
+    
+
+    
+
+
+    
+
+
+    
+
+    
+
+    <script>
+      function applySidebarAccess() {
+        const access = sessionStorage.getItem("access");
+
+        if (!access || access === "all") return;
+
+        const allowed = access.split(",").map(a => a.trim());
+
+        document.querySelectorAll("[data-nav]").forEach(btn => {
+          const nav = btn.getAttribute("data-nav");
+
+          // ❗ Only hide sidebar button (NOT view content)
+          if (!allowed.includes(nav)) {
+            btn.style.display = "none";
+          } else {
+            btn.style.display = "";
+          }
+        });
+      }
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        applySidebarAccess();
+      });
+    </script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+
+        const role = sessionStorage.getItem("role");
+        let accessRaw = sessionStorage.getItem("access");
+
+        console.log("ROLE:", role);
+        console.log("ACCESS RAW:", accessRaw);
+
+        // 🔥 FIX: normalize access
+        let allowedMenus = [];
+
+        if (!accessRaw || accessRaw === "undefined") {
+          allowedMenus = ["dashboard"]; // fallback
+        }
+        else if (accessRaw === "all") {
+          // ✅ Admin full access
+          allowedMenus = Array.from(document.querySelectorAll("[data-nav]"))
+            .map(el => el.getAttribute("data-nav"));
+        }
+        else {
+          allowedMenus = accessRaw.split(",").map(a => a.trim());
+        }
+
+        console.log("ALLOWED MENUS:", allowedMenus);
+
+        // ❌ Hide all first
+        document.querySelectorAll("[data-nav]").forEach(btn => {
+          btn.style.display = "none";
+        });
+
+        // ✅ Show allowed menus
+        allowedMenus.forEach(menu => {
+          const el = document.querySelector(`[data-nav="${menu}"]`);
+          if (el) {
+            el.style.display = "flex";
+          } else {
+            console.warn("Menu not found:", menu);
+          }
+        });
+
+        // 🔒 EXTRA: Hide "users" if not admin
+        if (role !== "admin") {
+          const userMenu = document.querySelector('[data-nav="users"]');
+          if (userMenu) userMenu.style.display = "none";
+        }
+
+        // ✅ Keep Business dropdown visible
+        const bizSection = document.querySelector("#bizSelect")?.closest("div");
+        if (bizSection) bizSection.style.display = "block";
+
+      });
+    </script>
+
+    <!-- Manage User End-->
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+
+        const username = sessionStorage.getItem("username") || "User";
+        const role = sessionStorage.getItem("role") || "viewer";
+
+        // ✅ Set profile data
+        document.getElementById("profileName").textContent = username;
+        document.getElementById("profileRole").textContent = role.toUpperCase();
+
+        document.getElementById("menuUserName").textContent = username;
+        document.getElementById("menuUserRole").textContent = role.toUpperCase();
+
+        // ✅ Toggle dropdown
+        const btn = document.getElementById("profileBtn");
+        const menu = document.getElementById("profileMenu");
+
+        btn.addEventListener("click", () => {
+          menu.classList.toggle("hidden");
+        });
+
+        // ✅ Close on outside click
+        document.addEventListener("click", (e) => {
+          if (!document.getElementById("profileWrapper").contains(e.target)) {
+            menu.classList.add("hidden");
+          }
+        });
+
+      });
+    </script>
+
+<style>
+  .rs-business-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .rs-business-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    max-width: 100%;
+    padding: 8px 15px;
+    border: 1px solid #a78bfa55;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #8b5cf624, #06b6d41a);
+    color: #ddd6fe;
+    box-shadow:
+      0 4px 16px #00000014,
+      inset 0 1px 0 #ffffff12;
+    font-family: inherit;
+  }
+
+  .rs-business-pill[hidden] {
+    display: none !important;
+  }
+
+  .rs-business-pill-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 27px;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: #a78bfa20;
+    color: #c4b5fd;
+  }
+
+  .rs-business-pill-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .rs-business-pill-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.4;
+    letter-spacing: .1px;
+  }
+
+  .rs-workspace-header
+  .rs-business-heading
+  .rs-workspace-title {
+    max-width: 100%;
+    margin: 0;
+    text-align: center;
+    font-size: 11px !important;
+    font-weight: 500;
+    color: var(--rs-soft, #a8b7cf) !important;
+  }
+
+  body.theme-minimal .rs-business-pill {
+    background: linear-gradient(135deg, #ede9fe, #e0f2fe);
+    border-color: #c4b5fd;
+    color: #5b21b6;
+    box-shadow: 0 3px 12px #6d28d90a;
+  }
+
+  body.theme-minimal .rs-business-pill-icon {
+    background: #ddd6fe;
+    color: #6d28d9;
+  }
+
+  @media (max-width: 1023px) {
+    .rs-workspace-header .rs-business-heading {
+      grid-column: 3;
+      grid-row: 2;
+      align-self: center;
+    }
+
+    .rs-business-pill {
+      gap: 6px;
+      padding: 6px 9px;
+    }
+
+    .rs-business-pill-icon {
+      width: 22px;
+      height: 22px;
+      flex-basis: 22px;
+    }
+
+    .rs-business-pill-icon svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .rs-business-pill-name {
+      max-width: 125px;
+      font-size: 11px;
+    }
+
+    .rs-workspace-header
+    .rs-business-heading
+    .rs-workspace-title {
+      font-size: 10px !important;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .rs-business-pill-name {
+      max-width: 85px;
+    }
+
+    .rs-business-pill {
+      padding: 5px 7px;
+    }
+  }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  function initBusinessHeaderPill() {
+    if (document.getElementById("rsHeaderBusinessPill")) return;
+
+    const businessSelect = document.getElementById("bizSelect");
+    const header = document.querySelector("body > header");
+    const pageTitle = header?.querySelector(".rs-workspace-title");
+
+    if (!businessSelect || !pageTitle) return;
+
+    // Remove the earlier below-brand label if it still exists.
+    document.getElementById("rsSelectedBusinessName")?.remove();
+
+    const heading = document.createElement("div");
+    heading.className = "rs-business-heading";
+
+    const pill = document.createElement("div");
+    pill.id = "rsHeaderBusinessPill";
+    pill.className = "rs-business-pill";
+    pill.hidden = true;
+
+    pill.innerHTML = `
+      <span class="rs-business-pill-icon" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 21h18"></path>
+          <path d="M5 21V7h14v14"></path>
+          <path d="M9 7V3h6v4"></path>
+          <path d="M9 11h1M14 11h1"></path>
+          <path d="M9 15h1M14 15h1"></path>
+          <path d="M10 21v-3h4v3"></path>
+        </svg>
+      </span>
+      <span
+        class="rs-business-pill-name"
+        aria-live="polite"
+        aria-atomic="true"
+      ></span>
+    `;
+
+    const name = pill.querySelector(".rs-business-pill-name");
+
+    // Retain the actual title element so existing title updates work.
+    pageTitle.before(heading);
+    heading.append(pill, pageTitle);
+
+    function updateBusinessPill() {
+      const option = businessSelect.selectedOptions[0];
+      const value = String(businessSelect.value || "").trim();
+
+      const label = option && value
+        ? value.toLowerCase() === "all"
+          ? "All Businesses"
+          : option.textContent.trim()
+        : "";
+
+      if (name.textContent !== label) {
+        name.textContent = label;
+      }
+
+      pill.hidden = !label;
+      pill.title = label ? "Selected business: " + label : "";
+    }
+
+    businessSelect.addEventListener("change", updateBusinessPill);
+    businessSelect.addEventListener("input", updateBusinessPill);
+
+    new MutationObserver(updateBusinessPill).observe(
+      businessSelect,
+      {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ["selected", "label", "value"]
+      }
+    );
+
+    window.addEventListener("rs:data-loaded", function () {
+      requestAnimationFrame(updateBusinessPill);
+    });
+
+    updateBusinessPill();
+  }
+
+  if (document.readyState === "complete") {
+    initBusinessHeaderPill();
+  } else {
+    window.addEventListener("load", initBusinessHeaderPill, {
+      once: true
+    });
+  }
+})();
+</script>
+
+
+<style>
+  /* Hide Overview / page title below the business badge. */
+  .rs-workspace-header
+  .rs-business-heading
+  .rs-workspace-title {
+    display: none !important;
+  }
+
+  .rs-business-heading {
+    gap: 0;
+  }
+
+  /* Business-specific colours, including in the light theme. */
+  #rsHeaderBusinessPill {
+    background: var(--business-bg, #ede9fe) !important;
+    border: 1px solid var(--business-border, #c4b5fd) !important;
+    color: var(--business-text, #6d28d9) !important;
+    padding: 9px 17px;
+    box-shadow: 0 4px 12px #0000000d;
+  }
+
+  #rsHeaderBusinessPill .rs-business-pill-name {
+    color: var(--business-text, #6d28d9) !important;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  #rsHeaderBusinessPill .rs-business-pill-icon {
+    background: var(--business-icon-bg, #ddd6fe) !important;
+    color: var(--business-text, #6d28d9) !important;
+  }
+
+  @media (max-width: 1023px) {
+    #rsHeaderBusinessPill {
+      padding: 7px 10px;
+    }
+
+    #rsHeaderBusinessPill .rs-business-pill-name {
+      font-size: 12px;
+    }
+  }
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  function initBusinessColours() {
+    const select = document.getElementById("bizSelect");
+    const pill = document.getElementById("rsHeaderBusinessPill");
+
+    if (!select || !pill || pill.dataset.coloursInstalled) return;
+    pill.dataset.coloursInstalled = "true";
+
+    // Pastel background + contrasting business-name colour.
+    const palettes = [
+      {
+        bg: "#ede9fe",
+        border: "#c4b5fd",
+        text: "#6d28d9",
+        icon: "#ddd6fe"
+      },
+      {
+        bg: "#d1fae5",
+        border: "#6ee7b7",
+        text: "#065f46",
+        icon: "#a7f3d0"
+      },
+      {
+        bg: "#ffedd5",
+        border: "#fdba74",
+        text: "#9a3412",
+        icon: "#fed7aa"
+      },
+      {
+        bg: "#e0f2fe",
+        border: "#7dd3fc",
+        text: "#075985",
+        icon: "#bae6fd"
+      },
+      {
+        bg: "#fce7f3",
+        border: "#f9a8d4",
+        text: "#9d174d",
+        icon: "#fbcfe8"
+      },
+      {
+        bg: "#fef3c7",
+        border: "#fcd34d",
+        text: "#92400e",
+        icon: "#fde68a"
+      }
+    ];
+
+    // Preserve assigned colours while this page remains open.
+    const assigned = new Map();
+
+    function updateColours() {
+      Array.from(select.options).forEach(function (option) {
+        const id = String(option.value || "").trim();
+
+        if (!id || id.toLowerCase() === "all") return;
+
+        if (!assigned.has(id)) {
+          assigned.set(id, assigned.size % palettes.length);
+        }
+      });
+
+      const selectedId = String(select.value || "").trim();
+
+      const palette = selectedId.toLowerCase() === "all"
+        ? {
+            bg: "#e2e8f0",
+            border: "#94a3b8",
+            text: "#334155",
+            icon: "#cbd5e1"
+          }
+        : palettes[assigned.get(selectedId) ?? 0];
+
+      pill.style.setProperty("--business-bg", palette.bg);
+      pill.style.setProperty("--business-border", palette.border);
+      pill.style.setProperty("--business-text", palette.text);
+      pill.style.setProperty("--business-icon-bg", palette.icon);
+    }
+
+    select.addEventListener("change", updateColours);
+    select.addEventListener("input", updateColours);
+
+    new MutationObserver(updateColours).observe(select, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["value", "selected"]
+    });
+
+    window.addEventListener("rs:data-loaded", function () {
+      requestAnimationFrame(updateColours);
+    });
+
+    updateColours();
+  }
+
+  if (document.readyState === "complete") {
+    initBusinessColours();
+  } else {
+    window.addEventListener("load", initBusinessColours, {
+      once: true
+    });
+  }
+})();
+</script>
+
+<style>
+  /* Remove inherited effects from the business badge. */
+  #rsHeaderBusinessPill,
+  #rsHeaderBusinessPill * {
+    text-shadow: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1 !important;
+  }
+
+  #rsHeaderBusinessPill .rs-business-pill-name {
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: normal !important;
+    line-height: 1.5 !important;
+    color: var(--business-text, #6d28d9) !important;
+    -webkit-text-fill-color: currentColor !important;
+    -webkit-text-stroke: 0 !important;
+  }
+
+  /* Disable the header glass effect that can affect text rendering. */
+  body > header.rs-workspace-header {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+</style>
+
+<style>
+  /* Collection cards: overdue, upcoming, payment promises. */
+  #rsCollectionCards > button:nth-child(1) {
+    --collection-accent: #fb7185;
+    --collection-tint: #fb718514;
+    --collection-border: #fb718540;
+  }
+
+  #rsCollectionCards > button:nth-child(2) {
+    --collection-accent: #fbbf24;
+    --collection-tint: #fbbf2414;
+    --collection-border: #fbbf2440;
+  }
+
+  #rsCollectionCards > button:nth-child(3) {
+    --collection-accent: #2dd4bf;
+    --collection-tint: #2dd4bf14;
+    --collection-border: #2dd4bf40;
+  }
+
+  #rsCollectionCards > button {
+    background: var(--collection-tint) !important;
+    border: 1px solid var(--collection-border) !important;
+    border-radius: 16px;
+  }
+
+  #rsCollectionCards > button strong {
+    color: var(--collection-accent) !important;
+    -webkit-text-fill-color: currentColor !important;
+    text-shadow: none !important;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #rsCollectionCards > button > span {
+    color: var(--collection-accent) !important;
+    font-weight: 600;
+  }
+
+  #rsCollectionCards > button small {
+    color: var(--rs-soft, #a8b7cf) !important;
+  }
+
+  /* Stronger text colours for your light theme. */
+  body.theme-minimal #rsCollectionCards > button:nth-child(1) {
+    --collection-accent: #be123c;
+    --collection-tint: #fff1f2;
+    --collection-border: #fecdd3;
+  }
+
+  body.theme-minimal #rsCollectionCards > button:nth-child(2) {
+    --collection-accent: #92400e;
+    --collection-tint: #fffbeb;
+    --collection-border: #fde68a;
+  }
+
+  body.theme-minimal #rsCollectionCards > button:nth-child(3) {
+    --collection-accent: #0f766e;
+    --collection-tint: #f0fdfa;
+    --collection-border: #99f6e4;
+  }
+</style>
+
+
+<style id="rsDashboardEnhancementStyles">
+  .rs-dashboard-side-cards{display:grid;gap:16px;min-width:0;align-content:start}
+  #rsMonthlyGoalCard{min-width:0}
+  #rsMonthlyGoalCard h3{color:var(--rs-ink,#e9effa)}
+  .rs-goal-scope,.rs-goal-note{font-size:11px;line-height:1.5;color:var(--rs-soft,#a8b7cf);margin:4px 0 0}
+  .rs-goal-content{display:flex;align-items:center;gap:14px;margin:12px 0}
+  #revGoalRing{width:100px;height:100px;flex:0 0 100px;filter:none!important}
+  #revGoalRing .rs-goal-track{stroke:#94a3b830}
+  #revGoalProgress{stroke:#2dd4bf;transition:stroke-dashoffset .6s ease}
+  #revGoalText{fill:#5eead4;font:700 19px Arial,sans-serif;text-shadow:none!important}
+  .rs-goal-amounts{display:grid;gap:8px;flex:1;min-width:0;margin:0}
+  .rs-goal-amounts>div{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .rs-goal-amounts dt{font-size:11px;color:var(--rs-soft,#a8b7cf)}
+  .rs-goal-amounts dd{margin:0;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  #rsGoalAchieved{color:#5eead4!important}#rsGoalTarget{color:#c4b5fd!important}#rsGoalRemaining{color:#fbbf24!important}
+  #rsMonthlyGoalCard[data-complete=true] #rsGoalStatus{color:#5eead4}
+  .rs-dashboard-status-card canvas{max-height:150px}
+  body.theme-minimal #revGoalProgress{stroke:#0f766e}
+  body.theme-minimal #revGoalText{fill:#0f766e}
+  body.theme-minimal #rsGoalAchieved{color:#0f766e!important}
+  body.theme-minimal #rsGoalTarget{color:#6d28d9!important}
+  body.theme-minimal #rsGoalRemaining{color:#92400e!important}
+  body.theme-minimal #rsMonthlyGoalCard[data-complete=true] #rsGoalStatus{color:#0f766e}
+  /* Keep existing full-width report cards inside one column on mobile. */
+  @media(max-width:767px){#dashboardReports #reports>.col-span-2{grid-column:1/-1}}
+  @media(max-width:380px){.rs-goal-content{gap:10px}.rs-goal-amounts dd{font-size:12px}}
+  @media(prefers-reduced-motion:reduce){#revGoalProgress{transition:none}}
+</style>
+
+
+<style id="rsDashboardCompactStyles">
+ #view-dashboard .rs-report-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+ #view-dashboard .rs-report-heading h2{font-size:19px;font-weight:700;color:var(--rs-ink,#e9effa)}
+ #view-dashboard .rs-report-scope{font-size:11px;line-height:1.5;color:var(--rs-info,#a5b4fc);background:#818cf812;border:1px solid #818cf830;border-radius:999px;padding:6px 11px}
+ #view-dashboard .rs-compact-reports{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:12px;align-items:start}
+ #view-dashboard .rs-compact-report{padding:15px;border-radius:16px;min-width:0;overflow:hidden}
+ #view-dashboard .rs-compact-report h3{font-size:14px;font-weight:650;margin:0 0 8px;color:var(--rs-ink,#e9effa)}
+ #view-dashboard .rs-compact-chart{position:relative;width:100%;height:210px;min-width:0}
+ #view-dashboard .rs-revenue-chart{height:225px}
+ #view-dashboard .rs-compact-chart canvas,#view-dashboard .rs-status-chart canvas{width:100%!important;height:100%!important;max-height:none!important}
+ #view-dashboard .rs-dashboard-chart-grid{align-items:start}
+ #view-dashboard .rs-report-caption{font-size:11px;line-height:1.6;margin:5px 0 9px;color:var(--rs-soft,#a8b7cf)}
+ #view-dashboard .rs-report-wide{grid-column:1/-1}
+ #view-dashboard .rs-status-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}
+ #view-dashboard .rs-status-chart{position:relative;height:150px;min-width:0}
+ #view-dashboard .rs-status-legend{display:flex;justify-content:center;gap:15px;font-size:11px;margin:12px 0 0}
+ #view-dashboard .rs-status-legend span:nth-child(1){color:#14b8a6}#view-dashboard .rs-status-legend span:nth-child(2){color:#f59e0b}#view-dashboard .rs-status-legend span:nth-child(3){color:#fb7185}
+ #view-dashboard .rs-delay-metric{font-size:12px;font-weight:600;color:var(--rs-info,#a5b4fc);margin-bottom:8px}
+ #view-dashboard .rs-delay-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+ #view-dashboard .rs-delay-summary>div{padding:8px 5px;border-radius:9px;background:#818cf80c;border:1px solid #818cf81c;text-align:center}
+ #view-dashboard .rs-delay-summary strong{display:block;font-size:15px;color:var(--rs-info,#a5b4fc)}
+ #view-dashboard .rs-delay-summary span{font-size:9px;color:var(--rs-soft,#a8b7cf);display:block}
+ #view-dashboard .rs-report-details{border-top:1px solid var(--rs-outline,#ffffff18);margin-top:10px;padding-top:10px;font-size:11px;color:var(--rs-soft,#a8b7cf);line-height:1.7}
+ #view-dashboard .rs-report-details summary{cursor:pointer;color:var(--rs-info,#a5b4fc)}
+ #view-dashboard .rs-report-table{max-height:220px;overflow:auto;margin-top:8px}
+ #view-dashboard .rs-report-table table{width:100%;border-collapse:collapse;font-size:11px}
+ #view-dashboard .rs-report-table th,#view-dashboard .rs-report-table td{text-align:left;padding:8px;border-bottom:1px solid var(--rs-outline,#ffffff18)}
+ #view-dashboard .rs-efficiency-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:12px}
+ #view-dashboard .rs-efficiency-item{padding:12px;border:1px solid var(--rs-outline,#ffffff18);border-radius:12px;background:#818cf806;min-width:0}
+ #view-dashboard .rs-efficiency-label,#view-dashboard .rs-credit-label{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:12px;color:var(--rs-ink,#e9effa)}
+ #view-dashboard .rs-efficiency-label strong{overflow-wrap:anywhere}
+ #view-dashboard .rs-efficiency-label b{font-size:19px;white-space:nowrap}
+ #view-dashboard progress{width:100%;height:8px;display:block;margin:9px 0;accent-color:#14b8a6;border:0;border-radius:99px;overflow:hidden;background:#94a3b820}
+ #view-dashboard progress::-webkit-progress-bar{background:#94a3b820;border-radius:99px}#view-dashboard progress::-webkit-progress-value{background:var(--rs-progress-colour,#14b8a6);border-radius:99px}
+ #view-dashboard .rs-efficiency-item p,#view-dashboard .rs-efficiency-item small,#view-dashboard .rs-credit-list small{font-size:10px;line-height:1.6;color:var(--rs-soft,#a8b7cf);margin:0}
+ #view-dashboard .rs-credit-list{display:grid;gap:14px;max-height:220px;overflow:auto}
+ #view-dashboard .rs-credit-label{flex-wrap:wrap}#view-dashboard .rs-credit-label strong{font-size:11px}
+ #view-dashboard .rs-report-empty{padding:12px;border-radius:10px;background:#f59e0b12;color:var(--rs-warning,#fcd34d);font-size:12px}
+ #view-dashboard .rs-report-empty[hidden]{display:none}
+ @media(max-width:767px){#view-dashboard .rs-compact-reports{grid-template-columns:1fr}#view-dashboard .rs-compact-chart{height:190px}#view-dashboard .rs-revenue-chart{height:210px}#view-dashboard .rs-status-chart{height:135px}}
+</style>
+
+
+<style id="rsDashboardDetailStyles">
+ /* Keep the table visible; the chart remains compact alongside it. */
+ #view-dashboard .rs-delay-layout{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(0,1.8fr);gap:18px;align-items:start}
+ #view-dashboard .rs-delay-table-panel,#view-dashboard .rs-delay-content{min-width:0}
+ #view-dashboard #avgDelay.rs-report-table{max-height:340px;margin-top:0;overflow:auto;border:1px solid var(--rs-outline,#ffffff18);border-radius:10px;scrollbar-width:thin}
+ #view-dashboard #avgDelay table{table-layout:fixed;font-size:12px}
+ #view-dashboard #avgDelay th{position:sticky;top:0;z-index:1;background:#e2e8f0;color:#475569;padding:12px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+ #view-dashboard #avgDelay th:first-child{width:59%}
+ #view-dashboard #avgDelay td{padding:11px 10px;overflow-wrap:anywhere;vertical-align:middle;color:var(--rs-ink,#e9effa)}
+ #view-dashboard #avgDelay th:last-child,#view-dashboard #avgDelay td:last-child{text-align:right}
+ #view-dashboard #avgDelay tbody tr:nth-child(even){background:#94a3b807}
+ #view-dashboard .rs-delay-metric{font-size:14px;margin:3px 0 12px;font-weight:650}
+ #view-dashboard #avgDelaySummary{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+ #view-dashboard .rs-delay-same-day{--rs-delay-bg:#f0fdf4;--rs-delay-border:#bbf7d0;--rs-delay-ink:#15803d}
+ #view-dashboard .rs-delay-slight{--rs-delay-bg:#fffbeb;--rs-delay-border:#fde68a;--rs-delay-ink:#a16207}
+ #view-dashboard .rs-delay-late{--rs-delay-bg:#fff1f2;--rs-delay-border:#fecdd3;--rs-delay-ink:#be123c}
+ #view-dashboard .rs-delay-unknown{--rs-delay-bg:#f3f4f6;--rs-delay-border:#e5e7eb;--rs-delay-ink:#374151}
+ #view-dashboard .rs-delay-overall{--rs-delay-bg:#eff6ff;--rs-delay-border:#bfdbfe;--rs-delay-ink:#1d4ed8;grid-column:1/-1}
+ #view-dashboard #avgDelaySummary>.rs-delay-tile{display:flex;align-items:center;gap:8px;text-align:left;min-height:66px;padding:11px;background:var(--rs-delay-bg)!important;border:1px solid var(--rs-delay-border)!important;border-radius:10px;color:var(--rs-delay-ink)!important}
+ #view-dashboard #avgDelaySummary>.rs-delay-overall{min-height:44px}
+ #view-dashboard #avgDelaySummary .rs-delay-tile-label{display:block;font-size:12px;line-height:1.55;font-weight:600;color:var(--rs-delay-ink)!important}
+ #view-dashboard #avgDelaySummary strong{display:inline;font-size:inherit;color:var(--rs-delay-ink)!important}
+ #view-dashboard #avgDelaySummary .rs-delay-tile-dot{display:block;width:10px;height:10px;flex:0 0 10px;border-radius:50%;background:var(--rs-delay-ink);box-shadow:inset 2px 2px 3px #ffffff55}
+ #view-dashboard .rs-delay-value{display:inline-block;padding:4px 7px;border-radius:6px;font-size:11px;font-weight:600;background:var(--rs-delay-bg);color:var(--rs-delay-ink)!important}
+ #view-dashboard .rs-credit-item{min-width:0}
+ #view-dashboard .rs-credit-customer{display:inline-flex;gap:7px;align-items:baseline;min-width:0;overflow-wrap:anywhere;color:color-mix(in srgb,var(--rs-credit-colour) 65%,white)}
+ #view-dashboard .rs-credit-dot{display:inline-block;width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--rs-credit-colour)}
+ #view-dashboard #creditUsage progress{accent-color:var(--rs-credit-colour)}
+ #view-dashboard #creditUsage progress::-webkit-progress-value{background:var(--rs-credit-colour)}
+ #view-dashboard #creditUsage progress::-moz-progress-bar{background:var(--rs-credit-colour);border-radius:99px}
+ #view-dashboard .rs-credit-label strong{color:var(--rs-ink,#e9effa)}
+ body.theme-minimal #view-dashboard .rs-credit-customer{color:color-mix(in srgb,var(--rs-credit-colour) 65%,black)}
+ @media(max-width:900px){#view-dashboard #avgDelaySummary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ @media(max-width:640px){#view-dashboard .rs-delay-layout{grid-template-columns:1fr}#view-dashboard #avgDelay.rs-report-table{max-height:190px}#view-dashboard .rs-delay-chart{height:190px}}
+</style>
+
+
+<style id="rsEfficiencyMobileStyles">
+ /* Per-business colours, shared with Business Performance. */
+ #view-dashboard #collectionEfficiency .rs-efficiency-item{
+   background:var(--rs-efficiency-tint,#64748b14)!important;
+   border:1px solid var(--rs-efficiency-border,#64748b55)!important;
+   border-top:3px solid var(--rs-efficiency-colour,#64748b)!important;
+ }
+ #view-dashboard #collectionEfficiency .rs-efficiency-label strong{
+   color:color-mix(in srgb,var(--rs-efficiency-colour,#64748b) 65%,white)!important;
+ }
+ #view-dashboard #collectionEfficiency .rs-efficiency-label b{
+   color:color-mix(in srgb,var(--rs-efficiency-colour,#64748b) 65%,white)!important;
+ }
+ #view-dashboard #collectionEfficiency .rs-efficiency-dot{
+   display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;
+   background:var(--rs-efficiency-colour,#64748b);vertical-align:middle;
+ }
+ #view-dashboard #collectionEfficiency progress{accent-color:var(--rs-efficiency-colour,#64748b)}
+ #view-dashboard #collectionEfficiency progress::-webkit-progress-value{background:var(--rs-efficiency-colour,#64748b)}
+ #view-dashboard #collectionEfficiency progress::-moz-progress-bar{background:var(--rs-efficiency-colour,#64748b);border-radius:99px}
+ body.theme-minimal #view-dashboard #collectionEfficiency .rs-efficiency-item{background:var(--rs-efficiency-tint,#64748b14)!important}
+ body.theme-minimal #view-dashboard #collectionEfficiency .rs-efficiency-label strong,
+ body.theme-minimal #view-dashboard #collectionEfficiency .rs-efficiency-label b{
+   color:color-mix(in srgb,var(--rs-efficiency-colour,#64748b) 70%,black)!important;
+ }
+ /* Existing .btn styles must not place collection-card children in one flex row. */
+ #view-dashboard #rsCollectionCards{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px!important;min-width:0}
+ #view-dashboard #rsCollectionCards>button{
+   display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+   justify-content:flex-start!important;gap:7px!important;min-width:0!important;width:100%!important;
+   padding:15px!important;white-space:normal!important;text-align:left!important;
+   overflow-wrap:anywhere;box-sizing:border-box;
+ }
+ #view-dashboard #rsCollectionCards>button>*{min-width:0;max-width:100%;margin:0!important;white-space:normal!important}
+ #view-dashboard #rsCollectionCards>button>span{display:block;font-size:12px!important;line-height:1.45!important}
+ #view-dashboard #rsCollectionCards>button>strong{display:block;font-size:clamp(19px,2.2vw,26px)!important;line-height:1.2!important;letter-spacing:-.02em}
+ #view-dashboard #rsCollectionCards>button>small{display:block;font-size:11px!important;line-height:1.5!important}
+ @media(max-width:767px){
+   #view-dashboard #rsCollectionCards{grid-template-columns:minmax(0,1fr)!important;gap:9px!important}
+   #view-dashboard #rsCollectionCards>button{
+     display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+     gap:4px 12px!important;align-items:center!important;padding:12px 14px!important;
+   }
+   #view-dashboard #rsCollectionCards>button>span{grid-column:1;grid-row:1;font-size:12px!important}
+   #view-dashboard #rsCollectionCards>button>strong{grid-column:2;grid-row:1 / span 2;justify-self:end;text-align:right;font-size:22px!important}
+   #view-dashboard #rsCollectionCards>button>small{grid-column:1;grid-row:2;font-size:10px!important}
+   #view-dashboard #collectionEfficiency .rs-efficiency-grid{grid-template-columns:minmax(0,1fr)}
+ }
+ @media(max-width:350px){
+   #view-dashboard #rsCollectionCards>button{display:flex!important;gap:5px!important}
+   #view-dashboard #rsCollectionCards>button>strong{text-align:left;font-size:21px!important}
+ }
+</style>
+
+  </body>
+
+</html>

@@ -1,0 +1,105 @@
+/* Transactions only. Existing IDs, calculations and other report styles are retained. */
+#view-transactions{min-width:0}
+#view-transactions .rs-tx-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#view-transactions .rs-tx-heading h3{color:var(--rs-ink,#e9effa);font-size:18px;font-weight:700}
+#view-transactions .rs-tx-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;font-size:11px;color:var(--rs-soft,#a8b7cf)}
+#view-transactions #rsTxScope{overflow-wrap:anywhere;max-width:260px}
+#view-transactions #rsTxCount{border:1px solid #818cf840;background:#818cf812;border-radius:999px;padding:5px 10px;white-space:nowrap;color:var(--rs-info,#a5b4fc)}
+#view-transactions .rs-tx-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#view-transactions .rs-tx-kpi{grid-column:auto;min-width:0;padding:16px;border:1px solid var(--rs-tx-border);border-top:3px solid var(--rs-tx-accent);border-radius:15px;background:linear-gradient(135deg,var(--rs-tx-tint),transparent)}
+#view-transactions .rs-tx-kpi>div:first-child{font-size:11px;line-height:1.5;color:var(--rs-soft,#a8b7cf)}
+#view-transactions .rs-tx-kpi>div[id]{font-size:clamp(17px,2vw,25px);font-weight:700;color:var(--rs-tx-ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#view-transactions .rs-tx-kpi-invoiced{--rs-tx-accent:#8b5cf6;--rs-tx-border:#8b5cf638;--rs-tx-tint:#8b5cf614;--rs-tx-ink:#c4b5fd}
+#view-transactions .rs-tx-kpi-payments{--rs-tx-accent:#14b8a6;--rs-tx-border:#14b8a638;--rs-tx-tint:#14b8a614;--rs-tx-ink:#5eead4}
+#view-transactions .rs-tx-kpi-credits{--rs-tx-accent:#3b82f6;--rs-tx-border:#3b82f638;--rs-tx-tint:#3b82f614;--rs-tx-ink:#93c5fd}
+#view-transactions .rs-tx-kpi-balance{--rs-tx-accent:#f59e0b;--rs-tx-border:#f59e0b38;--rs-tx-tint:#f59e0b14;--rs-tx-ink:#fcd34d}
+#view-transactions .rs-tx-table-card{min-width:0;overflow:hidden;border:1px solid var(--rs-outline,#ffffff18);padding:0;border-radius:15px}
+#view-transactions .rs-tx-table-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--rs-outline,#ffffff18)}
+#view-transactions .rs-tx-table-heading>span{font-size:13px;font-weight:650;color:var(--rs-ink,#e9effa)}
+#view-transactions .rs-tx-table-heading>small{font-size:10px;color:var(--rs-soft,#a8b7cf)}
+#view-transactions .rs-tx-table-scroll{overflow:auto;max-height:65vh;min-width:0;overscroll-behavior:contain}
+#view-transactions table{width:100%;min-width:850px;border-collapse:separate;border-spacing:0;font-size:12px}
+#view-transactions th{position:sticky;top:0;z-index:1;padding:12px;background:#202b40;color:#bac9e2;text-transform:uppercase;letter-spacing:.04em;font-size:10px;font-weight:650;white-space:nowrap;border-bottom:1px solid var(--rs-outline,#ffffff18)}
+#view-transactions td{padding:12px;border-bottom:1px solid var(--rs-outline,#ffffff12);vertical-align:middle;color:var(--rs-ink,#e9effa)}
+#view-transactions .rs-tx-row:nth-child(even){background:#94a3b806}
+#view-transactions .rs-tx-row:hover{background:#818cf80b}
+#view-transactions .rs-tx-date{white-space:nowrap;color:var(--rs-soft,#a8b7cf);font-size:11px}
+#view-transactions .rs-tx-money{text-align:right;white-space:nowrap}
+#view-transactions .rs-tx-badge{display:inline-block;padding:5px 10px;border:1px solid transparent;border-radius:999px;font-size:11px;font-weight:600;line-height:1.5;box-shadow:none;text-shadow:none;filter:none;vertical-align:middle}
+#view-transactions .rs-tx-type,#view-transactions .rs-tx-amount,#view-transactions .rs-tx-ref,#view-transactions .rs-tx-method{white-space:nowrap}
+#view-transactions .rs-tx-amount{font-variant-numeric:tabular-nums;font-weight:700}
+#view-transactions .rs-tx-identity{max-width:210px;overflow-wrap:anywhere;color:var(--rs-tx-entity-ink);background:var(--rs-tx-entity-tint);border-color:var(--rs-tx-entity-border)}
+#view-transactions .rs-tx-invoice,#view-transactions .rs-tx-method-upi{color:#c4b5fd;background:#8b5cf615;border-color:#8b5cf638}
+#view-transactions .rs-tx-payment,#view-transactions .rs-tx-method-cash{color:#5eead4;background:#14b8a615;border-color:#14b8a638}
+#view-transactions .rs-tx-ref,#view-transactions .rs-tx-method-bank{color:#93c5fd;background:#3b82f612;border-color:#3b82f638}
+#view-transactions .rs-tx-ref{border-radius:8px;font-weight:650;letter-spacing:.02em}
+#view-transactions .rs-tx-method-card{color:#f9a8d4;background:#ec489915;border-color:#ec489938}
+#view-transactions .rs-tx-method-cheque{color:#fcd34d;background:#f59e0b15;border-color:#f59e0b38}
+#view-transactions .rs-tx-method-other{color:#67e8f9;background:#06b6d415;border-color:#06b6d438}
+#view-transactions .rs-tx-neutral,#view-transactions .rs-tx-method-neutral{color:var(--rs-soft,#a8b7cf);background:#94a3b810;border-color:#94a3b82a}
+#view-transactions .rs-tx-negative{color:#fda4af;background:#fb718515;border-color:#fb718538}
+#view-transactions .rs-tx-empty{text-align:center;padding:32px 16px;color:var(--rs-soft,#a8b7cf)}
+#view-transactions .rs-tx-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#view-transactions .rs-tx-table-scroll:focus-visible{outline:2px solid var(--rs-info,#a5b4fc);outline-offset:-2px}
+body.theme-minimal #view-transactions th{background:#edf2fc;color:#334155}
+body.theme-minimal #view-transactions .rs-tx-invoice,body.theme-minimal #view-transactions .rs-tx-method-upi{color:#6d28d9}
+body.theme-minimal #view-transactions .rs-tx-payment,body.theme-minimal #view-transactions .rs-tx-method-cash{color:#0f766e}
+body.theme-minimal #view-transactions .rs-tx-ref,body.theme-minimal #view-transactions .rs-tx-method-bank{color:#1d4ed8}
+body.theme-minimal #view-transactions .rs-tx-method-card{color:#be185d}
+body.theme-minimal #view-transactions .rs-tx-method-cheque{color:#92400e}
+body.theme-minimal #view-transactions .rs-tx-method-other{color:#0e7490}
+body.theme-minimal #view-transactions .rs-tx-negative{color:#be123c}
+body.theme-minimal #view-transactions .rs-tx-kpi-invoiced{--rs-tx-ink:#6d28d9}
+body.theme-minimal #view-transactions .rs-tx-kpi-payments{--rs-tx-ink:#0f766e}
+body.theme-minimal #view-transactions .rs-tx-kpi-credits{--rs-tx-ink:#1d4ed8}
+body.theme-minimal #view-transactions .rs-tx-kpi-balance{--rs-tx-ink:#92400e}
+@media(max-width:767px){#view-transactions .rs-tx-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#view-transactions .rs-tx-kpi{padding:12px}#view-transactions .rs-tx-heading{align-items:flex-start}#view-transactions .rs-tx-table-scroll{max-height:60vh}#view-transactions td,#view-transactions th{padding:10px}}
+#view-transactions .rs-tx-tone-0{--rs-tx-entity-ink:#c4b5fd;--rs-tx-entity-tint:#8b5cf614;--rs-tx-entity-border:#8b5cf638}
+body.theme-minimal #view-transactions .rs-tx-tone-0{--rs-tx-entity-ink:#6d28d9}
+#view-transactions .rs-tx-tone-1{--rs-tx-entity-ink:#5eead4;--rs-tx-entity-tint:#14b8a614;--rs-tx-entity-border:#14b8a638}
+body.theme-minimal #view-transactions .rs-tx-tone-1{--rs-tx-entity-ink:#0f766e}
+#view-transactions .rs-tx-tone-2{--rs-tx-entity-ink:#93c5fd;--rs-tx-entity-tint:#3b82f614;--rs-tx-entity-border:#3b82f638}
+body.theme-minimal #view-transactions .rs-tx-tone-2{--rs-tx-entity-ink:#1d4ed8}
+#view-transactions .rs-tx-tone-3{--rs-tx-entity-ink:#fcd34d;--rs-tx-entity-tint:#f59e0b14;--rs-tx-entity-border:#f59e0b38}
+body.theme-minimal #view-transactions .rs-tx-tone-3{--rs-tx-entity-ink:#92400e}
+#view-transactions .rs-tx-tone-4{--rs-tx-entity-ink:#f9a8d4;--rs-tx-entity-tint:#ec489914;--rs-tx-entity-border:#ec489938}
+body.theme-minimal #view-transactions .rs-tx-tone-4{--rs-tx-entity-ink:#be185d}
+#view-transactions .rs-tx-tone-5{--rs-tx-entity-ink:#fdba74;--rs-tx-entity-tint:#f9731614;--rs-tx-entity-border:#f9731638}
+body.theme-minimal #view-transactions .rs-tx-tone-5{--rs-tx-entity-ink:#9a3412}
+#view-transactions .rs-tx-tone-6{--rs-tx-entity-ink:#67e8f9;--rs-tx-entity-tint:#06b6d414;--rs-tx-entity-border:#06b6d438}
+body.theme-minimal #view-transactions .rs-tx-tone-6{--rs-tx-entity-ink:#0e7490}
+#view-transactions .rs-tx-tone-7{--rs-tx-entity-ink:#a5b4fc;--rs-tx-entity-tint:#6366f114;--rs-tx-entity-border:#6366f138}
+body.theme-minimal #view-transactions .rs-tx-tone-7{--rs-tx-entity-ink:#4338ca}
+#view-transactions .rs-tx-tone-8{--rs-tx-entity-ink:#bef264;--rs-tx-entity-tint:#84cc1614;--rs-tx-entity-border:#84cc1638}
+body.theme-minimal #view-transactions .rs-tx-tone-8{--rs-tx-entity-ink:#3f6212}
+#view-transactions .rs-tx-tone-9{--rs-tx-entity-ink:#f0abfc;--rs-tx-entity-tint:#d946ef14;--rs-tx-entity-border:#d946ef38}
+body.theme-minimal #view-transactions .rs-tx-tone-9{--rs-tx-entity-ink:#a21caf}
+#view-transactions .rs-tx-tone-10{--rs-tx-entity-ink:#6ee7b7;--rs-tx-entity-tint:#10b98114;--rs-tx-entity-border:#10b98138}
+body.theme-minimal #view-transactions .rs-tx-tone-10{--rs-tx-entity-ink:#047857}
+#view-transactions .rs-tx-tone-11{--rs-tx-entity-ink:#fde047;--rs-tx-entity-tint:#eab30814;--rs-tx-entity-border:#eab30838}
+body.theme-minimal #view-transactions .rs-tx-tone-11{--rs-tx-entity-ink:#854d0e}
+/* Filter controls, invoice actions and pagination. */
+#view-transactions .rs-tx-kpi>small{display:block;margin-top:7px;font-size:10px;line-height:1.5;color:var(--rs-soft,#a8b7cf)}
+#view-transactions .rs-tx-filters{display:flex;align-items:end;flex-wrap:wrap;gap:12px;padding:15px;border-radius:15px;min-width:0}
+#view-transactions .rs-tx-filters>label{display:block;flex:1 1 135px;min-width:0;font-size:11px;color:var(--rs-soft,#a8b7cf)}
+#view-transactions .rs-tx-filters>label.rs-tx-search{flex:2 1 240px}
+#view-transactions .rs-tx-filters input,#view-transactions .rs-tx-filters select,#view-transactions .rs-tx-pagination select{display:block;width:100%;min-height:40px;margin-top:5px;padding:9px 10px;border:1px solid var(--rs-outline,#ffffff25);border-radius:9px;color:var(--rs-ink,#e9effa);background:var(--rs-panel,#121b2a);font:12px system-ui;color-scheme:dark}
+#view-transactions .rs-tx-filters input::placeholder{color:var(--rs-soft,#a8b7cf);opacity:.8}
+#view-transactions .rs-tx-filter-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#view-transactions .rs-tx-filter-actions button,#view-transactions .rs-tx-pagination button{min-height:40px;font-size:11px;padding:8px 12px}
+#view-transactions .rs-tx-filter-status{flex-basis:100%;margin:0;font-size:11px;line-height:1.6;color:var(--rs-soft,#a8b7cf)}
+#view-transactions .rs-tx-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 15px;border-top:1px solid var(--rs-outline,#ffffff18);font-size:11px;color:var(--rs-soft,#a8b7cf)}
+#view-transactions .rs-tx-pagination>label{display:flex;align-items:center;gap:8px}
+#view-transactions .rs-tx-pagination select{width:75px;margin-top:0;min-height:36px;padding:6px 8px}
+#view-transactions .rs-tx-pagination>div{display:flex;gap:8px}
+#view-transactions button:disabled{opacity:.45;cursor:default}
+#view-transactions .rs-tx-ref-link{cursor:pointer;font:650 11px system-ui;transition:background .15s}
+#view-transactions .rs-tx-ref-link:hover{text-decoration:underline;background:#3b82f625}
+#view-transactions .rs-tx-ref-link:focus-visible,#view-transactions .rs-tx-filters input:focus-visible,#view-transactions .rs-tx-filters select:focus-visible,#view-transactions button:focus-visible,#view-transactions .rs-tx-pagination select:focus-visible{outline:2px solid var(--rs-info,#a5b4fc);outline-offset:2px}
+#view-transactions table{min-width:1030px}
+#view-transactions .rs-tx-payment-ref{max-width:200px;overflow-wrap:anywhere;font-size:11px;color:var(--rs-soft,#a8b7cf)}
+body.theme-minimal #view-transactions .rs-tx-filters input,body.theme-minimal #view-transactions .rs-tx-filters select,body.theme-minimal #view-transactions .rs-tx-pagination select{color-scheme:light}
+@media(max-width:767px){#view-transactions .rs-tx-filters{gap:10px;padding:12px}#view-transactions .rs-tx-filters>label{flex-basis:calc(50% - 10px)}#view-transactions .rs-tx-filters>label.rs-tx-search{flex-basis:100%}#view-transactions .rs-tx-filter-actions{width:100%}#view-transactions .rs-tx-filter-actions button{flex:1}#view-transactions .rs-tx-pagination{gap:10px;padding:12px}#view-transactions #rsTxPageInfo{order:3;width:100%}}
+/* Keep the final rows and pagination above the application footer. */
+#view-transactions{padding-bottom:calc(var(--rs-tx-footer-clearance,120px) + env(safe-area-inset-bottom,0px))}
+#view-transactions .rs-tx-pagination{scroll-margin-bottom:calc(var(--rs-tx-footer-clearance,120px) + env(safe-area-inset-bottom,0px))}

@@ -1,0 +1,56 @@
+/* Workspace density follows available CSS viewport space; no zoom or transform scaling.
+   Screen-only rules preserve printed invoice/A4 sizes, mobile, and large monitors. */
+.rs-business-load-tools:has(>p[hidden]):has(>button[hidden]){display:none}
+.rs-business-load-tools p{font-size:11px;line-height:1.5;margin:6px 0;color:#fcd34d;overflow-wrap:anywhere}
+.rs-business-load-tools button{font-size:11px;min-height:30px;padding:4px 9px}
+.rs-business-load-tools [hidden]{display:none!important}
+body.theme-minimal .rs-business-load-tools p{color:#92400e}
+@media screen and (min-width:1024px) and (max-width:1599px){
+ body>.rs-shell{grid-template-columns:clamp(202px,16vw,230px) minmax(0,1fr)!important;gap:12px!important;padding:12px 14px!important}
+ body.rs-sidebar-collapsed>.rs-shell{grid-template-columns:72px minmax(0,1fr)!important}
+ body>.rs-shell>#sidebar,body>.rs-shell>#mainContent{grid-column:auto!important;min-width:0!important}
+ #sidebar{padding:12px!important}
+ #sidebar button[data-nav],#sidebar #rsFinanceCentreNav{min-height:40px!important;padding:8px 10px!important;font-size:12px!important;border-radius:11px!important}
+ #sidebar nav{gap:5px!important}
+ #sidebar button[data-nav]>.chip,#sidebar #rsFinanceCentreNav>.chip{max-width:56px!important;white-space:nowrap!important;font-size:9px!important;padding:3px 6px!important}
+ body>.rs-workspace-header>div{grid-template-columns:auto minmax(160px,210px) minmax(80px,1fr) auto!important;gap:12px!important;padding:8px 14px!important}
+ .rs-workspace-header .rs-header-brand .rs-brand-text{font-size:15px!important}
+ .rs-workspace-header .rs-brand-logo{width:36px!important;max-width:36px!important;height:44px!important}
+ .rs-workspace-header #bizSelect{min-height:38px!important;padding:7px 30px 7px 10px!important;font-size:13px!important}
+ #rsHeaderBusinessPill{padding:7px 12px!important;max-width:100%}
+ #rsHeaderBusinessPill .rs-business-pill-name{font-size:12px!important;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .rs-head-actions{gap:7px!important}
+ .rs-head-actions .btn{padding:7px 9px!important}
+ #mainContent #view-dashboard .rs-finish-kpi.glass,#mainContent #commission-kpis .rs-finish-kpi.glass,#mainContent #view-transactions .rs-finish-kpi.glass{padding:14px!important;border-radius:15px!important}
+ #mainContent .rs-finish-kpi :is(#sumRevenue,#sumPending,#sumReceived,#sumCredit,#kpiTotalCommission,#kpiThisMonth,#kpiHighest,#kpiAvg,#txTotal,#txPayments,#txBalance,#txCredits){font-size:clamp(20px,1.9vw,26px)!important;line-height:1.35!important;padding-right:20px!important}
+ .rs-finish-kpi .badge{font-size:9px!important;padding:3px 6px!important}
+ .rs-finish-kpi-icon{width:26px;height:26px;right:10px;bottom:10px;border-radius:9px}
+ .rs-finish-kpi-icon svg{width:16px;height:16px}
+ #mainContent .rs-collection-cards,#mainContent .rs-fin-kpis{gap:9px!important;margin-bottom:12px!important}
+ #mainContent .rs-collection-cards button,#mainContent .rs-fin-kpi{padding:13px!important;border-radius:13px!important}
+ #mainContent .rs-collection-cards strong,#mainContent .rs-fin-kpi strong{font-size:22px!important;margin:5px 0!important}
+ #rsAttentionDetails{padding:13px!important}
+ #rsAttentionGrid{gap:11px!important;align-items:start!important}
+ #rsAttentionGrid .rs-attention-card{padding:14px!important;min-height:0!important;height:auto!important;border-radius:15px!important}
+ #rsAttentionGrid .rs-attention-card h3{font-size:13px!important;margin-bottom:10px!important}
+ #rsAttentionGrid .rs-attention-value{font-size:20px!important}
+ #rsAttentionGrid .rs-attention-buckets>div{padding:7px 0!important}
+ #rsAttentionGrid .rs-attention-note{font-size:11px!important;line-height:1.6!important}
+ #rsAttentionGrid .rs-attention-button{font-size:11px!important;padding:7px 10px!important}
+ #view-dashboard .rs-compact-chart{height:185px!important}
+ #view-dashboard .rs-revenue-chart{height:205px!important}
+ #view-dashboard .rs-compact-report{padding:14px!important}
+ #view-dashboard .rs-report-heading h2{font-size:20px!important}
+ #view-dashboard #dashboardReports{margin-top:18px!important}
+ #rsMonthlyGoalCard{padding:14px!important}
+ #view-reports .rs-report-chart-wrap{max-height:220px}
+ #mainContent :is(.rs-customer-heading,.rs-service-heading,.rs-reports-heading,.rs-statement-heading,.rs-finance-heading) h2{font-size:23px!important}
+ .rs-site-footer{padding:8px 16px!important;font-size:10px!important;gap:10px!important}
+}
+@media screen and (min-width:1024px) and (max-width:1279px){
+ body>.rs-workspace-header>div{grid-template-columns:auto minmax(150px,190px) minmax(70px,1fr) auto!important;gap:9px!important}
+ .rs-head-actions .rs-global-search-label{display:none!important}
+ #sidebar button[data-nav]>.chip,#sidebar #rsFinanceCentreNav>.chip{display:none!important}
+ #rsAttentionGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #rsAttentionGrid>.rs-attention-card:last-child{grid-column:1/-1}
+}

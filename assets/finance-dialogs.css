@@ -1,0 +1,50 @@
+/* Only dialogs created by Finance Centre. */
+.rs-fin-dialog-overlay{position:fixed;inset:0;z-index:1000600;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:#020617bd;backdrop-filter:blur(12px);overflow-y:auto;color:#edf3ff;font-family:inherit}
+.rs-fin-dialog-overlay .rs-fin-dialog-card{display:flex;flex-direction:column;width:640px;max-width:100%;max-height:calc(100dvh - 40px);border:1px solid #a78bfa60;border-radius:24px;background:linear-gradient(135deg,#292441,#12353f 75%,#15283e);box-shadow:0 30px 100px #02061790;overflow:hidden}
+.rs-fin-dialog-overlay .rs-fin-dialog-head{display:flex;align-items:flex-start;gap:13px;padding:22px;border-bottom:1px solid #a78bfa30;background:linear-gradient(115deg,#8b5cf615,#14b8a611);flex-shrink:0}
+.rs-fin-dialog-overlay .rs-fin-dialog-head>div{flex:1;min-width:0}
+.rs-fin-dialog-overlay .rs-fin-dialog-eyebrow{display:block;font-size:9px;font-weight:750;letter-spacing:.15em;color:#a5b4fc;margin-bottom:6px}
+.rs-fin-dialog-overlay .rs-fin-dialog-head h3{display:block!important;position:static!important;margin:0 0 7px!important;padding:0!important;border:0!important;background:none!important;color:#f1f5ff!important;font-size:21px!important;font-weight:750!important;line-height:1.5!important;overflow-wrap:anywhere}
+.rs-fin-dialog-overlay h3:before,.rs-fin-dialog-overlay h3:after{display:none!important}
+.rs-fin-dialog-overlay .rs-fin-dialog-head p{font-size:11px;line-height:1.8;color:#adbed6;margin:0}
+.rs-fin-dialog-overlay .rs-fin-dialog-icon{display:grid;place-items:center;flex:0 0 43px;height:43px;border:1px solid #a78bfa50;border-radius:14px;background:#8b5cf625;color:#c4b5fd;font-size:26px}
+.rs-fin-dialog-overlay form{display:flex;flex-direction:column;min-height:0;margin:0;overflow:hidden}
+.rs-fin-dialog-overlay .rs-fin-dialog-body{padding:21px;display:grid;gap:16px;overflow:auto;min-height:0;overscroll-behavior:contain}
+.rs-fin-dialog-overlay label{display:flex;flex-direction:column;gap:9px;font-size:11px;font-weight:650;line-height:1.7;color:#bdcee3;min-width:0;padding:14px;border:1px solid #a78bfa30;background:#6366f10b;border-radius:14px}
+.rs-fin-dialog-overlay label:nth-of-type(even){border-color:#2dd4bf30;background:#14b8a609}
+.rs-fin-dialog-overlay :is(input,select,textarea){width:100%;min-width:0;box-sizing:border-box;min-height:45px;padding:11px 13px;border:1px solid #a5b4fc45!important;border-radius:11px!important;background:#091a30aa!important;color:#edf3ff!important;font-family:inherit;font-size:13px;line-height:1.7;outline:none;color-scheme:dark}
+.rs-fin-dialog-overlay textarea{resize:vertical;min-height:130px}
+.rs-fin-dialog-overlay option{background:#14283c;color:#edf3ff}
+.rs-fin-dialog-overlay input:disabled,.rs-fin-dialog-overlay select:disabled,.rs-fin-dialog-overlay textarea:disabled{opacity:.75;cursor:not-allowed}
+.rs-fin-dialog-overlay :is(button,input,select,textarea):focus-visible{outline:2px solid #a78bfa;outline-offset:3px}
+.rs-fin-dialog-overlay button{font:inherit;font-size:12px;font-weight:650;min-height:41px;padding:10px 14px;border-radius:12px;border:1px solid #94a3b845;background:#64748b18;color:#d2deee;cursor:pointer;line-height:1.6}
+.rs-fin-dialog-overlay button:disabled{opacity:.5;cursor:wait}
+.rs-fin-dialog-overlay button.rs-fin-dialog-close{width:34px;min-height:34px;flex:0 0 34px;padding:2px;font-size:22px}
+.rs-fin-dialog-overlay .rs-fin-dialog-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:17px 21px;border-top:1px solid #94a3b830;background:#07182c60;flex-shrink:0}
+.rs-fin-dialog-overlay .rs-fin-dialog-footer>small{font-size:10px;line-height:1.7;color:#aebfd7;margin-right:auto}
+.rs-fin-dialog-overlay button.rs-fin-dialog-primary{background:linear-gradient(115deg,#7c3aed,#2563eb 60%,#0f766e)!important;border-color:#a78bfa70!important;color:#fff!important;min-width:115px}
+.rs-fin-dialog-overlay .rs-fin-dialog-primary[aria-busy=true]:before{content:'';display:inline-block;width:12px;height:12px;border:2px solid #ffffff50;border-top-color:white;border-radius:50%;margin-right:8px;vertical-align:-2px;animation:rsFinSpinner .8s linear infinite}
+.rs-fin-dialog-overlay .rs-fin-dialog-status{font-size:11px;line-height:1.8;color:#fde68a;margin:0;overflow-wrap:anywhere}
+.rs-fin-dialog-overlay .rs-fin-dialog-status:empty{display:none}
+.rs-fin-dialog-overlay .rs-fin-inspect-card{width:820px;border-color:#60a5fa60;background:linear-gradient(135deg,#202c4a,#15353d)}
+.rs-fin-dialog-overlay .rs-fin-inspect-content{margin:0;padding:17px;max-width:100%;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.9;color:#c9daef;border-radius:14px;border:1px solid #60a5fa35;background:#081a2d90}
+.rs-fin-dialog-overlay .rs-fin-dialog-hint{font-size:11px;line-height:1.8;color:#aebed6;margin:0;padding:12px;border:1px solid #2dd4bf35;border-radius:12px;background:#14b8a609}
+#view-finance .rs-fin-portal-action{min-height:38px;padding:8px 12px!important;border-radius:11px!important;border:1px solid rgba(var(--fp-rgb,139,92,246),.45)!important;background:rgba(var(--fp-rgb,139,92,246),.16)!important;color:var(--fp-accent,#c4b5fd)!important;font-size:11px;font-weight:650}
+@keyframes rsFinSpinner{to{transform:rotate(360deg)}}
+@media(max-width:640px){.rs-fin-dialog-overlay{padding:12px}.rs-fin-dialog-overlay .rs-fin-dialog-card{max-height:calc(100dvh - 24px);border-radius:19px}.rs-fin-dialog-overlay .rs-fin-dialog-head{padding:17px;gap:10px}.rs-fin-dialog-overlay .rs-fin-dialog-head h3{font-size:18px!important}.rs-fin-dialog-overlay .rs-fin-dialog-body{padding:14px;gap:12px}.rs-fin-dialog-overlay .rs-fin-dialog-footer{padding:14px;flex-wrap:wrap}.rs-fin-dialog-overlay .rs-fin-dialog-footer>small{width:100%}.rs-fin-dialog-overlay .rs-fin-dialog-footer button{flex:1}.rs-fin-dialog-overlay label{padding:11px}}
+@media(prefers-reduced-motion:reduce){.rs-fin-dialog-overlay .rs-fin-dialog-primary[aria-busy=true]:before{animation:none}}
+/* Compact, precisely centred close controls across every Finance dialog. */
+.rs-fin-dialog-overlay .rs-fin-dialog-head{position:relative!important;display:flex!important;align-items:flex-start!important;padding-right:72px!important;gap:12px!important}
+.rs-fin-dialog-overlay button.rs-fin-dialog-close{position:absolute!important;top:20px!important;right:20px!important;left:auto!important;bottom:auto!important;display:grid!important;place-items:center!important;width:36px!important;height:36px!important;min-width:36px!important;max-width:36px!important;min-height:36px!important;max-height:36px!important;padding:0!important;margin:0!important;line-height:1!important;font-size:24px!important;font-weight:400!important;letter-spacing:0!important;text-indent:0!important;text-align:center!important;transform:none!important;box-sizing:border-box!important;align-self:auto!important;flex:none!important;overflow:hidden}
+.rs-fin-dialog-overlay button.rs-fin-dialog-close:before,.rs-fin-dialog-overlay button.rs-fin-dialog-close:after{content:none!important}
+.rs-fin-dialog-overlay .rs-fin-dialog-body{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.rs-fin-dialog-overlay .rs-fin-dialog-body>label:has(textarea),.rs-fin-dialog-overlay .rs-fin-dialog-body>.rs-fin-dialog-status,.rs-fin-dialog-overlay .rs-fin-dialog-body>.rs-fin-dialog-hint,.rs-fin-dialog-overlay .rs-fin-dialog-body>.rs-fin-inspect-content,.rs-fin-dialog-overlay .rs-fin-dialog-body>.rs-fin-reminder-summary{grid-column:1/-1}
+.rs-fin-dialog-overlay[data-kind=reminder] textarea{min-height:320px;font-size:13px!important;line-height:1.9!important;border-color:#2dd4bf55!important;background:linear-gradient(135deg,#0b2032,#102b36)!important;color:#d4f3ed!important}
+.rs-fin-dialog-overlay .rs-fin-reminder-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.rs-fin-dialog-overlay .rs-fin-reminder-summary>div{padding:12px;border:1px solid #a78bfa40;border-radius:13px;background:#8b5cf617;min-width:0}
+.rs-fin-dialog-overlay .rs-fin-reminder-summary>div[data-tone=teal]{border-color:#2dd4bf40;background:#14b8a612}
+.rs-fin-dialog-overlay .rs-fin-reminder-summary>div[data-tone=amber]{border-color:#fbbf2440;background:#f59e0b12}
+.rs-fin-dialog-overlay .rs-fin-reminder-summary small{display:block;font-size:10px;color:#b8c8df;margin-bottom:7px}
+.rs-fin-dialog-overlay .rs-fin-reminder-summary strong{display:block;font-size:12px;color:#ddd6fe;line-height:1.6;overflow-wrap:anywhere}
+.rs-fin-dialog-overlay .rs-fin-reminder-summary [data-tone=teal] strong{color:#99f6e4}.rs-fin-dialog-overlay .rs-fin-reminder-summary [data-tone=amber] strong{color:#fde68a}
+@media(max-width:640px){.rs-fin-dialog-overlay .rs-fin-dialog-head{padding-right:59px!important}.rs-fin-dialog-overlay button.rs-fin-dialog-close{top:14px!important;right:14px!important;width:33px!important;min-width:33px!important;height:33px!important;min-height:33px!important}.rs-fin-dialog-overlay .rs-fin-dialog-body{grid-template-columns:1fr!important}.rs-fin-dialog-overlay .rs-fin-reminder-summary{grid-template-columns:1fr}.rs-fin-dialog-overlay[data-kind=reminder] textarea{min-height:260px}}

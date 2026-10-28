@@ -1,0 +1,107 @@
+/* Services and owned service dialogs only. */
+#view-services{--sv-ink:#e8effb;--sv-muted:#adbed5;color:var(--sv-ink);min-width:0;padding-bottom:calc(var(--rs-service-footer-clearance,24px) + env(safe-area-inset-bottom,0px))}
+#view-services [data-tone=violet]{--sv-color:#c4b5fd;--sv-rgb:139,92,246}#view-services [data-tone=teal]{--sv-color:#5eead4;--sv-rgb:20,184,166}#view-services [data-tone=blue]{--sv-color:#93c5fd;--sv-rgb:59,130,246}#view-services [data-tone=amber]{--sv-color:#fcd34d;--sv-rgb:245,158,11}#view-services [data-tone=pink]{--sv-color:#f9a8d4;--sv-rgb:236,72,153}#view-services [data-tone=indigo]{--sv-color:#a5b4fc;--sv-rgb:99,102,241}
+#view-services .rs-service-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:7px 0 12px}
+#view-services .rs-service-eyebrow{font-size:10px;letter-spacing:.14em;font-weight:700;color:#a5b4fc}
+#view-services .rs-service-heading h3{display:flex!important;align-items:center;gap:11px;margin:8px 0!important;padding:0!important;position:static!important;border:0!important;background:none!important;font-size:24px!important;line-height:1.3!important;color:var(--sv-ink)!important}
+#view-services .rs-service-heading h3::before,#view-services .rs-service-heading h3::after{display:none!important}
+#view-services .rs-service-heading h3 svg{width:36px;height:36px;padding:7px;border:1px solid #a78bfa40;border-radius:11px;background:#8b5cf61c;color:#c4b5fd}
+#view-services .rs-service-heading p{font-size:12px;color:var(--sv-muted);margin:6px 0}
+#view-services .rs-service-heading-actions{display:flex;gap:10px;flex-wrap:wrap}
+#view-services button{font-family:inherit;cursor:pointer}
+#view-services .rs-service-heading-actions button{display:inline-flex;align-items:center;gap:8px;min-height:43px;padding:10px 15px;border-radius:13px;font-size:12px;font-weight:650;border:1px solid #a78bfa40;background:#8b5cf61c;color:#c4b5fd}
+#view-services .rs-service-heading-actions .rs-service-new{color:#99f6e4;background:linear-gradient(120deg,#0f766e40,#0891b225);border-color:#2dd4bf50}
+#view-services .rs-service-heading-actions .rs-service-delete{color:#fda4af;background:#f43f5e12;border-color:#fb718540}
+#view-services .rs-service-catalog-scope{display:inline-block;border:1px solid #818cf830;border-radius:999px;padding:8px 13px;font-size:11px;color:var(--sv-muted);background:#6366f10a;overflow-wrap:anywhere;max-width:100%}
+#view-services #serviceCatalog{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin-top:16px}
+#view-services .rs-service-business-card{min-width:0;overflow:hidden;border:1px solid rgba(var(--sv-rgb),.32);border-radius:21px;background:linear-gradient(140deg,rgba(var(--sv-rgb),.09),#10203599);box-shadow:0 14px 35px #02061714}
+#view-services .rs-service-business-head{display:flex;align-items:center;gap:11px;padding:18px;border-bottom:1px solid rgba(var(--sv-rgb),.2);background:linear-gradient(110deg,rgba(var(--sv-rgb),.14),rgba(var(--sv-rgb),.02))}
+#view-services .rs-service-business-icon{display:grid;place-items:center;width:40px;height:40px;flex:0 0 40px;border-radius:13px;border:1px solid rgba(var(--sv-rgb),.3);background:rgba(var(--sv-rgb),.14);color:var(--sv-color)}
+#view-services svg{width:17px;height:17px;flex-shrink:0}
+#view-services .rs-service-business-head>div{min-width:0}
+#view-services .rs-service-business-head small{font-size:9px;letter-spacing:.08em;color:var(--sv-muted)}
+#view-services .rs-service-business-head h4{font-size:15px;font-weight:700;margin:4px 0 0;color:var(--sv-color);overflow-wrap:anywhere;line-height:1.5}
+#view-services .rs-service-count{margin-left:auto;flex-shrink:0;border:1px solid rgba(var(--sv-rgb),.3);background:rgba(var(--sv-rgb),.12);color:var(--sv-color);font-size:10px;border-radius:999px;padding:6px 9px;white-space:nowrap}
+#view-services .rs-service-list{display:grid;gap:10px;padding:13px}
+#view-services .rs-service-row{min-width:0;padding:13px;border-radius:15px;border:1px solid rgba(var(--sv-rgb),.21);background:linear-gradient(120deg,rgba(var(--sv-rgb),.07),#ffffff02)}
+#view-services .rs-service-row-copy{display:flex;gap:10px;align-items:center;min-width:0}
+#view-services .rs-service-row-icon{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:10px;background:rgba(var(--sv-rgb),.13);color:var(--sv-color)}
+#view-services .rs-service-row-copy strong{font-size:13px;color:var(--sv-color);font-weight:650;overflow-wrap:anywhere;line-height:1.6}
+#view-services .rs-service-row-copy small{display:block;font-size:10px;color:var(--sv-muted);margin-top:3px;overflow-wrap:anywhere}
+#view-services .rs-service-row-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:12px}
+#view-services .rs-service-row-actions button{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:7px 9px;border-radius:10px;border:1px solid #a5b4fc38;background:#6366f110;color:#c4b5fd;font-size:10px;font-weight:650}
+#view-services .rs-service-row-actions svg{width:13px;height:13px}
+#view-services .rs-service-row-actions .rs-service-add{color:#99f6e4;background:#14b8a612;border-color:#2dd4bf35}
+#view-services .rs-service-row-actions .rs-service-edit{color:#93c5fd;background:#3b82f612;border-color:#60a5fa35}
+#view-services .rs-service-row-actions .rs-service-delete{color:#fda4af;background:#f43f5e12;border-color:#fb718535}
+#view-services .rs-service-price{margin-right:auto;white-space:nowrap;font-size:11px;font-weight:650;color:#fde68a;background:#f59e0b12;border:1px solid #fbbf2430;border-radius:999px;padding:6px 9px}
+#view-services .rs-service-empty{grid-column:1/-1;padding:35px;text-align:center;color:var(--sv-muted);font-size:13px;border:1px dashed #94a3b840;border-radius:17px}
+.rs-service-overlay{position:fixed;inset:0;z-index:1000500;display:flex;align-items:center;justify-content:center;padding:20px;background:#020617b8;backdrop-filter:blur(10px);box-sizing:border-box;overflow-y:auto;font-family:inherit;color:#e8effb}
+.rs-service-overlay .rs-service-dialog{width:620px;max-width:100%;max-height:calc(100dvh - 40px);min-height:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid #a78bfa50;border-radius:24px;background:linear-gradient(135deg,#242340,#112d3a 70%,#122237);box-shadow:0 35px 100px #02061790}
+.rs-service-overlay .rs-service-dialog>header,.rs-service-overlay .rs-service-dialog>footer{position:static!important;inset:auto!important;transform:none!important;margin:0!important;z-index:auto!important;width:auto!important;flex-shrink:0}
+.rs-service-overlay .rs-service-dialog>header{display:flex;align-items:flex-start;gap:12px;padding:23px!important;background:linear-gradient(110deg,#8b5cf618,#06b6d410);border-bottom:1px solid #94a3b825}
+.rs-service-overlay .rs-service-hero-icon{display:grid;place-items:center;width:45px;height:45px;flex:0 0 45px;background:#8b5cf626;border:1px solid #a78bfa45;color:#c4b5fd;border-radius:15px}
+.rs-service-overlay svg{width:21px;height:21px;flex-shrink:0}
+.rs-service-overlay header>div{min-width:0;flex:1}
+.rs-service-overlay header small{font-size:9px;letter-spacing:.1em;color:#a5b4fc;font-weight:650}
+.rs-service-overlay h3{display:block!important;position:static!important;margin:5px 0!important;padding:0!important;background:none!important;border:0!important;font-size:23px!important;color:#f1f5ff!important;line-height:1.3!important}
+.rs-service-overlay h3::before,.rs-service-overlay h3::after{display:none!important}
+.rs-service-overlay header p{font-size:11px;color:#acbdd5;line-height:1.6;margin:6px 0 0}
+.rs-service-overlay button{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;min-height:42px;padding:10px 14px;border-radius:12px;border:1px solid #94a3b840;background:#64748b13;color:#cbd5e1;font-size:12px;cursor:pointer}
+.rs-service-overlay button.rs-service-close{padding:8px;min-height:35px;width:35px;flex-shrink:0}
+.rs-service-overlay .rs-service-close svg{width:16px;height:16px}
+.rs-service-overlay .rs-service-dialog-body{display:grid;gap:15px;padding:21px;overflow:auto;min-height:0;overscroll-behavior:contain}
+.rs-service-overlay .rs-service-form-panel,.rs-service-overlay .rs-service-delete-panel{padding:17px;border:1px solid #a78bfa30;background:#6366f10b;border-radius:17px}
+.rs-service-overlay .rs-service-form-panel[data-panel=name]{background:#14b8a60b;border-color:#2dd4bf30}
+.rs-service-overlay h4{display:flex;align-items:center;gap:9px;color:#c4b5fd;margin:0 0 16px;font-size:13px;font-weight:700}
+.rs-service-overlay h4 span{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:#8b5cf626;border:1px solid #a78bfa35;font-size:10px}
+.rs-service-overlay [data-panel=name] h4{color:#5eead4}
+.rs-service-overlay [data-panel=name] h4 span{background:#14b8a61c;border-color:#2dd4bf35}
+.rs-service-overlay label{display:block;font-size:11px;font-weight:650;color:#becce0;margin-bottom:8px}
+.rs-service-overlay input:not([type=hidden]),.rs-service-overlay select{width:100%;box-sizing:border-box;min-height:47px;padding:12px 13px;border:1px solid #a5b4fc40;border-radius:12px;background:#07162b85;color:#edf4ff;font:inherit;font-size:14px;outline:none}
+.rs-service-overlay option{background:#12283c;color:#edf4ff}
+.rs-service-overlay input::placeholder{color:#879cb8}
+.rs-service-overlay input:focus,.rs-service-overlay select:focus{border-color:#a78bfa;box-shadow:0 0 0 3px #8b5cf624}
+.rs-service-overlay .rs-service-form-panel>small{display:block;font-size:10px;line-height:1.7;color:#9eb2cc;margin-top:9px}
+.rs-service-overlay .rs-service-dialog>footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:17px 21px!important;border-top:1px solid #94a3b82a;background:#06152a50}
+.rs-service-overlay footer>span{margin-right:auto;font-size:10px;color:#a8bad3}
+.rs-service-overlay button.rs-service-primary{color:#fff;border-color:#a78bfa60;background:linear-gradient(115deg,#7c3aed,#2563eb 60%,#0f766e);min-width:145px;font-weight:650}
+.rs-service-overlay button.rs-service-danger{color:#fff;border-color:#fb718550;background:linear-gradient(115deg,#be123c,#9f1239);font-weight:650}
+.rs-service-overlay button:disabled{opacity:.45;cursor:not-allowed}
+.rs-service-overlay [hidden]{display:none!important}
+.rs-service-overlay[data-kind=delete] .rs-service-dialog{border-color:#fb718550;background:linear-gradient(135deg,#302238,#17263b 75%)}
+.rs-service-overlay[data-kind=delete] .rs-service-hero-icon{color:#fda4af;border-color:#fb718540;background:#f43f5e20}
+.rs-service-overlay .rs-service-delete-panel{border-color:#fb718530;background:#f43f5e07}
+.rs-service-overlay #rsServiceDeleteName{font-size:12px;color:#fda4af;overflow-wrap:anywhere;line-height:1.7}
+.rs-service-overlay .rs-service-archive-note{font-size:11px;color:#b5c4da;line-height:1.8;margin:13px 0 17px}
+.rs-service-overlay #finalConfirmBox{padding:15px;border:1px solid #fb718540;border-radius:13px;background:#f43f5e10;color:#fecdd3;font-size:12px;line-height:1.7}
+.rs-service-overlay #finalConfirmBox p{color:#becce0;font-size:11px}
+.rs-service-overlay .rs-service-dialog-error{margin:0;font-size:12px;line-height:1.75;color:#fecdd3;padding:12px;border:1px solid #fb718540;border-radius:11px;background:#f43f5e14}
+.rs-service-overlay .rs-service-spinner{display:inline-block;width:14px;height:14px;border:2px solid #ffffff40;border-top-color:white;border-radius:50%;animation:rs-service-spin .8s linear infinite}
+@keyframes rs-service-spin{to{transform:rotate(360deg)}}
+.rs-service-overlay button:focus-visible,#view-services button:focus-visible{outline:2px solid #67e8f9;outline-offset:3px}
+body.theme-minimal #view-services{--sv-ink:#172554;--sv-muted:#475569}body.theme-minimal #view-services .rs-service-business-card{background:linear-gradient(140deg,rgba(var(--sv-rgb),.07),#ffffff)}body.theme-minimal #view-services [data-tone=violet]{--sv-color:#6d28d9}body.theme-minimal #view-services [data-tone=teal]{--sv-color:#0f766e}body.theme-minimal #view-services [data-tone=blue]{--sv-color:#1d4ed8}body.theme-minimal #view-services [data-tone=amber]{--sv-color:#92400e}body.theme-minimal #view-services [data-tone=pink]{--sv-color:#be185d}body.theme-minimal #view-services [data-tone=indigo]{--sv-color:#4338ca}body.theme-minimal #view-services .rs-service-new,body.theme-minimal #view-services .rs-service-row-actions .rs-service-add{color:#0f766e}body.theme-minimal #view-services .rs-service-delete,body.theme-minimal #view-services .rs-service-row-actions .rs-service-delete{color:#be123c}body.theme-minimal #view-services .rs-service-edit{color:#1d4ed8}body.theme-minimal #view-services .rs-service-price{color:#92400e}
+@media(max-width:1000px){#view-services #serviceCatalog{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){#view-services .rs-service-heading h3{font-size:21px!important}#view-services .rs-service-heading-actions{width:100%}#view-services .rs-service-heading-actions button{flex:1}#view-services .rs-service-business-head{padding:14px;gap:8px}#view-services .rs-service-count{font-size:9px;padding:5px 7px}#view-services .rs-service-row-actions button{min-height:40px;padding:8px 10px}.rs-service-overlay{padding:10px}.rs-service-overlay .rs-service-dialog{max-height:calc(100dvh - 20px);border-radius:19px}.rs-service-overlay .rs-service-dialog>header{padding:17px!important}.rs-service-overlay h3{font-size:21px!important}.rs-service-overlay .rs-service-dialog-body{padding:14px;gap:12px}.rs-service-overlay .rs-service-form-panel,.rs-service-overlay .rs-service-delete-panel{padding:14px}.rs-service-overlay input:not([type=hidden]),.rs-service-overlay select{font-size:16px}.rs-service-overlay .rs-service-dialog>footer{padding:14px!important;flex-wrap:wrap}.rs-service-overlay footer>span{width:100%;margin-bottom:2px}.rs-service-overlay footer>button{flex:1}}
+@media(prefers-reduced-motion:reduce){.rs-service-overlay .rs-service-spinner{animation-duration:1.5s}}
+/* Service tools and saved defaults. Footer padding is measured in service-workspace.js. */
+#view-services .rs-service-toolbar{display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;padding:16px;border:1px solid #818cf833;border-radius:17px;background:linear-gradient(120deg,#6366f10b,#14b8a608)}
+#view-services .rs-service-toolbar label{display:flex;flex:1;flex-direction:column;gap:8px;min-width:155px;color:var(--sv-muted);font-size:11px;font-weight:650}#view-services .rs-service-toolbar .rs-service-search{flex:2;min-width:230px}
+#view-services .rs-service-toolbar input,#view-services .rs-service-toolbar select{width:100%;min-height:44px;padding:10px 12px;border:1px solid #a5b4fc40;border-radius:12px;background:#112136;color:var(--sv-ink);font-size:12px}
+#view-services .rs-service-toolbar button{min-height:44px;border:1px solid #a78bfa40;border-radius:12px;background:#8b5cf612;color:#c4b5fd;padding:10px 14px;font-size:12px}
+#view-services .rs-service-favourite{margin-left:auto;display:inline-grid;place-items:center;min-width:35px;min-height:35px;flex:0 0 35px;border:1px solid #fbbf2440;border-radius:11px;background:#f59e0b0c;color:#fcd34d;font-size:23px;line-height:1;padding:4px}
+#view-services .rs-service-favourite[aria-pressed=true]{background:#f59e0b24;border-color:#fcd34d80}
+#view-services .rs-service-description{font-size:11px;line-height:1.75;color:var(--sv-muted);overflow-wrap:anywhere;margin:10px 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#view-services .rs-service-row-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}#view-services .rs-service-row-meta .rs-service-price{margin-right:0}
+#view-services .rs-service-recent-pill{font-size:10px;padding:5px 8px;border:1px solid #22d3ee33;border-radius:999px;background:#06b6d410;color:#67e8f9}
+#view-services .rs-service-usage{display:block;text-align:left;font-size:10px;line-height:1.6;color:#93c5fd;border:0;border-radius:9px;padding:6px 8px;background:#3b82f60b;margin-top:8px;text-decoration:underline;text-underline-offset:3px}
+.rs-service-overlay .rs-service-default-label{margin-top:17px}
+.rs-service-overlay textarea{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #a5b4fc40;border-radius:12px;background:#07162b85;color:#edf4ff;font:inherit;font-size:14px;min-height:90px;resize:vertical}
+.rs-service-overlay textarea:focus{outline:none;border-color:#a78bfa;box-shadow:0 0 0 3px #8b5cf624}
+.rs-service-overlay .rs-service-duplicate-warning{padding:15px;border:1px solid #fbbf2445;background:#f59e0b0d;border-radius:14px;color:#fde68a;font-size:12px;line-height:1.75}
+.rs-service-overlay .rs-service-duplicate-warning p{color:#bdcce1;overflow-wrap:anywhere}.rs-service-overlay #rsServiceDuplicateContinue{background:#92400e55;border-color:#fbbf2450;color:#fde68a}
+.rs-service-overlay .rs-service-usage-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid #a78bfa40;background:#8b5cf612;border-radius:14px;padding:15px}.rs-service-overlay .rs-service-usage-summary strong{font-size:18px;color:#c4b5fd}.rs-service-overlay .rs-service-usage-summary span{font-size:11px;color:#aebed5}
+.rs-service-overlay .rs-service-usage-note{font-size:11px;line-height:1.75;color:#b4c4db;margin:0}
+.rs-service-overlay .rs-service-usage-table{overflow:auto;border:1px solid #94a3b830;border-radius:12px;max-height:45vh}.rs-service-overlay .rs-service-usage-table table{min-width:540px;width:100%;border-collapse:collapse;font-size:11px}.rs-service-overlay .rs-service-usage-table th,.rs-service-overlay .rs-service-usage-table td{text-align:left;padding:10px;border-bottom:1px solid #94a3b81c;overflow-wrap:anywhere}.rs-service-overlay .rs-service-usage-table th{position:sticky;top:0;background:#22334d;color:#a5b4fc;font-size:10px}.rs-service-overlay .rs-service-usage-table button{font-size:10px;color:#67e8f9;background:#0891b210;border:0;text-decoration:underline;text-underline-offset:3px}.rs-service-overlay .rs-service-usage-table tr:nth-child(even){background:#818cf807}
+body.theme-minimal #view-services .rs-service-toolbar input,body.theme-minimal #view-services .rs-service-toolbar select{background:#fff;color:#172554}body.theme-minimal #view-services .rs-service-toolbar button{color:#6d28d9}body.theme-minimal #view-services .rs-service-usage{color:#1d4ed8}body.theme-minimal #view-services .rs-service-recent-pill{color:#0e7490}body.theme-minimal #view-services .rs-service-favourite{color:#a16207}
+@media(max-width:600px){#view-services .rs-service-toolbar{padding:13px;gap:11px}#view-services .rs-service-toolbar label,#view-services .rs-service-toolbar .rs-service-search{min-width:0;flex-basis:100%}#view-services .rs-service-toolbar input,#view-services .rs-service-toolbar select,.rs-service-overlay textarea{font-size:16px}#view-services .rs-service-toolbar button{width:100%}}

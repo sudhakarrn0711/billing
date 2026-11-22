@@ -1,0 +1,540 @@
+    :root {
+      color-scheme: dark;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(124, 58, 237, .28), transparent 40%),
+        radial-gradient(1000px 500px at 100% 0%, rgba(34, 211, 238, .12), transparent 35%),
+        #0a0b0f;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    .glass {
+      background: linear-gradient(180deg, rgba(255, 255, 255, .03), rgba(255, 255, 255, .01));
+      border: 1px solid rgba(255, 255, 255, .06);
+      box-shadow: 0 8px 30px rgba(2, 6, 23, .6), inset 0 1px rgba(255, 255, 255, .02);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn {
+      padding: .5rem .75rem;
+      border-radius: .75rem;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .03);
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      cursor: pointer;
+    }
+
+    .chip,
+    .badge,
+    .btn-accent {
+      font-weight: 600;
+      border-radius: 999px;
+      transition: color 0.3s ease, background 0.3s ease;
+      color: var(--accent-text, #fff);
+    }
+
+    .chip {
+      font-size: .72rem;
+      padding: .2rem .5rem;
+      background: linear-gradient(90deg, var(--accent-color), #22d3ee);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .badge {
+      font-size: .75rem;
+      padding: .2rem .45rem;
+      background: var(--accent-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-accent {
+      padding: .5rem .9rem;
+      background: var(--accent-color);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+
+
+    .scroll-thin::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+
+    .scroll-thin::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, .12);
+      border-radius: 999px;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important
+      }
+
+      .print-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        background: white;
+        color: black;
+      }
+    }
+
+    .modal-glass {
+      background: rgba(30, 30, 30, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    @keyframes rowHighlight {
+      0% {
+        background-color: rgba(34, 197, 94, 0.4);
+      }
+
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    .row-highlight {
+      animation: rowHighlight 1s ease-out;
+    }
+
+    .row-fade-out {
+      animation: fadeOut 0.4s forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+    }
+
+    @keyframes neonPulsePink {
+
+      0%,
+      100% {
+        box-shadow: 0 0 12px rgba(236, 72, 153, 0.3), 0 0 24px rgba(236, 72, 153, 0.15);
+      }
+
+      50% {
+        box-shadow: 0 0 22px rgba(236, 72, 153, 0.6), 0 0 36px rgba(236, 72, 153, 0.4);
+      }
+    }
+
+    @keyframes neonPulseCyan {
+
+      0%,
+      100% {
+        box-shadow: 0 0 12px rgba(6, 182, 212, 0.3), 0 0 24px rgba(6, 182, 212, 0.15);
+      }
+
+      50% {
+        box-shadow: 0 0 22px rgba(6, 182, 212, 0.6), 0 0 36px rgba(6, 182, 212, 0.4);
+      }
+    }
+
+    /* Apply to modals */
+    .modal-glass {
+      animation: neonPulsePink 3s infinite alternate;
+    }
+
+    /* Hover effect for table rows */
+    table tbody tr:hover {
+      animation: neonPulseCyan 2s infinite alternate;
+    }
+
+    /* Glow on buttons when focused */
+    .btn:focus {
+      animation: neonPulsePink 1.5s infinite alternate;
+      outline: none !important;
+    }
+
+    /* Dropdowns */
+    select {
+      color: #fff !important;
+      background: rgba(0, 0, 0, 0.75) !important;
+    }
+
+    select option {
+      background: #111 !important;
+      color: #fff !important;
+    }
+
+    /* Header */
+    header.sticky {
+      background: rgba(10, 10, 15, 0.85) !important;
+      border-bottom: 2px solid rgba(236, 72, 153, 0.5) !important;
+      animation: headerGlow 6s infinite alternate;
+    }
+
+    @keyframes headerGlow {
+      from {
+        box-shadow: 0 0 10px rgba(236, 72, 153, 0.25);
+      }
+
+      to {
+        box-shadow: 0 0 30px rgba(6, 182, 212, 0.4);
+      }
+    }
+
+    /* Breathing grid background */
+    @keyframes bgBreath {
+
+      0%,
+      100% {
+        background-color: rgba(236, 72, 153, 0.05);
+      }
+
+      50% {
+        background-color: rgba(6, 182, 212, 0.05);
+      }
+    }
+
+    body {
+      background: #000;
+      background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px,
+          transparent 1px, transparent 20px);
+      animation: bgBreath 12s infinite alternate;
+    }
+
+    /* NeoGlass theme */
+    body.theme-neoglass {
+      background: #000;
+      background-image: radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.12), transparent);
+    }
+
+    /* Glass + header overrides in NeoGlass theme */
+    body.theme-neoglass .glass,
+    body.theme-neoglass header.sticky {
+      background: rgba(10, 20, 15, 0.65);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 24px rgba(59, 130, 246, 0.25);
+    }
+
+    /* Buttons hover */
+    body.theme-neoglass .btn:hover {
+      background: rgba(34, 197, 94, 0.2);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.5), 0 0 22px rgba(59, 130, 246, 0.4);
+    }
+
+    /* CYBERPUNK HUD THEME */
+    body.theme-cyberpunk {
+      background: #000 !important;
+      background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 1px,
+          transparent 1px, transparent 20px) !important;
+      color: #fff !important;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body.theme-cyberpunk .glass,
+    body.theme-cyberpunk aside,
+    body.theme-cyberpunk section,
+    body.theme-cyberpunk .modal-glass {
+      background: rgba(10, 10, 15, 0.65) !important;
+      backdrop-filter: blur(16px) saturate(160%) !important;
+      -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+      border-radius: 0.75rem !important;
+      border: 1px solid rgba(236, 72, 153, 0.35) !important;
+      box-shadow: 0 0 18px rgba(236, 72, 153, 0.3), 0 0 24px rgba(6, 182, 212, 0.2) !important;
+    }
+
+    /* neon glow for header in cyberpunk */
+    body.theme-cyberpunk header.sticky h1,
+    body.theme-cyberpunk header.sticky span {
+      color: #f0f0f0 !important;
+      text-shadow: 0 0 8px rgba(236, 72, 153, 0.8), 0 0 12px rgba(6, 182, 212, 0.6);
+    }
+
+    /* Always enforce visible header text */
+    header.sticky h1,
+    header.sticky span,
+    header.sticky button,
+    header.sticky i {
+      color: #fff !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    }
+
+    header.sticky .brand-name {
+      font-weight: 800;
+      color: #f9fafb !important;
+    }
+
+    :root {
+      --accent-color: #7c3aed;
+      /* default purple */
+    }
+
+    body.accent-green {
+      --accent-color: #22c55e;
+    }
+
+    body.accent-blue {
+      --accent-color: #3b82f6;
+    }
+
+    body.accent-purple {
+      --accent-color: #7c3aed;
+    }
+
+    body.accent-orange {
+      --accent-color: #f97316;
+    }
+
+    /* Use accent wherever needed */
+    a,
+    .chip,
+    .btn-accent {
+      color: var(--accent-color);
+    }
+
+    .chip {
+      background: linear-gradient(90deg, var(--accent-color), #22d3ee);
+    }
+
+    header.sticky {
+      border-bottom: 2px solid var(--accent-color) !important;
+    }
+
+    /* Minimal White Theme */
+    body.theme-minimal {
+      background: #f9fafb !important;
+      color: #111 !important;
+      font-family: Inter, sans-serif;
+    }
+
+    body.theme-minimal header.sticky {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border-bottom: 2px solid var(--accent-color) !important;
+      color: #111 !important;
+    }
+
+    body.theme-minimal .glass,
+    body.theme-minimal aside,
+    body.theme-minimal section {
+      background: #fff !important;
+      border: 1px solid #e5e7eb !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    body.theme-minimal .chip {
+      color: #111 !important;
+      text-shadow: none;
+      background: linear-gradient(90deg, var(--accent-color), #38bdf8);
+    }
+
+
+    /* Active nav button with left border highlight */
+    .nav-active {
+      position: relative;
+      background-color: rgba(59, 130, 246, 0.08);
+      /* subtle blue bg */
+    }
+
+    .nav-active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: linear-gradient(to bottom, #3b82f6, #06b6d4);
+      /* blue → cyan */
+      border-radius: 0 4px 4px 0;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .nav-active::before {
+      transform: scaleY(1);
+      /* slide in */
+    }
+
+
+    /* nav button base */
+    nav .nav-btn {
+      position: relative;
+      overflow: visible;
+      --nav-accent: #7c3aed;
+      /* default start */
+      --nav-accent-2: #a78bfa;
+      /* default end */
+      padding-left: 1rem;
+      /* space for left bar */
+    }
+
+    /* LEFT vertical highlight bar (animated scaleY) */
+    nav .nav-btn::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: linear-gradient(to bottom, var(--nav-accent), var(--nav-accent-2));
+      border-radius: 0 4px 4px 0;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.28s cubic-bezier(.2, .9, .2, 1), background 0.28s ease;
+      z-index: 2;
+    }
+
+    /* show left bar when active */
+    nav .nav-btn.nav-active::before {
+      transform: scaleY(1);
+    }
+
+    /* hover underline gradient (animated) using ::after */
+    nav .nav-btn::after {
+      content: "";
+      position: absolute;
+      left: 0.75rem;
+      /* indent slightly from left content */
+      right: 0.5rem;
+      bottom: 6px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--nav-accent), var(--nav-accent-2));
+      border-radius: 999px;
+      transform: scaleX(0);
+      transform-origin: left;
+      opacity: 0;
+      transition: transform 0.28s ease, opacity 0.28s ease;
+      z-index: 1;
+    }
+
+    /* reveal underline on hover */
+    nav .nav-btn:hover::after {
+      transform: scaleX(1);
+      opacity: 0.95;
+    }
+
+    /* small focus styling */
+    nav .nav-btn:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08);
+    }
+
+    /* ensure content doesn't overlap left bar */
+    nav .nav-btn>* {
+      position: relative;
+      z-index: 3;
+    }
+
+    /* optional: smoother transitions for bg when button becomes active */
+    nav .nav-btn {
+      transition: background-color .22s ease, color .18s ease;
+    }
+
+    /* global override variables (set by JS) */
+    :root {
+      --sidebar-override-start: '';
+      --sidebar-override-end: '';
+    }
+
+    #notifPanel {
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .credit-bar-fill {
+      transition: width 0.8s ease-in-out;
+    }
+  
+    .env-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.env-switch {
+  display: none;
+}
+
+.env-slider {
+  width: 50px;
+  height: 24px;
+  background-color: #e74c3c; /* default red for test */
+  border-radius: 34px;
+  position: relative;
+  cursor: pointer;
+  transition: 0.4s;
+}
+
+.env-slider::before {
+  content: "";
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.4s;
+}
+
+.env-switch:checked + .env-slider {
+  background-color: #27ae60; /* green for live */
+}
+
+.env-switch:checked + .env-slider::before {
+  transform: translateX(26px);
+}
+
+.env-label {
+  font-weight: bold;
+  font-size: 14px;
+  color: #444;
+}
+
+ /* === Floating Bubble Tooltip === */
+    #tooltip {
+      position: fixed;
+      background: linear-gradient(135deg, #9a22f6, #6a11cb); 
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 150ms ease, transform 150ms ease;
+      transform: translateY(-50%) translateX(4px);
+      z-index: 9999;
+    }
+    #tooltip.show {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+    #tooltip::before {
+      background: linear-gradient(135deg, #9a22f6, #6a11cb);
+      content: "";
+      position: absolute;
+      left: -4px;
+      top: 50%;
+      transform: translateY(-50%) rotate(45deg);
+      width: 8px;
+      height: 8px;
+      background: rgba(17, 24, 39, 0.95);
+      border-radius: 2px;
+    }
